@@ -1,0 +1,383 @@
+roadId,fromLocationId,toLocationId,fromName,toName,distanceKm,travelTimeMin,trafficLevel,roadCondition,roadConditionWeight,isOneWay,weight
+1,1,13,Balme Library,Department of Animal Biology,0.237,1.42,MEDIUM,FAIR,1.15,false,0.3271
+2,1,25,Balme Library,Department of Physics,0.243,1.46,MEDIUM,GOOD,1.0,false,0.2916
+3,1,40,Balme Library,Department Of Economics,0.136,1.02,HIGH,FAIR,1.15,false,0.2346
+4,1,58,Balme Library,Department for the Study of Religions - Research Institute,0.211,1.27,MEDIUM,FAIR,1.15,false,0.2912
+5,1,59,Balme Library,Department Of Philosophy and Classics - Research Institute,0.189,0.95,LOW,GOOD,1.0,false,0.189
+6,1,60,Balme Library,Economic Policy Management Programme Office - Research Institute,0.146,0.73,LOW,POOR,1.35,false,0.1971
+7,1,95,Balme Library,Ghana Korea Information Access Centre,0.092,0.46,LOW,GOOD,1.0,false,0.092
+8,2,41,Great Hall,Research and Innovation Office Complex,0.587,3.52,MEDIUM,GOOD,1.0,true,0.7044
+9,2,46,Great Hall,Sociology Department,0.993,5.96,MEDIUM,GOOD,1.0,false,1.1916
+10,2,47,Great Hall,School of Graduate studies,0.834,4.17,LOW,GOOD,1.0,false,0.834
+11,2,50,Great Hall,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,0.828,4.14,LOW,GOOD,1.0,false,0.828
+12,2,68,Great Hall,Commonwealth Hall,0.476,3.57,HIGH,FAIR,1.15,false,0.8211
+13,2,69,Great Hall,Volta Hall,0.907,4.54,LOW,GOOD,1.0,false,0.907
+14,3,7,College of Humanities,School of Law,0.15,0.9,MEDIUM,GOOD,1.0,false,0.18
+15,3,15,College of Humanities,Department of Educational Studies and Leadership (DESL),0.192,0.96,LOW,GOOD,1.0,false,0.192
+16,3,16,College of Humanities,Department of Teacher Education,0.236,1.42,MEDIUM,FAIR,1.15,false,0.3257
+17,3,17,College of Humanities,International Programmes office,0.043,0.26,MEDIUM,GOOD,1.0,false,0.0516
+18,3,18,College of Humanities,JQB Lecture Hall,0.217,1.3,MEDIUM,POOR,1.35,false,0.3515
+19,3,63,College of Humanities,Department of Statistics,0.233,1.17,LOW,FAIR,1.15,false,0.268
+20,3,65,College of Humanities,School of Engineering Sciences,0.253,1.52,MEDIUM,FAIR,1.15,false,0.3491
+21,3,77,College of Humanities,Old Pentagon Blocks,0.464,2.78,MEDIUM,FAIR,1.15,false,0.6403
+22,4,7,Computer Science Department,School of Law,0.123,0.74,MEDIUM,FAIR,1.15,false,0.1697
+23,4,31,Computer Science Department,"Institute of Statistical, Social and Economic Research(ISSER)",0.086,0.64,HIGH,GOOD,1.0,false,0.129
+24,4,42,Computer Science Department,Biomedical Engineering Department,0.197,0.99,LOW,GOOD,1.0,false,0.197
+25,4,62,Computer Science Department,Department of Mathematics,0.104,0.62,MEDIUM,FAIR,1.15,false,0.1435
+26,4,63,Computer Science Department,Department of Statistics,0.102,0.51,LOW,GOOD,1.0,false,0.102
+27,4,65,Computer Science Department,School of Engineering Sciences,0.172,1.03,MEDIUM,GOOD,1.0,false,0.2064
+28,4,78,Computer Science Department,Pent Hostel Block A,0.503,3.02,MEDIUM,FAIR,1.15,true,0.6941
+29,5,38,Business School,Department of Music,1.427,8.56,MEDIUM,FAIR,1.15,false,1.9693
+30,5,61,Business School,School of Public Health,3.224,19.34,MEDIUM,FAIR,1.15,false,4.4491
+31,5,77,Business School,Old Pentagon Blocks,0.62,3.1,LOW,GOOD,1.0,false,0.62
+32,5,78,Business School,Pent Hostel Block A,0.675,4.05,MEDIUM,GOOD,1.0,false,0.81
+33,5,79,Business School,Pent Hostel Block B,0.665,3.33,LOW,FAIR,1.15,false,0.7647
+34,5,80,Business School,Pent Hostel Block C,0.542,2.71,LOW,FAIR,1.15,true,0.6233
+35,5,81,Business School,Evandy Hostel,0.88,4.4,LOW,GOOD,1.0,false,0.88
+36,5,82,Business School,Bani Hostel,0.749,3.75,LOW,GOOD,1.0,false,0.749
+37,5,83,Business School,TF Hostel,1.365,6.83,LOW,GOOD,1.0,false,1.365
+38,6,19,Geography & Resource Development,Institute of Africa Studies,0.179,0.9,LOW,GOOD,1.0,false,0.179
+39,6,23,Geography & Resource Development,Department of Geology,0.201,1.01,LOW,GOOD,1.0,false,0.201
+40,6,24,Geography & Resource Development,Centre for International Affairs,0.218,1.31,MEDIUM,FAIR,1.15,false,0.3008
+41,6,32,Geography & Resource Development,Department Of Animal Science,0.163,0.82,LOW,POOR,1.35,false,0.2201
+42,6,34,Geography & Resource Development,Faculty of Agriculture,0.141,1.06,HIGH,FAIR,1.15,false,0.2432
+43,6,39,Geography & Resource Development,RS/GIS Lab - Research institute,0.074,0.37,LOW,POOR,1.35,false,0.0999
+44,6,50,Geography & Resource Development,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,1.276,6.38,LOW,FAIR,1.15,false,1.4674
+45,6,53,Geography & Resource Development,Department Of Family And Consumer Science,0.154,0.92,MEDIUM,FAIR,1.15,false,0.2125
+46,7,17,School of Law,International Programmes office,0.204,1.22,MEDIUM,POOR,1.35,false,0.3305
+47,7,31,School of Law,"Institute of Statistical, Social and Economic Research(ISSER)",0.179,0.9,LOW,GOOD,1.0,false,0.179
+48,7,42,School of Law,Biomedical Engineering Department,0.222,1.11,LOW,FAIR,1.15,false,0.2553
+49,7,62,School of Law,Department of Mathematics,0.135,0.68,LOW,FAIR,1.15,false,0.1553
+50,7,63,School of Law,Department of Statistics,0.092,0.46,LOW,FAIR,1.15,false,0.1058
+51,7,65,School of Law,School of Engineering Sciences,0.203,1.52,HIGH,GOOD,1.0,false,0.3045
+52,7,94,School of Law,ECOWAS Coastal & Marine Resources Management Centre,0.238,1.43,MEDIUM,GOOD,1.0,false,0.2856
+53,8,9,Department of Chemistry,Department of Home Science,0.111,0.83,HIGH,FAIR,1.15,false,0.1915
+54,8,24,Department of Chemistry,Centre for International Affairs,0.22,1.1,LOW,FAIR,1.15,false,0.253
+55,8,25,Department of Chemistry,Department of Physics,0.23,1.38,MEDIUM,GOOD,1.0,false,0.276
+56,8,26,Department of Chemistry,Department of Plant and Environmental Biology,0.215,1.29,MEDIUM,FAIR,1.15,false,0.2967
+57,8,62,Department of Chemistry,Department of Mathematics,0.21,1.58,HIGH,POOR,1.35,false,0.4253
+58,8,94,Department of Chemistry,ECOWAS Coastal & Marine Resources Management Centre,0.199,1.49,HIGH,POOR,1.35,false,0.403
+59,9,23,Department of Home Science,Department of Geology,0.239,1.19,LOW,POOR,1.35,false,0.3227
+60,9,24,Department of Home Science,Centre for International Affairs,0.102,0.51,LOW,GOOD,1.0,false,0.102
+61,9,42,Department of Home Science,Biomedical Engineering Department,0.453,2.27,LOW,POOR,1.35,false,0.6116
+62,9,62,Department of Home Science,Department of Mathematics,0.157,0.94,MEDIUM,FAIR,1.15,false,0.2167
+63,9,63,Department of Home Science,Department of Statistics,0.189,0.95,LOW,POOR,1.35,false,0.2552
+64,9,94,Department of Home Science,ECOWAS Coastal & Marine Resources Management Centre,0.095,0.48,LOW,GOOD,1.0,false,0.095
+65,10,11,Department of Political Science,Department of Psychology,0.065,0.33,LOW,FAIR,1.15,false,0.0748
+66,10,12,Department of Political Science,Department of Information Studies,0.117,0.59,LOW,GOOD,1.0,false,0.117
+67,10,26,Department of Political Science,Department of Plant and Environmental Biology,0.111,0.55,LOW,FAIR,1.15,false,0.1276
+68,10,55,Department of Political Science,Mfodwo Complex/ N Block - Training center,0.091,0.46,LOW,FAIR,1.15,false,0.1047
+69,10,56,Department of Political Science,School of Social Sciences,0.14,0.84,MEDIUM,GOOD,1.0,false,0.168
+70,10,57,Department of Political Science,CSPS - Centre for Social Policy Studies,0.175,1.05,MEDIUM,FAIR,1.15,false,0.2415
+71,11,12,Department of Psychology,Department of Information Studies,0.075,0.45,MEDIUM,FAIR,1.15,false,0.1035
+72,11,26,Department of Psychology,Department of Plant and Environmental Biology,0.191,1.15,MEDIUM,POOR,1.35,false,0.3094
+73,11,43,Department of Psychology,New N Block,0.229,1.15,LOW,GOOD,1.0,false,0.229
+74,11,44,Department of Psychology,Centre for Climate Change and Sustainability Studies-C3SS,0.306,1.53,LOW,GOOD,1.0,false,0.306
+75,11,55,Department of Psychology,Mfodwo Complex/ N Block - Training center,0.099,0.5,LOW,GOOD,1.0,false,0.099
+76,11,56,Department of Psychology,School of Social Sciences,0.102,0.61,MEDIUM,GOOD,1.0,false,0.1224
+77,11,57,Department of Psychology,CSPS - Centre for Social Policy Studies,0.149,0.75,LOW,FAIR,1.15,false,0.1713
+78,12,26,Department of Information Studies,Department of Plant and Environmental Biology,0.219,1.31,MEDIUM,POOR,1.35,false,0.3548
+79,12,43,Department of Information Studies,New N Block,0.157,0.94,MEDIUM,GOOD,1.0,false,0.1884
+80,12,44,Department of Information Studies,Centre for Climate Change and Sustainability Studies-C3SS,0.256,1.28,LOW,POOR,1.35,false,0.3456
+81,12,45,Department of Information Studies,GCB Lecture Building,0.168,0.84,LOW,POOR,1.35,false,0.2268
+82,12,55,Department of Information Studies,Mfodwo Complex/ N Block - Training center,0.092,0.69,HIGH,FAIR,1.15,true,0.1587
+83,12,56,Department of Information Studies,School of Social Sciences,0.031,0.19,MEDIUM,GOOD,1.0,false,0.0372
+84,12,57,Department of Information Studies,CSPS - Centre for Social Policy Studies,0.078,0.39,LOW,GOOD,1.0,false,0.078
+85,13,14,Department of Animal Biology,Department of Marine and Fisheries Sciences,0.131,0.79,MEDIUM,GOOD,1.0,false,0.1572
+86,13,26,Department of Animal Biology,Department of Plant and Environmental Biology,0.202,1.01,LOW,POOR,1.35,false,0.2727
+87,13,27,Department of Animal Biology,School of Pharmacy,0.288,1.73,MEDIUM,GOOD,1.0,true,0.3456
+88,13,55,Department of Animal Biology,Mfodwo Complex/ N Block - Training center,0.204,1.22,MEDIUM,POOR,1.35,false,0.3305
+89,13,57,Department of Animal Biology,CSPS - Centre for Social Policy Studies,0.216,1.3,MEDIUM,GOOD,1.0,false,0.2592
+90,13,95,Department of Animal Biology,Ghana Korea Information Access Centre,0.206,1.55,HIGH,GOOD,1.0,false,0.309
+91,14,27,Department of Marine and Fisheries Sciences,School of Pharmacy,0.13,0.65,LOW,GOOD,1.0,false,0.13
+92,14,28,Department of Marine and Fisheries Sciences,Department of Biochemistry,0.198,1.19,MEDIUM,GOOD,1.0,false,0.2376
+93,14,29,Department of Marine and Fisheries Sciences,School of Nursing and Midwifery,0.25,1.25,LOW,GOOD,1.0,false,0.25
+94,14,45,Department of Marine and Fisheries Sciences,GCB Lecture Building,0.204,1.02,LOW,FAIR,1.15,false,0.2346
+95,14,47,Department of Marine and Fisheries Sciences,School of Graduate studies,0.336,2.52,HIGH,FAIR,1.15,true,0.5796
+96,14,55,Department of Marine and Fisheries Sciences,Mfodwo Complex/ N Block - Training center,0.254,1.27,LOW,FAIR,1.15,false,0.2921
+97,14,57,Department of Marine and Fisheries Sciences,CSPS - Centre for Social Policy Studies,0.205,1.54,HIGH,GOOD,1.0,false,0.3075
+98,15,16,Department of Educational Studies and Leadership (DESL),Department of Teacher Education,0.042,0.21,LOW,FAIR,1.15,false,0.0483
+99,15,17,Department of Educational Studies and Leadership (DESL),International Programmes office,0.145,0.87,MEDIUM,GOOD,1.0,false,0.174
+100,15,18,Department of Educational Studies and Leadership (DESL),JQB Lecture Hall,0.132,0.66,LOW,GOOD,1.0,false,0.132
+101,15,20,Department of Educational Studies and Leadership (DESL),Department of Adult Education,0.192,0.96,LOW,FAIR,1.15,false,0.2208
+102,15,21,Department of Educational Studies and Leadership (DESL),Department of Archaeology,0.146,0.88,MEDIUM,GOOD,1.0,false,0.1752
+103,15,91,Department of Educational Studies and Leadership (DESL),Legon Hospital,0.548,2.74,LOW,GOOD,1.0,false,0.548
+104,16,17,Department of Teacher Education,International Programmes office,0.203,1.01,LOW,GOOD,1.0,false,0.203
+105,16,18,Department of Teacher Education,JQB Lecture Hall,0.146,0.73,LOW,FAIR,1.15,false,0.1679
+106,16,20,Department of Teacher Education,Department of Adult Education,0.154,1.16,HIGH,GOOD,1.0,false,0.231
+107,16,21,Department of Teacher Education,Department of Archaeology,0.129,0.97,HIGH,POOR,1.35,false,0.2612
+108,16,91,Department of Teacher Education,Legon Hospital,0.546,2.73,LOW,FAIR,1.15,false,0.6279
+109,17,18,International Programmes office,JQB Lecture Hall,0.183,0.92,LOW,FAIR,1.15,false,0.2104
+110,17,21,International Programmes office,Department of Archaeology,0.298,1.49,LOW,FAIR,1.15,false,0.3427
+111,18,19,JQB Lecture Hall,Institute of Africa Studies,0.181,0.9,LOW,GOOD,1.0,false,0.181
+112,18,20,JQB Lecture Hall,Department of Adult Education,0.172,1.29,HIGH,FAIR,1.15,false,0.2967
+113,18,21,JQB Lecture Hall,Department of Archaeology,0.115,0.69,MEDIUM,GOOD,1.0,true,0.138
+114,18,22,JQB Lecture Hall,School of Continuing and Distance Education,0.26,1.56,MEDIUM,FAIR,1.15,false,0.3588
+115,18,39,JQB Lecture Hall,RS/GIS Lab - Research institute,0.203,1.01,LOW,GOOD,1.0,false,0.203
+116,19,20,Institute of Africa Studies,Department of Adult Education,0.14,0.7,LOW,FAIR,1.15,false,0.161
+117,19,21,Institute of Africa Studies,Department of Archaeology,0.135,0.68,LOW,GOOD,1.0,false,0.135
+118,19,22,Institute of Africa Studies,School of Continuing and Distance Education,0.127,0.76,MEDIUM,GOOD,1.0,false,0.1524
+119,19,38,Institute of Africa Studies,Department of Music,0.297,1.78,MEDIUM,GOOD,1.0,false,0.3564
+120,19,39,Institute of Africa Studies,RS/GIS Lab - Research institute,0.141,0.7,LOW,FAIR,1.15,false,0.1621
+121,19,66,Institute of Africa Studies,School of Performing Arts,0.152,0.91,MEDIUM,GOOD,1.0,false,0.1824
+122,20,21,Department of Adult Education,Department of Archaeology,0.057,0.34,MEDIUM,GOOD,1.0,false,0.0684
+123,20,22,Department of Adult Education,School of Continuing and Distance Education,0.094,0.56,MEDIUM,FAIR,1.15,false,0.1297
+124,20,38,Department of Adult Education,Department of Music,0.359,2.15,MEDIUM,POOR,1.35,false,0.5816
+125,20,91,Department of Adult Education,Legon Hospital,0.484,2.9,MEDIUM,FAIR,1.15,false,0.6679
+126,21,22,Department of Archaeology,School of Continuing and Distance Education,0.151,0.76,LOW,FAIR,1.15,false,0.1736
+127,21,91,Department of Archaeology,Legon Hospital,0.487,2.92,MEDIUM,FAIR,1.15,false,0.6721
+128,22,38,School of Continuing and Distance Education,Department of Music,0.221,1.66,HIGH,FAIR,1.15,false,0.3812
+129,22,66,School of Continuing and Distance Education,School of Performing Arts,0.167,1.25,HIGH,POOR,1.35,false,0.3382
+130,22,91,School of Continuing and Distance Education,Legon Hospital,0.501,3.76,HIGH,FAIR,1.15,false,0.8642
+131,23,24,Department of Geology,Centre for International Affairs,0.135,0.81,MEDIUM,FAIR,1.15,false,0.1863
+132,23,25,Department of Geology,Department of Physics,0.152,0.76,LOW,GOOD,1.0,false,0.152
+133,23,34,Department of Geology,Faculty of Agriculture,0.182,0.91,LOW,GOOD,1.0,false,0.182
+134,23,37,Department of Geology,Department Of Crop Science,0.183,1.1,MEDIUM,FAIR,1.15,false,0.2525
+135,23,52,Department of Geology,Department of Soil Science,0.133,1.0,HIGH,FAIR,1.15,false,0.2294
+136,23,53,Department of Geology,Department Of Family And Consumer Science,0.136,0.82,MEDIUM,POOR,1.35,false,0.2203
+137,23,70,Department of Geology,Akuafo Hall,0.232,1.39,MEDIUM,GOOD,1.0,false,0.2784
+138,24,39,Centre for International Affairs,RS/GIS Lab - Research institute,0.235,1.17,LOW,GOOD,1.0,false,0.235
+139,24,94,Centre for International Affairs,ECOWAS Coastal & Marine Resources Management Centre,0.101,0.51,LOW,GOOD,1.0,false,0.101
+140,25,37,Department of Physics,Department Of Crop Science,0.193,1.16,MEDIUM,GOOD,1.0,false,0.2316
+141,25,51,Department of Physics,Maison Française Legon - Educational institution,0.444,2.66,MEDIUM,GOOD,1.0,false,0.5328
+142,25,52,Department of Physics,Department of Soil Science,0.182,1.37,HIGH,FAIR,1.15,false,0.3139
+143,25,70,Department of Physics,Akuafo Hall,0.139,0.7,LOW,POOR,1.35,false,0.1877
+144,26,55,Department of Plant and Environmental Biology,Mfodwo Complex/ N Block - Training center,0.149,1.12,HIGH,GOOD,1.0,false,0.2235
+145,27,28,School of Pharmacy,Department of Biochemistry,0.121,0.73,MEDIUM,POOR,1.35,false,0.196
+146,27,29,School of Pharmacy,School of Nursing and Midwifery,0.127,0.64,LOW,POOR,1.35,false,0.1715
+147,27,41,School of Pharmacy,Research and Innovation Office Complex,0.559,2.8,LOW,GOOD,1.0,false,0.559
+148,27,45,School of Pharmacy,GCB Lecture Building,0.224,1.34,MEDIUM,FAIR,1.15,true,0.3091
+149,27,47,School of Pharmacy,School of Graduate studies,0.249,1.49,MEDIUM,FAIR,1.15,false,0.3436
+150,28,29,Department of Biochemistry,School of Nursing and Midwifery,0.193,0.97,LOW,GOOD,1.0,false,0.193
+151,28,41,Department of Biochemistry,Research and Innovation Office Complex,0.497,2.49,LOW,FAIR,1.15,false,0.5716
+152,28,43,Department of Biochemistry,New N Block,0.306,1.53,LOW,GOOD,1.0,false,0.306
+153,28,45,Department of Biochemistry,GCB Lecture Building,0.158,0.79,LOW,GOOD,1.0,false,0.158
+154,28,47,Department of Biochemistry,School of Graduate studies,0.286,2.15,HIGH,POOR,1.35,false,0.5792
+155,28,57,Department of Biochemistry,CSPS - Centre for Social Policy Studies,0.281,2.11,HIGH,FAIR,1.15,false,0.4847
+156,29,41,School of Nursing and Midwifery,Research and Innovation Office Complex,0.385,1.92,LOW,GOOD,1.0,false,0.385
+157,29,45,School of Nursing and Midwifery,GCB Lecture Building,0.306,2.3,HIGH,FAIR,1.15,true,0.5278
+158,29,47,School of Nursing and Midwifery,School of Graduate studies,0.132,0.79,MEDIUM,FAIR,1.15,false,0.1822
+159,29,69,School of Nursing and Midwifery,Volta Hall,0.326,1.96,MEDIUM,GOOD,1.0,true,0.3912
+160,30,46,French Department,Sociology Department,0.176,1.32,HIGH,GOOD,1.0,false,0.264
+161,30,48,French Department,Department of Modern Languages,0.252,1.51,MEDIUM,GOOD,1.0,false,0.3024
+162,30,49,French Department,Department Of History,0.158,0.95,MEDIUM,GOOD,1.0,false,0.1896
+163,30,58,French Department,Department for the Study of Religions - Research Institute,0.059,0.3,LOW,GOOD,1.0,false,0.059
+164,30,59,French Department,Department Of Philosophy and Classics - Research Institute,0.096,0.58,MEDIUM,FAIR,1.15,false,0.1325
+165,30,60,French Department,Economic Policy Management Programme Office - Research Institute,0.108,0.54,LOW,FAIR,1.15,false,0.1242
+166,30,67,French Department,Legon Hall,0.102,0.76,HIGH,FAIR,1.15,false,0.176
+167,30,69,French Department,Volta Hall,0.228,1.14,LOW,GOOD,1.0,true,0.228
+168,31,42,"Institute of Statistical, Social and Economic Research(ISSER)",Biomedical Engineering Department,0.227,1.14,LOW,GOOD,1.0,false,0.227
+169,31,62,"Institute of Statistical, Social and Economic Research(ISSER)",Department of Mathematics,0.121,0.73,MEDIUM,FAIR,1.15,false,0.167
+170,31,63,"Institute of Statistical, Social and Economic Research(ISSER)",Department of Statistics,0.131,0.98,HIGH,FAIR,1.15,false,0.226
+171,31,65,"Institute of Statistical, Social and Economic Research(ISSER)",School of Engineering Sciences,0.217,1.09,LOW,GOOD,1.0,false,0.217
+172,32,33,Department Of Animal Science,Department of Agriculture Economics and Agribusiness,0.045,0.27,MEDIUM,FAIR,1.15,false,0.0621
+173,32,34,Department Of Animal Science,Faculty of Agriculture,0.096,0.72,HIGH,FAIR,1.15,false,0.1656
+174,32,35,Department Of Animal Science,Biotechnology Laboratory,0.165,1.24,HIGH,FAIR,1.15,false,0.2846
+175,32,36,Department Of Animal Science,CEGENSA - College,0.145,0.87,MEDIUM,GOOD,1.0,false,0.174
+176,32,38,Department Of Animal Science,Department of Music,0.34,2.55,HIGH,FAIR,1.15,false,0.5865
+177,32,39,Department Of Animal Science,RS/GIS Lab - Research institute,0.222,1.33,MEDIUM,GOOD,1.0,false,0.2664
+178,32,53,Department Of Animal Science,Department Of Family And Consumer Science,0.133,1.0,HIGH,GOOD,1.0,false,0.1995
+179,32,54,Department Of Animal Science,UG Creche and Kindergarten School,0.108,0.65,MEDIUM,FAIR,1.15,false,0.149
+180,32,66,Department Of Animal Science,School of Performing Arts,0.201,1.01,LOW,FAIR,1.15,false,0.2312
+181,33,34,Department of Agriculture Economics and Agribusiness,Faculty of Agriculture,0.093,0.56,MEDIUM,GOOD,1.0,true,0.1116
+182,33,35,Department of Agriculture Economics and Agribusiness,Biotechnology Laboratory,0.127,0.76,MEDIUM,FAIR,1.15,false,0.1753
+183,33,36,Department of Agriculture Economics and Agribusiness,CEGENSA - College,0.09,0.54,MEDIUM,GOOD,1.0,false,0.108
+184,33,38,Department of Agriculture Economics and Agribusiness,Department of Music,0.382,1.91,LOW,GOOD,1.0,false,0.382
+185,33,53,Department of Agriculture Economics and Agribusiness,Department Of Family And Consumer Science,0.143,0.72,LOW,GOOD,1.0,false,0.143
+186,33,54,Department of Agriculture Economics and Agribusiness,UG Creche and Kindergarten School,0.079,0.47,MEDIUM,FAIR,1.15,false,0.109
+187,33,66,Department of Agriculture Economics and Agribusiness,School of Performing Arts,0.231,1.39,MEDIUM,GOOD,1.0,false,0.2772
+188,34,35,Faculty of Agriculture,Biotechnology Laboratory,0.222,1.11,LOW,GOOD,1.0,false,0.222
+189,34,36,Faculty of Agriculture,CEGENSA - College,0.166,1.0,MEDIUM,FAIR,1.15,false,0.2291
+190,34,37,Faculty of Agriculture,Department Of Crop Science,0.135,0.81,MEDIUM,GOOD,1.0,false,0.162
+191,34,39,Faculty of Agriculture,RS/GIS Lab - Research institute,0.222,1.11,LOW,GOOD,1.0,false,0.222
+192,34,52,Faculty of Agriculture,Department of Soil Science,0.135,0.68,LOW,GOOD,1.0,false,0.135
+193,34,53,Faculty of Agriculture,Department Of Family And Consumer Science,0.046,0.28,MEDIUM,FAIR,1.15,true,0.0635
+194,34,54,Faculty of Agriculture,UG Creche and Kindergarten School,0.078,0.39,LOW,GOOD,1.0,false,0.078
+195,35,36,Biotechnology Laboratory,CEGENSA - College,0.04,0.2,LOW,GOOD,1.0,false,0.04
+196,35,53,Biotechnology Laboratory,Department Of Family And Consumer Science,0.239,1.79,HIGH,FAIR,1.15,false,0.4123
+197,35,54,Biotechnology Laboratory,UG Creche and Kindergarten School,0.148,1.11,HIGH,GOOD,1.0,false,0.222
+198,35,66,Biotechnology Laboratory,School of Performing Arts,0.329,2.47,HIGH,GOOD,1.0,false,0.4935
+199,35,71,Biotechnology Laboratory,Akuafo Hall Annex,0.354,1.77,LOW,FAIR,1.15,false,0.4071
+200,36,53,CEGENSA - College,Department Of Family And Consumer Science,0.187,0.94,LOW,GOOD,1.0,false,0.187
+201,36,54,CEGENSA - College,UG Creche and Kindergarten School,0.097,0.49,LOW,GOOD,1.0,false,0.097
+202,36,71,CEGENSA - College,Akuafo Hall Annex,0.363,1.82,LOW,FAIR,1.15,false,0.4174
+203,37,52,Department Of Crop Science,Department of Soil Science,0.03,0.18,MEDIUM,GOOD,1.0,false,0.036
+204,37,53,Department Of Crop Science,Department Of Family And Consumer Science,0.105,0.79,HIGH,GOOD,1.0,false,0.1575
+205,37,54,Department Of Crop Science,UG Creche and Kindergarten School,0.152,0.76,LOW,GOOD,1.0,false,0.152
+206,37,70,Department Of Crop Science,Akuafo Hall,0.125,0.63,LOW,GOOD,1.0,false,0.125
+207,38,39,Department of Music,RS/GIS Lab - Research institute,0.391,2.35,MEDIUM,GOOD,1.0,false,0.4692
+208,38,66,Department of Music,School of Performing Arts,0.209,1.57,HIGH,GOOD,1.0,false,0.3135
+209,38,91,Department of Music,Legon Hospital,0.545,2.73,LOW,FAIR,1.15,false,0.6268
+210,39,66,RS/GIS Lab - Research institute,School of Performing Arts,0.229,1.15,LOW,GOOD,1.0,false,0.229
+211,40,48,Department Of Economics,Department of Modern Languages,0.24,1.8,HIGH,FAIR,1.15,false,0.414
+212,40,51,Department Of Economics,Maison Française Legon - Educational institution,0.253,1.26,LOW,FAIR,1.15,false,0.291
+213,40,58,Department Of Economics,Department for the Study of Religions - Research Institute,0.141,0.7,LOW,FAIR,1.15,false,0.1621
+214,40,59,Department Of Economics,Department Of Philosophy and Classics - Research Institute,0.109,0.82,HIGH,FAIR,1.15,false,0.188
+215,40,60,Department Of Economics,Economic Policy Management Programme Office - Research Institute,0.088,0.66,HIGH,FAIR,1.15,false,0.1518
+216,40,67,Department Of Economics,Legon Hall,0.175,1.31,HIGH,GOOD,1.0,false,0.2625
+217,40,70,Department Of Economics,Akuafo Hall,0.289,1.44,LOW,GOOD,1.0,false,0.289
+218,40,95,Department Of Economics,Ghana Korea Information Access Centre,0.14,0.7,LOW,GOOD,1.0,true,0.14
+219,41,44,Research and Innovation Office Complex,Centre for Climate Change and Sustainability Studies-C3SS,0.774,4.64,MEDIUM,FAIR,1.15,true,1.0681
+220,41,47,Research and Innovation Office Complex,School of Graduate studies,0.332,1.66,LOW,POOR,1.35,false,0.4482
+221,41,68,Research and Innovation Office Complex,Commonwealth Hall,0.435,2.61,MEDIUM,GOOD,1.0,false,0.522
+222,41,69,Research and Innovation Office Complex,Volta Hall,0.566,2.83,LOW,POOR,1.35,false,0.7641
+223,42,63,Biomedical Engineering Department,Department of Statistics,0.306,2.3,HIGH,GOOD,1.0,false,0.459
+224,42,65,Biomedical Engineering Department,School of Engineering Sciences,0.045,0.22,LOW,GOOD,1.0,false,0.045
+225,42,77,Biomedical Engineering Department,Old Pentagon Blocks,0.296,1.48,LOW,GOOD,1.0,false,0.296
+226,42,78,Biomedical Engineering Department,Pent Hostel Block A,0.306,1.53,LOW,GOOD,1.0,false,0.306
+227,42,79,Biomedical Engineering Department,Pent Hostel Block B,0.445,2.23,LOW,GOOD,1.0,false,0.445
+228,42,80,Biomedical Engineering Department,Pent Hostel Block C,0.451,2.26,LOW,FAIR,1.15,false,0.5186
+229,43,44,New N Block,Centre for Climate Change and Sustainability Studies-C3SS,0.084,0.5,MEDIUM,GOOD,1.0,false,0.1008
+230,43,45,New N Block,GCB Lecture Building,0.169,0.85,LOW,GOOD,1.0,false,0.169
+231,43,56,New N Block,School of Social Sciences,0.17,0.85,LOW,GOOD,1.0,false,0.17
+232,43,57,New N Block,CSPS - Centre for Social Policy Studies,0.166,1.0,MEDIUM,GOOD,1.0,true,0.1992
+233,44,45,Centre for Climate Change and Sustainability Studies-C3SS,GCB Lecture Building,0.257,1.29,LOW,GOOD,1.0,false,0.257
+234,44,56,Centre for Climate Change and Sustainability Studies-C3SS,School of Social Sciences,0.218,1.09,LOW,FAIR,1.15,false,0.2507
+235,44,57,Centre for Climate Change and Sustainability Studies-C3SS,CSPS - Centre for Social Policy Studies,0.266,1.6,MEDIUM,GOOD,1.0,false,0.3192
+236,45,56,GCB Lecture Building,School of Social Sciences,0.137,1.03,HIGH,GOOD,1.0,false,0.2055
+237,45,57,GCB Lecture Building,CSPS - Centre for Social Policy Studies,0.107,0.54,LOW,GOOD,1.0,false,0.107
+238,46,48,Sociology Department,Department of Modern Languages,0.346,2.08,MEDIUM,GOOD,1.0,false,0.4152
+239,46,49,Sociology Department,Department Of History,0.049,0.25,LOW,FAIR,1.15,false,0.0564
+240,46,50,Sociology Department,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,0.402,2.01,LOW,GOOD,1.0,false,0.402
+241,46,58,Sociology Department,Department for the Study of Religions - Research Institute,0.215,1.29,MEDIUM,FAIR,1.15,false,0.2967
+242,46,59,Sociology Department,Department Of Philosophy and Classics - Research Institute,0.267,1.34,LOW,FAIR,1.15,false,0.3071
+243,46,67,Sociology Department,Legon Hall,0.193,1.16,MEDIUM,GOOD,1.0,false,0.2316
+244,46,68,Sociology Department,Commonwealth Hall,0.409,2.05,LOW,FAIR,1.15,false,0.4703
+245,46,69,Sociology Department,Volta Hall,0.242,1.82,HIGH,GOOD,1.0,false,0.363
+246,47,68,School of Graduate studies,Commonwealth Hall,0.488,2.44,LOW,GOOD,1.0,false,0.488
+247,47,69,School of Graduate studies,Volta Hall,0.215,1.08,LOW,GOOD,1.0,false,0.215
+248,48,51,Department of Modern Languages,Maison Française Legon - Educational institution,0.014,0.11,HIGH,GOOD,1.0,true,0.021
+249,48,58,Department of Modern Languages,Department for the Study of Religions - Research Institute,0.242,1.21,LOW,FAIR,1.15,false,0.2783
+250,48,59,Department of Modern Languages,Department Of Philosophy and Classics - Research Institute,0.242,1.82,HIGH,GOOD,1.0,false,0.363
+251,48,67,Department of Modern Languages,Legon Hall,0.146,0.73,LOW,GOOD,1.0,false,0.146
+252,48,74,Department of Modern Languages,Legon Hall Annex,0.297,1.49,LOW,GOOD,1.0,false,0.297
+253,49,50,Department Of History,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,0.409,2.05,LOW,GOOD,1.0,true,0.409
+254,49,51,Department Of History,Maison Française Legon - Educational institution,0.291,1.45,LOW,FAIR,1.15,false,0.3346
+255,49,58,Department Of History,Department for the Study of Religions - Research Institute,0.19,1.14,MEDIUM,FAIR,1.15,false,0.2622
+256,49,59,Department Of History,Department Of Philosophy and Classics - Research Institute,0.225,1.13,LOW,FAIR,1.15,false,0.2588
+257,49,67,Department Of History,Legon Hall,0.161,0.97,MEDIUM,GOOD,1.0,false,0.1932
+258,49,68,Department Of History,Commonwealth Hall,0.426,2.13,LOW,GOOD,1.0,false,0.426
+259,49,69,Department Of History,Volta Hall,0.254,1.52,MEDIUM,FAIR,1.15,false,0.3505
+260,50,51,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,Maison Française Legon - Educational institution,0.544,2.72,LOW,GOOD,1.0,false,0.544
+261,50,67,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,Legon Hall,0.526,3.16,MEDIUM,FAIR,1.15,false,0.7259
+262,50,68,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,Commonwealth Hall,0.425,3.19,HIGH,FAIR,1.15,false,0.7331
+263,50,74,Merian Institute for Advanced Studies in Africa (MIASA) - Research institute,Legon Hall Annex,0.478,2.87,MEDIUM,POOR,1.35,false,0.7744
+264,51,58,Maison Française Legon - Educational institution,Department for the Study of Religions - Research Institute,0.23,1.15,LOW,FAIR,1.15,false,0.2645
+265,51,59,Maison Française Legon - Educational institution,Department Of Philosophy and Classics - Research Institute,0.265,1.33,LOW,GOOD,1.0,false,0.265
+266,51,67,Maison Française Legon - Educational institution,Legon Hall,0.181,0.9,LOW,GOOD,1.0,false,0.181
+267,51,74,Maison Française Legon - Educational institution,Legon Hall Annex,0.262,1.31,LOW,GOOD,1.0,true,0.262
+268,51,90,Maison Française Legon - Educational institution,Central Cafeteria,0.416,2.08,LOW,FAIR,1.15,false,0.4784
+269,52,53,Department of Soil Science,Department Of Family And Consumer Science,0.101,0.51,LOW,POOR,1.35,false,0.1364
+270,52,54,Department of Soil Science,UG Creche and Kindergarten School,0.151,0.91,MEDIUM,FAIR,1.15,false,0.2084
+271,52,70,Department of Soil Science,Akuafo Hall,0.129,0.65,LOW,POOR,1.35,false,0.1742
+272,53,54,Department Of Family And Consumer Science,UG Creche and Kindergarten School,0.088,0.53,MEDIUM,FAIR,1.15,false,0.1214
+273,53,70,Department Of Family And Consumer Science,Akuafo Hall,0.213,1.07,LOW,FAIR,1.15,false,0.2449
+274,55,56,Mfodwo Complex/ N Block - Training center,School of Social Sciences,0.082,0.41,LOW,POOR,1.35,false,0.1107
+275,55,57,Mfodwo Complex/ N Block - Training center,CSPS - Centre for Social Policy Studies,0.093,0.47,LOW,GOOD,1.0,false,0.093
+276,56,57,School of Social Sciences,CSPS - Centre for Social Policy Studies,0.057,0.34,MEDIUM,GOOD,1.0,false,0.0684
+277,58,59,Department for the Study of Religions - Research Institute,Department Of Philosophy and Classics - Research Institute,0.031,0.16,LOW,GOOD,1.0,false,0.031
+278,58,60,Department for the Study of Religions - Research Institute,Economic Policy Management Programme Office - Research Institute,0.065,0.33,LOW,GOOD,1.0,false,0.065
+279,58,67,Department for the Study of Religions - Research Institute,Legon Hall,0.098,0.49,LOW,GOOD,1.0,false,0.098
+280,58,69,Department for the Study of Religions - Research Institute,Volta Hall,0.241,1.45,MEDIUM,FAIR,1.15,false,0.3326
+281,58,95,Department for the Study of Religions - Research Institute,Ghana Korea Information Access Centre,0.189,0.95,LOW,FAIR,1.15,true,0.2174
+282,59,60,Department Of Philosophy and Classics - Research Institute,Economic Policy Management Programme Office - Research Institute,0.049,0.29,MEDIUM,GOOD,1.0,false,0.0588
+283,59,67,Department Of Philosophy and Classics - Research Institute,Legon Hall,0.11,0.55,LOW,GOOD,1.0,false,0.11
+284,59,95,Department Of Philosophy and Classics - Research Institute,Ghana Korea Information Access Centre,0.163,1.22,HIGH,GOOD,1.0,false,0.2445
+285,60,67,Economic Policy Management Programme Office - Research Institute,Legon Hall,0.165,0.83,LOW,GOOD,1.0,false,0.165
+286,60,69,Economic Policy Management Programme Office - Research Institute,Volta Hall,0.296,1.48,LOW,GOOD,1.0,false,0.296
+287,60,95,Economic Policy Management Programme Office - Research Institute,Ghana Korea Information Access Centre,0.125,0.63,LOW,GOOD,1.0,false,0.125
+288,61,64,School of Public Health,West African Genetic Medicine Centre - WAGMC,0.366,2.2,MEDIUM,GOOD,1.0,false,0.4392
+289,61,85,School of Public Health,International Student Hostel,0.633,4.75,HIGH,GOOD,1.0,false,0.9495
+290,61,86,School of Public Health,Dr. Hilla Limann Hall,0.297,1.49,LOW,FAIR,1.15,false,0.3415
+291,61,87,School of Public Health,Alexander Kwapong Hall,0.42,2.1,LOW,GOOD,1.0,false,0.42
+292,61,88,School of Public Health,Elizabeth Sey Hall,0.811,4.87,MEDIUM,FAIR,1.15,false,1.1192
+293,61,92,School of Public Health,Sports Complex,0.437,2.62,MEDIUM,GOOD,1.0,false,0.5244
+294,62,63,Department of Mathematics,Department of Statistics,0.043,0.26,MEDIUM,FAIR,1.15,false,0.0593
+295,62,94,Department of Mathematics,ECOWAS Coastal & Marine Resources Management Centre,0.178,0.89,LOW,GOOD,1.0,false,0.178
+296,63,65,Department of Statistics,School of Engineering Sciences,0.227,1.14,LOW,GOOD,1.0,false,0.227
+297,63,94,Department of Statistics,ECOWAS Coastal & Marine Resources Management Centre,0.151,0.76,LOW,GOOD,1.0,false,0.151
+298,64,85,West African Genetic Medicine Centre - WAGMC,International Student Hostel,0.723,4.34,MEDIUM,GOOD,1.0,false,0.8676
+299,64,86,West African Genetic Medicine Centre - WAGMC,Dr. Hilla Limann Hall,0.372,2.79,HIGH,FAIR,1.15,false,0.6417
+300,64,87,West African Genetic Medicine Centre - WAGMC,Alexander Kwapong Hall,0.328,1.64,LOW,GOOD,1.0,false,0.328
+301,64,88,West African Genetic Medicine Centre - WAGMC,Elizabeth Sey Hall,0.439,2.63,MEDIUM,GOOD,1.0,false,0.5268
+302,64,89,West African Genetic Medicine Centre - WAGMC,Jean Nelson Akah Hall,0.496,3.72,HIGH,GOOD,1.0,false,0.744
+303,65,77,School of Engineering Sciences,Old Pentagon Blocks,0.306,1.53,LOW,FAIR,1.15,false,0.3519
+304,65,78,School of Engineering Sciences,Pent Hostel Block A,0.319,1.91,MEDIUM,GOOD,1.0,false,0.3828
+305,65,79,School of Engineering Sciences,Pent Hostel Block B,0.5,3.75,HIGH,POOR,1.35,false,1.0125
+306,65,80,School of Engineering Sciences,Pent Hostel Block C,0.537,2.69,LOW,GOOD,1.0,false,0.537
+307,67,69,Legon Hall,Volta Hall,0.319,1.91,MEDIUM,FAIR,1.15,false,0.4402
+308,67,74,Legon Hall,Legon Hall Annex,0.399,2.0,LOW,FAIR,1.15,false,0.4589
+309,68,69,Commonwealth Hall,Volta Hall,0.396,2.38,MEDIUM,GOOD,1.0,false,0.4752
+310,68,74,Commonwealth Hall,Legon Hall Annex,0.759,4.55,MEDIUM,POOR,1.35,false,1.2296
+311,70,71,Akuafo Hall,Akuafo Hall Annex,0.383,1.92,LOW,POOR,1.35,false,0.5171
+312,70,77,Akuafo Hall,Old Pentagon Blocks,1.064,5.32,LOW,FAIR,1.15,false,1.2236
+313,71,72,Akuafo Hall Annex,Mensah Sarbah Hall,0.291,1.75,MEDIUM,GOOD,1.0,false,0.3492
+314,71,73,Akuafo Hall Annex,Vikings Hostel,0.511,2.56,LOW,FAIR,1.15,false,0.5877
+315,71,74,Akuafo Hall Annex,Legon Hall Annex,0.362,1.81,LOW,POOR,1.35,true,0.4887
+316,71,75,Akuafo Hall Annex,Mensah Sarbah Annex,0.334,1.67,LOW,POOR,1.35,false,0.4509
+317,71,76,Akuafo Hall Annex,Valco Trust Hostel,0.484,2.42,LOW,FAIR,1.15,false,0.5566
+318,71,90,Akuafo Hall Annex,Central Cafeteria,0.203,1.01,LOW,FAIR,1.15,false,0.2335
+319,72,73,Mensah Sarbah Hall,Vikings Hostel,0.338,2.03,MEDIUM,FAIR,1.15,false,0.4664
+320,72,74,Mensah Sarbah Hall,Legon Hall Annex,0.235,1.17,LOW,FAIR,1.15,false,0.2703
+321,72,75,Mensah Sarbah Hall,Mensah Sarbah Annex,0.256,1.28,LOW,GOOD,1.0,false,0.256
+322,72,76,Mensah Sarbah Hall,Valco Trust Hostel,0.298,1.49,LOW,GOOD,1.0,true,0.298
+323,72,90,Mensah Sarbah Hall,Central Cafeteria,0.091,0.55,MEDIUM,FAIR,1.15,false,0.1256
+324,72,93,Mensah Sarbah Hall,University Banking Square,0.603,3.01,LOW,GOOD,1.0,false,0.603
+325,73,75,Vikings Hostel,Mensah Sarbah Annex,0.191,0.96,LOW,GOOD,1.0,false,0.191
+326,73,76,Vikings Hostel,Valco Trust Hostel,0.205,1.54,HIGH,GOOD,1.0,false,0.3075
+327,73,84,Vikings Hostel,Jubilee Hall,0.59,4.43,HIGH,GOOD,1.0,false,0.885
+328,73,90,Vikings Hostel,Central Cafeteria,0.425,2.55,MEDIUM,GOOD,1.0,false,0.51
+329,73,93,Vikings Hostel,University Banking Square,0.212,1.27,MEDIUM,GOOD,1.0,false,0.2544
+330,74,76,Legon Hall Annex,Valco Trust Hostel,0.524,2.62,LOW,GOOD,1.0,false,0.524
+331,74,90,Legon Hall Annex,Central Cafeteria,0.216,1.08,LOW,GOOD,1.0,false,0.216
+332,75,76,Mensah Sarbah Annex,Valco Trust Hostel,0.257,1.93,HIGH,FAIR,1.15,false,0.4433
+333,75,90,Mensah Sarbah Annex,Central Cafeteria,0.314,1.57,LOW,GOOD,1.0,false,0.314
+334,75,93,Mensah Sarbah Annex,University Banking Square,0.387,2.9,HIGH,GOOD,1.0,false,0.5805
+335,76,84,Valco Trust Hostel,Jubilee Hall,0.602,3.01,LOW,GOOD,1.0,false,0.602
+336,76,90,Valco Trust Hostel,Central Cafeteria,0.36,1.8,LOW,GOOD,1.0,false,0.36
+337,76,93,Valco Trust Hostel,University Banking Square,0.31,1.55,LOW,FAIR,1.15,false,0.3565
+338,77,78,Old Pentagon Blocks,Pent Hostel Block A,0.123,0.74,MEDIUM,GOOD,1.0,false,0.1476
+339,77,79,Old Pentagon Blocks,Pent Hostel Block B,0.279,1.67,MEDIUM,FAIR,1.15,false,0.385
+340,77,80,Old Pentagon Blocks,Pent Hostel Block C,0.256,1.54,MEDIUM,GOOD,1.0,false,0.3072
+341,78,79,Pent Hostel Block A,Pent Hostel Block B,0.197,0.99,LOW,FAIR,1.15,false,0.2266
+342,78,80,Pent Hostel Block A,Pent Hostel Block C,0.187,1.12,MEDIUM,GOOD,1.0,false,0.2244
+343,78,81,Pent Hostel Block A,Evandy Hostel,0.859,5.15,MEDIUM,GOOD,1.0,false,1.0308
+344,78,82,Pent Hostel Block A,Bani Hostel,0.927,4.64,LOW,FAIR,1.15,false,1.0661
+345,78,83,Pent Hostel Block A,TF Hostel,1.355,8.13,MEDIUM,FAIR,1.15,true,1.8699
+346,79,80,Pent Hostel Block B,Pent Hostel Block C,0.089,0.53,MEDIUM,GOOD,1.0,false,0.1068
+347,79,81,Pent Hostel Block B,Evandy Hostel,0.679,4.07,MEDIUM,GOOD,1.0,false,0.8148
+348,79,82,Pent Hostel Block B,Bani Hostel,0.668,4.01,MEDIUM,FAIR,1.15,true,0.9218
+349,79,83,Pent Hostel Block B,TF Hostel,1.177,7.06,MEDIUM,GOOD,1.0,false,1.4124
+350,80,81,Pent Hostel Block C,Evandy Hostel,0.63,3.15,LOW,GOOD,1.0,false,0.63
+351,80,82,Pent Hostel Block C,Bani Hostel,0.653,3.27,LOW,GOOD,1.0,false,0.653
+352,80,83,Pent Hostel Block C,TF Hostel,1.24,6.2,LOW,GOOD,1.0,false,1.24
+353,81,82,Evandy Hostel,Bani Hostel,0.301,1.51,LOW,GOOD,1.0,false,0.301
+354,81,83,Evandy Hostel,TF Hostel,0.454,2.27,LOW,FAIR,1.15,false,0.5221
+355,82,83,Bani Hostel,TF Hostel,0.593,4.45,HIGH,FAIR,1.15,false,1.0229
+356,83,84,TF Hostel,Jubilee Hall,3.522,17.61,LOW,POOR,1.35,false,4.7547
+357,84,85,Jubilee Hall,International Student Hostel,0.134,0.67,LOW,POOR,1.35,false,0.1809
+358,84,86,Jubilee Hall,Dr. Hilla Limann Hall,0.509,2.55,LOW,FAIR,1.15,false,0.5853
+359,84,87,Jubilee Hall,Alexander Kwapong Hall,0.552,2.76,LOW,GOOD,1.0,false,0.552
+360,84,88,Jubilee Hall,Elizabeth Sey Hall,0.703,3.51,LOW,POOR,1.35,false,0.9491
+361,84,89,Jubilee Hall,Jean Nelson Akah Hall,0.812,4.06,LOW,GOOD,1.0,false,0.812
+362,84,92,Jubilee Hall,Sports Complex,0.716,3.58,LOW,GOOD,1.0,true,0.716
+363,84,93,Jubilee Hall,University Banking Square,0.313,1.88,MEDIUM,FAIR,1.15,false,0.4319
+364,85,86,International Student Hostel,Dr. Hilla Limann Hall,0.395,2.37,MEDIUM,FAIR,1.15,false,0.5451
+365,85,87,International Student Hostel,Alexander Kwapong Hall,0.402,2.01,LOW,GOOD,1.0,false,0.402
+366,85,88,International Student Hostel,Elizabeth Sey Hall,0.706,3.53,LOW,FAIR,1.15,false,0.8119
+367,85,89,International Student Hostel,Jean Nelson Akah Hall,0.725,3.63,LOW,FAIR,1.15,false,0.8337
+368,85,92,International Student Hostel,Sports Complex,0.607,3.04,LOW,GOOD,1.0,false,0.607
+369,85,93,International Student Hostel,University Banking Square,0.419,2.51,MEDIUM,FAIR,1.15,false,0.5782
+370,86,87,Dr. Hilla Limann Hall,Alexander Kwapong Hall,0.116,0.58,LOW,FAIR,1.15,false,0.1334
+371,86,88,Dr. Hilla Limann Hall,Elizabeth Sey Hall,0.49,3.68,HIGH,GOOD,1.0,false,0.735
+372,86,89,Dr. Hilla Limann Hall,Jean Nelson Akah Hall,0.513,2.57,LOW,POOR,1.35,false,0.6926
+373,86,92,Dr. Hilla Limann Hall,Sports Complex,0.609,3.65,MEDIUM,GOOD,1.0,false,0.7308
+374,87,88,Alexander Kwapong Hall,Elizabeth Sey Hall,0.367,1.84,LOW,POOR,1.35,false,0.4955
+375,87,89,Alexander Kwapong Hall,Jean Nelson Akah Hall,0.458,3.44,HIGH,GOOD,1.0,false,0.687
+376,87,92,Alexander Kwapong Hall,Sports Complex,0.736,4.42,MEDIUM,FAIR,1.15,false,1.0157
+377,88,89,Elizabeth Sey Hall,Jean Nelson Akah Hall,0.079,0.4,LOW,GOOD,1.0,false,0.079
+378,90,93,Central Cafeteria,University Banking Square,0.662,3.97,MEDIUM,FAIR,1.15,false,0.9136
+379,91,92,Legon Hospital,Sports Complex,1.923,11.54,MEDIUM,GOOD,1.0,false,2.3076
+380,91,94,Legon Hospital,ECOWAS Coastal & Marine Resources Management Centre,0.85,6.38,HIGH,FAIR,1.15,false,1.4662
+381,92,93,Sports Complex,University Banking Square,0.885,5.31,MEDIUM,FAIR,1.15,false,1.2213
+382,94,95,ECOWAS Coastal & Marine Resources Management Centre,Ghana Korea Information Access Centre,0.579,2.89,LOW,GOOD,1.0,false,0.579
