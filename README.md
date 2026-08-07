@@ -1,5 +1,3 @@
-*** Begin README replacement ***
-
 # UG Swift — Campus Service Operations Prototype
 
 This repository is a Java desktop application demonstrating a campus logistics and routing system (UG Swift). It was built as a Data Structures & Algorithms (DSA) semester project and contains custom implementations of core data structures, graph routing, scheduling engines, and a Swing-based UI.
@@ -102,4 +100,4 @@ This repository is a Java desktop application demonstrating a campus logistics a
 
 - Add an appropriate license file if the submission requires one.
 
-*** End README replacement ***
+ 
