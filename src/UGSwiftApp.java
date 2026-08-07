@@ -120,7 +120,7 @@ public class UGSwiftApp extends JFrame {
                     }
                 }
                 if (moved != null) {
-                    activeOrders.remove(moved);
+                    activeOrders.removeElement(moved);
                     completedOrders.add(moved);
                 }
             }
@@ -184,7 +184,19 @@ public class UGSwiftApp extends JFrame {
             // assign and persist
             req.setAssignedRiderId(result.rider.getResourceId());
             req.setStatus("ASSIGNED");
-            double deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+            // compute realistic delivery duration: rider travel to pickup + pickup->delivery travel time
+            double deliveryDuration = 0.0;
+            try {
+                ds.Graph fullGraph = buildGraph();
+                RouteEngine.PathResult pd = RouteEngine.dijkstra(fullGraph, order.getPickupLocationId(), order.getDeliveryLocationId());
+                if (pd != null) {
+                    deliveryDuration = result.estimatedTimeMin + pd.totalTimeMin;
+                } else {
+                    deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+                }
+            } catch (Exception ex) {
+                deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+            }
             req = new models.ServiceRequest(req.getRequestId(), req.getSourceLocationId(), req.getDestLocationId(), req.getCategory(), req.getUrgency(), req.getTimeSubmittedMin(), 480.0 + deliveryDuration, req.getStatus(), req.getAssignedRiderId(), req.getDeliveredTimeMin());
             DatabaseManager.saveServiceRequest(req);
             DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
@@ -365,6 +377,8 @@ public class UGSwiftApp extends JFrame {
         JButton refreshBtn = new JButton("Refresh Dashboard");
         JButton initBtn = new JButton("Initialize Data");
         JButton generateBtn = new JButton("Generate Roads");
+        JButton seededBtn = new JButton("Show Seeded Requests");
+        JButton dsDemoBtn = new JButton("DS Demo");
 
         orderBtn.setBackground(new Color(0x1F7A1F));
         orderBtn.setForeground(Color.WHITE);
@@ -381,6 +395,8 @@ public class UGSwiftApp extends JFrame {
         buttonRow.add(refreshBtn);
         buttonRow.add(initBtn);
         buttonRow.add(generateBtn);
+        buttonRow.add(seededBtn);
+        buttonRow.add(dsDemoBtn);
         panel.add(buttonRow);
         panel.add(Box.createVerticalStrut(12));
 
@@ -407,6 +423,8 @@ public class UGSwiftApp extends JFrame {
         refreshBtn.addActionListener(e -> loadData());
         initBtn.addActionListener(e -> runAction("initializing data", this::initializeData));
         generateBtn.addActionListener(e -> runAction("generating roads", this::generateRoadNetwork));
+        seededBtn.addActionListener(e -> showSeededRequests());
+        dsDemoBtn.addActionListener(e -> showDSDemo());
 
         return panel;
     }
@@ -647,7 +665,19 @@ public class UGSwiftApp extends JFrame {
         }
 
         result.rider.setAvailabilityStatus("BUSY");
-        double deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+        // compute realistic delivery duration: rider travel to pickup + pickup->delivery travel time
+        double deliveryDuration = 0.0;
+        try {
+            Graph graph = buildGraph();
+            var pd = RouteEngine.dijkstra(graph, order.getPickupLocationId(), order.getDeliveryLocationId());
+            if (pd != null) {
+                deliveryDuration = result.estimatedTimeMin + pd.totalTimeMin;
+            } else {
+                deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+            }
+        } catch (Exception ex) {
+            deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+        }
 
         // update request as assigned with deadline
         request.setAssignedRiderId(result.rider.getResourceId());
@@ -726,6 +756,156 @@ public class UGSwiftApp extends JFrame {
     private void showSummary() {
         refreshSummary();
         log("Summary: " + locations.size() + " locations, " + roads.size() + " roads, " + requests.size() + " requests, " + activeOrders.size() + " active orders.");
+    }
+
+    private void showSeededRequests() {
+        try {
+            DynamicArray<ServiceRequest> all = DatabaseManager.loadServiceRequests();
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (ServiceRequest r : all) {
+                if (r.getRequestId() <= 300) {
+                    String line = "#" + r.getRequestId() + " [" + r.getStatus() + "] "
+                            + findLocationName(r.getSourceLocationId()) + " → " + findLocationName(r.getDestLocationId())
+                            + " | " + r.getCategory() + " | urgency:" + r.getUrgency();
+                    model.addElement(line);
+                }
+            }
+            // If DB returned nothing (or different ids), fall back to in-memory requests loaded on startup
+            if (model.getSize() == 0 && requests != null && !requests.isEmpty()) {
+                for (ServiceRequest r : requests) {
+                    if (r.getRequestId() <= 300) {
+                        String line = "#" + r.getRequestId() + " [" + r.getStatus() + "] "
+                                + findLocationName(r.getSourceLocationId()) + " → " + findLocationName(r.getDestLocationId())
+                                + " | " + r.getCategory() + " | urgency:" + r.getUrgency();
+                        model.addElement(line);
+                    }
+                }
+            }
+            if (model.getSize() == 0) {
+                model.addElement("No seeded requests found. Ensure the database is initialized and contains the seeded rows.");
+            }
+            JList<String> list = new JList<>(model);
+            list.setFont(new Font("Consolas", Font.PLAIN, 12));
+            JDialog dlg = new JDialog(this, "Seeded Requests (1-300)", true);
+            dlg.setSize(760, 520);
+            dlg.setLocationRelativeTo(this);
+            dlg.setLayout(new BorderLayout());
+            dlg.add(new JScrollPane(list), BorderLayout.CENTER);
+            JButton close = new JButton("Close");
+            close.addActionListener(e -> dlg.dispose());
+            JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            bottom.add(close);
+            dlg.add(bottom, BorderLayout.SOUTH);
+            dlg.setVisible(true);
+        } catch (Exception ex) {
+            log("Failed to load seeded requests: " + ex.getMessage());
+        }
+    }
+
+    private void showDSDemo() {
+        JDialog dlg = new JDialog(this, "Data Structures Demo", true);
+        dlg.setSize(900, 600);
+        dlg.setLocationRelativeTo(this);
+        JTabbedPane tabs = new JTabbedPane();
+
+        // Stack demo
+        JTextArea stackArea = new JTextArea();
+        stackArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        stackArea.setEditable(false);
+        JButton runStack = new JButton("Run Stack Demo");
+        runStack.addActionListener(e -> {
+            stackArea.setText("");
+            ds.Stack<Integer> s = new ds.Stack<>();
+            stackArea.append("Initial: empty\n");
+            stackArea.append("push 10\n"); s.push(10);
+            stackArea.append("push 20\n"); s.push(20);
+            stackArea.append("push 30\n"); s.push(30);
+            stackArea.append("peek -> " + s.peek() + "\n");
+            stackArea.append("pop -> " + s.pop() + "\n");
+            stackArea.append("pop -> " + s.pop() + "\n");
+            stackArea.append("isEmpty -> " + s.isEmpty() + "\n");
+            stackArea.append("pop -> " + s.pop() + "\n");
+            stackArea.append("isEmpty -> " + s.isEmpty() + "\n");
+        });
+        JPanel stackPanel = new JPanel(new BorderLayout());
+        stackPanel.add(new JScrollPane(stackArea), BorderLayout.CENTER);
+        JPanel sp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); sp.add(runStack); stackPanel.add(sp, BorderLayout.SOUTH);
+        tabs.addTab("Stack", stackPanel);
+
+        // Queue demo
+        JTextArea queueArea = new JTextArea();
+        queueArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        queueArea.setEditable(false);
+        JButton runQueue = new JButton("Run Queue Demo");
+        runQueue.addActionListener(e -> {
+            queueArea.setText("");
+            ds.Queue<String> q = new ds.Queue<>();
+            queueArea.append("enqueue A\n"); q.enqueue("A");
+            queueArea.append("enqueue B\n"); q.enqueue("B");
+            queueArea.append("enqueue C\n"); q.enqueue("C");
+            queueArea.append("peek -> " + q.peek() + "\n");
+            queueArea.append("dequeue -> " + q.dequeue() + "\n");
+            queueArea.append("dequeue -> " + q.dequeue() + "\n");
+            queueArea.append("size -> " + q.size() + "\n");
+            queueArea.append("dequeue -> " + q.dequeue() + "\n");
+            queueArea.append("isEmpty -> " + q.isEmpty() + "\n");
+        });
+        JPanel queuePanel = new JPanel(new BorderLayout());
+        queuePanel.add(new JScrollPane(queueArea), BorderLayout.CENTER);
+        JPanel qp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); qp.add(runQueue); queuePanel.add(qp, BorderLayout.SOUTH);
+        tabs.addTab("Queue", queuePanel);
+
+        // Deque demo
+        JTextArea dequeArea = new JTextArea();
+        dequeArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        dequeArea.setEditable(false);
+        JButton runDeque = new JButton("Run Deque Demo");
+        runDeque.addActionListener(e -> {
+            dequeArea.setText("");
+            ds.Deque<Integer> d = new ds.Deque<>();
+            dequeArea.append("addRear 1\n"); d.addRear(1);
+            dequeArea.append("addFront 0\n"); d.addFront(0);
+            dequeArea.append("addRear 2\n"); d.addRear(2);
+            dequeArea.append("peekFront -> " + d.peekFront() + "\n");
+            dequeArea.append("peekRear -> " + d.peekRear() + "\n");
+            dequeArea.append("removeFront -> " + d.removeFront() + "\n");
+            dequeArea.append("removeRear -> " + d.removeRear() + "\n");
+            dequeArea.append("size -> " + d.size() + "\n");
+        });
+        JPanel dequePanel = new JPanel(new BorderLayout());
+        dequePanel.add(new JScrollPane(dequeArea), BorderLayout.CENTER);
+        JPanel dp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); dp.add(runDeque); dequePanel.add(dp, BorderLayout.SOUTH);
+        tabs.addTab("Deque", dequePanel);
+
+        // Priority queue (MinHeap) demo
+        JTextArea heapArea = new JTextArea();
+        heapArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        heapArea.setEditable(false);
+        JButton runHeap = new JButton("Run Priority Queue Demo");
+        runHeap.addActionListener(e -> {
+            heapArea.setText("");
+            ds.MinHeap<Integer> h = new ds.MinHeap<>(16, Integer::compareTo);
+            heapArea.append("insert 50\n"); h.insert(50);
+            heapArea.append("insert 20\n"); h.insert(20);
+            heapArea.append("insert 30\n"); h.insert(30);
+            heapArea.append("insert 10\n"); h.insert(10);
+            heapArea.append("peek -> " + h.peek() + "\n");
+            heapArea.append("extractMin -> " + h.extractMin() + "\n");
+            heapArea.append("extractMin -> " + h.extractMin() + "\n");
+            heapArea.append("size -> " + h.size() + "\n");
+        });
+        JPanel heapPanel = new JPanel(new BorderLayout());
+        heapPanel.add(new JScrollPane(heapArea), BorderLayout.CENTER);
+        JPanel hp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); hp.add(runHeap); heapPanel.add(hp, BorderLayout.SOUTH);
+        tabs.addTab("Priority Queue", heapPanel);
+
+        dlg.add(tabs, BorderLayout.CENTER);
+        JButton close = new JButton("Close"); close.addActionListener(e -> dlg.dispose());
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bottom.add(close);
+        dlg.add(bottom, BorderLayout.SOUTH);
+        dlg.setVisible(true);
+        // mark task done
+        try { engines.DatabaseManager.getConnection().close(); } catch (Exception ignored) {}
     }
 
     private void populateLocationSelectors() {

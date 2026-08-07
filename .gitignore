@@ -1,0 +1,67 @@
+# Build artifacts
+/bin/
+/out/
+/target/
+/build/
+*.class
+
+# IDE files
+/.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database files
+ug_swift.db
+*.db
+*.sqlite
+*.sqlite3
+
+# SQLite JDBC JAR (local dependency)
+sqlite-jdbc-*.jar
+
+# Secrets and env
+.env
+.env.*
+secrets.*
+credentials.*
+*.key
+*.pem
+*.p12
+*.jks
+
+# Keys and keystores
+keystore.jks
+
+# Test output
+/test-output/
+coverage/
+
+# Node modules (if any)
+node_modules/
+
+# Exported reports and large data
+*.csv
+*.zip
+*.tar.gz
+
+# Ignore compiled native libs
+*.so
+*.dll
+*.dylib
+
+# Misc
+*.bak
+*~
+
+# Allow list: if you want to keep specific csv files under version control, remove them from the ignore above.
