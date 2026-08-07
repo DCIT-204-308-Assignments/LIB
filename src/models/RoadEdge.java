@@ -1,3 +1,5 @@
+package models;
+
 /**
  * UG Swift - RoadEdge model
  * Represents a single weighted edge (road) between two campus locations.

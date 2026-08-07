@@ -1,3 +1,5 @@
+package models;
+
 /**
  * UG Swift - Location model
  * Represents a single vertex in the University of Ghana campus graph.

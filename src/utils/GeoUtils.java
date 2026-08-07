@@ -1,3 +1,5 @@
+package utils;
+
 /**
  * UG Swift - Geo utility
  * Haversine great-circle distance between two lat/lon points, in kilometres.
