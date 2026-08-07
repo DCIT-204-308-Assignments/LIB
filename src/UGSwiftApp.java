@@ -373,16 +373,25 @@ public class UGSwiftApp extends JFrame {
         result.rider.setAvailabilityStatus("BUSY");
         double deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
         ServiceRequest request = new ServiceRequest(
-                10000 + activeOrders.size() + requests.size(),
-                pickupId,
-                deliveryId,
-                meal,
-                "Express".equalsIgnoreCase(priority) ? 4 : ("Family Pack".equalsIgnoreCase(priority) ? 3 : 2),
-                480.0,
-                480.0 + deliveryDuration,
-                "ASSIGNED",
-                result.rider.getResourceId()
+            10000 + activeOrders.size() + requests.size(),
+            pickupId,
+            deliveryId,
+            meal,
+            "Express".equalsIgnoreCase(priority) ? 4 : ("Family Pack".equalsIgnoreCase(priority) ? 3 : 2),
+            480.0,
+            480.0 + deliveryDuration,
+            "ASSIGNED",
+            result.rider.getResourceId()
         );
+
+        // Persist the new request and update rider status in the database so reloads reflect changes
+        try {
+            DatabaseManager.addServiceRequest(request);
+            DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
+        } catch (Exception ex) {
+            log("Warning: could not persist request or update rider status: " + ex.getMessage());
+        }
+
         requests.add(request);
         activeOrders.add(order);
 
@@ -394,6 +403,7 @@ public class UGSwiftApp extends JFrame {
         log("Pickup: " + findLocationName(pickupId) + " → Delivery: " + findLocationName(deliveryId));
         setStatus("Order placed and rider assigned");
         refreshDashboard();
+        refreshSummary();
     }
 
     private void runDispatch(String strategy) {
