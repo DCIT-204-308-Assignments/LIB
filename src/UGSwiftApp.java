@@ -312,7 +312,20 @@ public class UGSwiftApp extends JFrame {
         JPanel rightPanel = buildDashboardPanel();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
-        splitPane.setDividerLocation(430);
+        // Make right panel 30% larger than left: leftShare = 1 / (1 + 1.3) = ~0.43478
+        double leftShare = 1.0 / 2.3;
+        splitPane.setResizeWeight(leftShare);
+        splitPane.setContinuousLayout(true);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerSize(8);
+        // Set reasonable minimum sizes so user can drag the divider leftwards
+        leftPanel.setMinimumSize(new java.awt.Dimension(220, 200));
+        rightPanel.setMinimumSize(new java.awt.Dimension(320, 200));
+        // If window width is known, set divider accordingly; fallback to default
+        int w = getWidth();
+        if (w > 0) {
+            splitPane.setDividerLocation((int) (w * leftShare));
+        }
         splitPane.setBorder(null);
         content.add(splitPane, BorderLayout.CENTER);
         root.add(content, BorderLayout.CENTER);
@@ -379,6 +392,7 @@ public class UGSwiftApp extends JFrame {
         JButton generateBtn = new JButton("Generate Roads");
         JButton seededBtn = new JButton("Show Seeded Requests");
         JButton dsDemoBtn = new JButton("DS Demo");
+        JButton openMapBtn = new JButton("Open Campus Map");
 
         orderBtn.setBackground(new Color(0x1F7A1F));
         orderBtn.setForeground(Color.WHITE);
@@ -387,7 +401,8 @@ public class UGSwiftApp extends JFrame {
         dispatchBtn.setBackground(new Color(0x8A4B08));
         dispatchBtn.setForeground(Color.WHITE);
 
-        JPanel buttonRow = new JPanel(new GridLayout(2, 3, 8, 8));
+        // use 3 columns and allow rows to wrap automatically
+        JPanel buttonRow = new JPanel(new GridLayout(0, 3, 8, 8));
         buttonRow.setOpaque(false);
         buttonRow.add(orderBtn);
         buttonRow.add(routeBtn);
@@ -397,6 +412,7 @@ public class UGSwiftApp extends JFrame {
         buttonRow.add(generateBtn);
         buttonRow.add(seededBtn);
         buttonRow.add(dsDemoBtn);
+        buttonRow.add(openMapBtn);
         panel.add(buttonRow);
         panel.add(Box.createVerticalStrut(12));
 
@@ -425,6 +441,13 @@ public class UGSwiftApp extends JFrame {
         generateBtn.addActionListener(e -> runAction("generating roads", this::generateRoadNetwork));
         seededBtn.addActionListener(e -> showSeededRequests());
         dsDemoBtn.addActionListener(e -> showDSDemo());
+        openMapBtn.addActionListener(e -> {
+            try {
+                tools.CampusMapLauncher.openMap();
+            } catch (Exception ex) {
+                log("Failed to open campus map: " + ex.getMessage());
+            }
+        });
 
         return panel;
     }

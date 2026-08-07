@@ -1,0 +1,9 @@
+html,body,#map-root { height:100%; margin:0; padding:0; }
+#map-root { display:flex; height:100vh; font-family: Arial, sans-serif; }
+#sidebar { width:320px; padding:12px; background:#f7f7f7; box-shadow:2px 0 6px rgba(0,0,0,0.08); overflow:auto; }
+#map { flex:1; }
+#controls { margin-bottom:12px; }
+#controls select, #controls button { width:100%; margin:6px 0; padding:8px; }
+#locations-list { list-style:none; padding:0; max-height:60vh; overflow:auto; }
+#locations-list li { padding:6px; border-bottom:1px solid #eee; cursor:pointer; }
+#locations-list li:hover { background:#eef; }
