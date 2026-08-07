@@ -11,6 +11,7 @@ public class ServiceRequest {
     private String status; // PENDING, ASSIGNED, DELIVERED
     private int assignedRiderId;
     private final double priority; // calculated priority weight
+    private double deliveredTimeMin; // when delivered, minutes from start of day (-1 if not delivered)
 
     public ServiceRequest(int requestId, int sourceLocationId, int destLocationId,
                           String category, int urgency, double timeSubmittedMin,
@@ -24,8 +25,25 @@ public class ServiceRequest {
         this.deadlineMin = deadlineMin;
         this.status = status;
         this.assignedRiderId = assignedRiderId;
+        this.deliveredTimeMin = -1.0;
         // Calculated priority using student index number parts (22237205)
         // Formula: urgency * 2.22 + (1440 - deadlineMin) * 0.05
+        this.priority = Math.round((urgency * 2.22 + (1440.0 - deadlineMin) * 0.05) * 100.0) / 100.0;
+    }
+
+    public ServiceRequest(int requestId, int sourceLocationId, int destLocationId,
+                          String category, int urgency, double timeSubmittedMin,
+                          double deadlineMin, String status, int assignedRiderId, double deliveredTimeMin) {
+        this.requestId = requestId;
+        this.sourceLocationId = sourceLocationId;
+        this.destLocationId = destLocationId;
+        this.category = category;
+        this.urgency = urgency;
+        this.timeSubmittedMin = timeSubmittedMin;
+        this.deadlineMin = deadlineMin;
+        this.status = status;
+        this.assignedRiderId = assignedRiderId;
+        this.deliveredTimeMin = deliveredTimeMin;
         this.priority = Math.round((urgency * 2.22 + (1440.0 - deadlineMin) * 0.05) * 100.0) / 100.0;
     }
 
@@ -41,6 +59,8 @@ public class ServiceRequest {
     public int getAssignedRiderId() { return assignedRiderId; }
     public void setAssignedRiderId(int assignedRiderId) { this.assignedRiderId = assignedRiderId; }
     public double getPriority() { return priority; }
+    public double getDeliveredTimeMin() { return deliveredTimeMin; }
+    public void setDeliveredTimeMin(double t) { this.deliveredTimeMin = t; }
 
     @Override
     public String toString() {

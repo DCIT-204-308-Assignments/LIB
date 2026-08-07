@@ -66,7 +66,7 @@ public class DatabaseManager {
                     "FOREIGN KEY(homeLocationId) REFERENCES locations(locationId)" +
                     ");");
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS service_requests (" +
+                stmt.execute("CREATE TABLE IF NOT EXISTS service_requests (" +
                     "requestId INTEGER PRIMARY KEY," +
                     "sourceLocationId INTEGER NOT NULL," +
                     "destLocationId INTEGER NOT NULL," +
@@ -76,6 +76,7 @@ public class DatabaseManager {
                     "deadlineMin REAL NOT NULL," +
                     "status TEXT NOT NULL," +
                     "assignedRiderId INTEGER," +
+                    "deliveredTimeMin REAL," +
                     "FOREIGN KEY(sourceLocationId) REFERENCES locations(locationId)," +
                     "FOREIGN KEY(destLocationId) REFERENCES locations(locationId)" +
                     ");");
@@ -222,7 +223,7 @@ public class DatabaseManager {
     private static void seedServiceRequests(Connection conn) throws SQLException {
         String[] categories = {"Waakye", "Jollof Rice", "Red Red", "Fufu & Goat Light Soup", "Pizza", "Documents", "Pharmacy", "Groceries", "Courier Package"};
         Random rnd = new Random(SEED);
-        String insertSql = "INSERT INTO service_requests (requestId, sourceLocationId, destLocationId, category, urgency, timeSubmittedMin, deadlineMin, status, assignedRiderId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertSql = "INSERT INTO service_requests (requestId, sourceLocationId, destLocationId, category, urgency, timeSubmittedMin, deadlineMin, status, assignedRiderId, deliveredTimeMin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         conn.setAutoCommit(false);
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
             for (int i = 1; i <= 300; i++) {
@@ -245,6 +246,7 @@ public class DatabaseManager {
 
                 pstmt.setString(8, "PENDING");
                 pstmt.setNull(9, Types.INTEGER);
+                pstmt.setNull(10, Types.REAL);
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
@@ -311,6 +313,8 @@ public class DatabaseManager {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
+                double delivered = rs.getDouble("deliveredTimeMin");
+                if (rs.wasNull()) delivered = -1.0;
                 list.add(new ServiceRequest(
                         rs.getInt("requestId"),
                         rs.getInt("sourceLocationId"),
@@ -320,7 +324,8 @@ public class DatabaseManager {
                         rs.getDouble("timeSubmittedMin"),
                         rs.getDouble("deadlineMin"),
                         rs.getString("status"),
-                        rs.getInt("assignedRiderId")
+                        rs.getInt("assignedRiderId"),
+                        delivered
                 ));
             }
         } catch (SQLException e) {
@@ -330,7 +335,7 @@ public class DatabaseManager {
     }
 
     public static void saveServiceRequest(ServiceRequest req) {
-        String sql = "UPDATE service_requests SET status = ?, assignedRiderId = ? WHERE requestId = ?";
+        String sql = "UPDATE service_requests SET status = ?, assignedRiderId = ?, deliveredTimeMin = ? WHERE requestId = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, req.getStatus());
@@ -339,7 +344,12 @@ public class DatabaseManager {
             } else {
                 pstmt.setNull(2, Types.INTEGER);
             }
-            pstmt.setInt(3, req.getRequestId());
+            if (req.getDeliveredTimeMin() >= 0) {
+                pstmt.setDouble(3, req.getDeliveredTimeMin());
+            } else {
+                pstmt.setNull(3, Types.REAL);
+            }
+            pstmt.setInt(4, req.getRequestId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

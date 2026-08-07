@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.List;
 
@@ -7,6 +8,8 @@ import ds.DynamicArray;
 import ds.Graph;
 import engines.DatabaseManager;
 import engines.DeliveryEngine;
+import engines.IncomingOrderManager;
+import engines.DriverPool;
 import engines.RouteEngine;
 import engines.SchedulingEngine;
 import models.Location;
@@ -22,6 +25,10 @@ public class UGSwiftApp extends JFrame {
     private final JList<String> riderList = new JList<>(riderListModel);
     private final DefaultListModel<String> stationListModel = new DefaultListModel<>();
     private final JList<String> stationList = new JList<>(stationListModel);
+    private final DefaultListModel<String> incomingListModel = new DefaultListModel<>();
+    private final JList<String> incomingList = new JList<>(incomingListModel);
+    private final DefaultListModel<String> completedListModel = new DefaultListModel<>();
+    private final JList<String> completedList = new JList<>(completedListModel);
     private final JComboBox<String> sourceCombo = new JComboBox<>();
     private final JComboBox<String> destinationCombo = new JComboBox<>();
     private final JComboBox<String> restaurantCombo = new JComboBox<>();
@@ -36,9 +43,20 @@ public class UGSwiftApp extends JFrame {
     private DynamicArray<ServiceRequest> requests = new DynamicArray<>();
     private DynamicArray<Resource> riders = new DynamicArray<>();
     private DynamicArray<Order> activeOrders = new DynamicArray<>();
+    private DynamicArray<Order> completedOrders = new DynamicArray<>();
+    private IncomingOrderManager incomingManager = new IncomingOrderManager();
+    private DriverPool driverPool = new DriverPool();
     private final Map<String, Integer> locationIds = new LinkedHashMap<>();
     private final Map<String, List<String>> restaurantMenus = new LinkedHashMap<>();
     private final Map<String, Double> menuWeights = new LinkedHashMap<>();
+
+    // Auto-processing controls
+    private javax.swing.Timer autoProcessTimer;
+    private boolean autoProcessing = false;
+    private JButton autoToggleBtn;
+    private JTextField intervalField;
+    private JButton bulkProcessBtn;
+    private JTextField bulkCountField;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -54,6 +72,192 @@ public class UGSwiftApp extends JFrame {
         setLocationRelativeTo(null);
         buildUI();
         initializeData();
+        startCompletionWatcher();
+    }
+
+    private void startCompletionWatcher() {
+        // Check every 10 seconds for completed deliveries
+        javax.swing.Timer timer = new javax.swing.Timer(10000, e -> checkForCompletedOrders());
+        timer.setRepeats(true);
+        timer.start();
+    }
+
+    private void checkForCompletedOrders() {
+        try {
+            double currentMinutes = LocalTime.now().getHour() * 60 + LocalTime.now().getMinute() + LocalTime.now().getSecond() / 60.0;
+            List<ServiceRequest> toComplete = new ArrayList<>();
+            for (ServiceRequest req : requests) {
+                if (req.getStatus() != null && req.getStatus().equalsIgnoreCase("ASSIGNED")) {
+                    if (currentMinutes >= req.getDeadlineMin()) {
+                        toComplete.add(req);
+                    }
+                }
+            }
+
+            for (ServiceRequest req : toComplete) {
+                req.setStatus("DELIVERED");
+                // Persist status
+                DatabaseManager.saveServiceRequest(req);
+                // Free up rider
+                int riderId = req.getAssignedRiderId();
+                if (riderId > 0) {
+                    DatabaseManager.updateResourceStatus(riderId, "AVAILABLE");
+                    // Update in-memory copy
+                    for (Resource r : riders) {
+                        if (r.getResourceId() == riderId) {
+                            r.setAvailabilityStatus("AVAILABLE");
+                            break;
+                        }
+                    }
+                }
+
+                // Move matching order from active -> completed
+                Order moved = null;
+                for (Order o : activeOrders) {
+                    if (o.getPickupLocationId() == req.getSourceLocationId() && o.getDeliveryLocationId() == req.getDestLocationId() && o.getFoodItem().equals(req.getCategory())) {
+                        moved = o;
+                        break;
+                    }
+                }
+                if (moved != null) {
+                    activeOrders.remove(moved);
+                    completedOrders.add(moved);
+                }
+            }
+
+            if (!toComplete.isEmpty()) {
+                refreshDashboard();
+                refreshSummary();
+                log("Moved " + toComplete.size() + " deliveries to completed queue.");
+            }
+        } catch (Exception ex) {
+            // keep watcher resilient
+        }
+    }
+
+    private void processNextIncoming() {
+        try {
+            if (!incomingManager.hasPending()) {
+                log("No incoming requests to process.");
+                return;
+            }
+            models.ServiceRequest req = incomingManager.next();
+            if (req == null) {
+                log("No incoming request retrieved.");
+                return;
+            }
+
+            // build a lightweight order for assignment
+            Order order = new Order(
+                    1000 + (int) (Math.random() * 9000),
+                    "Queued",
+                    "QueuedVendor",
+                    req.getCategory(),
+                    1.0,
+                    req.getSourceLocationId(),
+                    req.getDestLocationId(),
+                    req.getTimeSubmittedMin(),
+                    req.getStatus(),
+                    req.getAssignedRiderId()
+            );
+
+            // attempt circular pool assignment
+            models.Resource assigned = driverPool.nextSuitable(order, locations, roads);
+            DeliveryEngine.AssignmentResult result = null;
+            if (assigned != null) {
+                ds.Graph graph = buildGraph();
+                var path = RouteEngine.dijkstra(graph, assigned.getHomeLocationId(), order.getPickupLocationId());
+                if (path != null) {
+                    result = new DeliveryEngine.AssignmentResult(assigned, path.totalDistanceKm, path.totalTimeMin);
+                }
+            }
+            if (result == null) {
+                result = DeliveryEngine.assignRider(order, riders, locations, roads);
+            }
+
+            if (result == null || result.rider == null) {
+                log("Could not assign a rider now; requeueing request.");
+                incomingManager.requeue(req, req.getUrgency() >= 4);
+                return;
+            }
+
+            // assign and persist
+            req.setAssignedRiderId(result.rider.getResourceId());
+            req.setStatus("ASSIGNED");
+            double deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
+            req = new models.ServiceRequest(req.getRequestId(), req.getSourceLocationId(), req.getDestLocationId(), req.getCategory(), req.getUrgency(), req.getTimeSubmittedMin(), 480.0 + deliveryDuration, req.getStatus(), req.getAssignedRiderId(), req.getDeliveredTimeMin());
+            DatabaseManager.saveServiceRequest(req);
+            DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
+            result.rider.setAvailabilityStatus("BUSY");
+            activeOrders.add(order);
+            log("Processed incoming request " + req.getRequestId() + " and assigned rider " + result.rider.getName());
+            refreshDashboard();
+            refreshSummary();
+        } catch (Exception ex) {
+            log("Processing incoming request failed: " + ex.getMessage());
+        }
+    }
+
+    private void toggleAutoProcessing() {
+        if (autoProcessing) {
+            stopAutoProcessing();
+        } else {
+            int seconds = 10;
+            try {
+                seconds = Integer.parseInt(intervalField.getText().trim());
+                if (seconds <= 0) seconds = 10;
+            } catch (Exception ex) {
+                seconds = 10;
+            }
+            startAutoProcessing(seconds);
+        }
+    }
+
+    private void startAutoProcessing(int seconds) {
+        if (autoProcessTimer != null && autoProcessTimer.isRunning()) {
+            autoProcessTimer.stop();
+        }
+        autoProcessTimer = new javax.swing.Timer(seconds * 1000, e -> {
+            processNextIncoming();
+        });
+        autoProcessTimer.setRepeats(true);
+        autoProcessTimer.start();
+        autoProcessing = true;
+        autoToggleBtn.setText("Stop Auto");
+        log("Auto-processing started (" + seconds + "s interval)");
+    }
+
+    private void stopAutoProcessing() {
+        if (autoProcessTimer != null) {
+            autoProcessTimer.stop();
+            autoProcessTimer = null;
+        }
+        autoProcessing = false;
+        if (autoToggleBtn != null) autoToggleBtn.setText("Start Auto");
+        log("Auto-processing stopped");
+    }
+
+    private void startBulkProcessing() {
+        int n = 5;
+        try {
+            n = Integer.parseInt(bulkCountField.getText().trim());
+            if (n <= 0) n = 1;
+        } catch (Exception ex) {
+            n = 5;
+        }
+        final int total = n;
+        javax.swing.Timer t = new javax.swing.Timer(300, null);
+        final int[] counter = {0};
+        t.addActionListener(e -> {
+            if (counter[0] >= total) {
+                t.stop();
+                return;
+            }
+            processNextIncoming();
+            counter[0]++;
+        });
+        t.setRepeats(true);
+        t.start();
     }
 
     private void buildUI() {
@@ -242,6 +446,41 @@ public class UGSwiftApp extends JFrame {
 
         panel.add(top, BorderLayout.NORTH);
 
+        JPanel mid = new JPanel(new GridLayout(1, 2, 8, 8));
+        JPanel incomingPanel = new JPanel(new BorderLayout());
+        incomingPanel.setBorder(BorderFactory.createTitledBorder("Incoming queue"));
+        incomingPanel.setBackground(Color.WHITE);
+        incomingList.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        incomingPanel.add(new JScrollPane(incomingList), BorderLayout.CENTER);
+        JPanel incomingControls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton processNextBtn = new JButton("Process next");
+        autoToggleBtn = new JButton("Start Auto");
+        intervalField = new JTextField("10", 4);
+        bulkCountField = new JTextField("5", 4);
+        bulkProcessBtn = new JButton("Process N");
+        incomingControls.add(new JLabel("Interval(s):"));
+        incomingControls.add(intervalField);
+        incomingControls.add(autoToggleBtn);
+        incomingControls.add(processNextBtn);
+        incomingControls.add(new JLabel("Bulk:"));
+        incomingControls.add(bulkCountField);
+        incomingControls.add(bulkProcessBtn);
+        incomingPanel.add(incomingControls, BorderLayout.SOUTH);
+        mid.add(incomingPanel);
+
+        JPanel completedPanel = new JPanel(new BorderLayout());
+        completedPanel.setBorder(BorderFactory.createTitledBorder("Completed deliveries"));
+        completedPanel.setBackground(Color.WHITE);
+        completedList.setFont(new Font("Consolas", Font.PLAIN, 12));
+        completedPanel.add(new JScrollPane(completedList), BorderLayout.CENTER);
+        mid.add(completedPanel);
+
+        panel.add(mid, BorderLayout.CENTER);
+
+        processNextBtn.addActionListener(e -> processNextIncoming());
+        autoToggleBtn.addActionListener(e -> toggleAutoProcessing());
+        bulkProcessBtn.addActionListener(e -> startBulkProcessing());
+
         logArea.setFont(new Font("Consolas", Font.PLAIN, 12));
         logArea.setWrapStyleWord(true);
         logArea.setLineWrap(true);
@@ -275,6 +514,8 @@ public class UGSwiftApp extends JFrame {
             roads = DatabaseManager.loadRoads();
             requests = DatabaseManager.loadServiceRequests();
             riders = loadResources();
+            // rebuild driver pool for fair circular assignment
+            driverPool.rebuild(riders);
             populateLocationSelectors();
             populateRestaurantMenus();
             refreshDashboard();
@@ -363,36 +604,62 @@ public class UGSwiftApp extends JFrame {
                 "PENDING",
                 -1
         );
+        // Build service request and submit to incoming manager (FIFO / priority)
+        ServiceRequest request = new ServiceRequest(
+                10000 + activeOrders.size() + requests.size(),
+                pickupId,
+                deliveryId,
+                meal,
+                "Express".equalsIgnoreCase(priority) ? 4 : ("Family Pack".equalsIgnoreCase(priority) ? 3 : 2),
+                480.0,
+                480.0,
+                "PENDING",
+                -1
+        );
 
-        DeliveryEngine.AssignmentResult result = DeliveryEngine.assignRider(order, riders, locations, roads);
+        boolean highPriority = "Express".equalsIgnoreCase(priority);
+        incomingManager.submit(request, highPriority);
+        requests.add(request);
+
+        // Try to assign a rider fairly using the circular driver pool first
+        models.Resource assigned = driverPool.nextSuitable(order, locations, roads);
+        DeliveryEngine.AssignmentResult result = null;
+        if (assigned != null) {
+            // compute path/time
+            ds.Graph graph = buildGraph();
+            var path = RouteEngine.dijkstra(graph, assigned.getHomeLocationId(), pickupId);
+            if (path != null) {
+                result = new DeliveryEngine.AssignmentResult(assigned, path.totalDistanceKm, path.totalTimeMin);
+            }
+        }
+
+        // Fallback to earlier assignment algorithm
+        if (result == null) {
+            result = DeliveryEngine.assignRider(order, riders, locations, roads);
+        }
+
         if (result == null || result.rider == null) {
-            log("No rider could be assigned for this order right now.");
+            log("No rider could be assigned for this order right now. Order queued.");
+            setStatus("Order queued");
+            refreshDashboard();
+            refreshSummary();
             return;
         }
 
         result.rider.setAvailabilityStatus("BUSY");
         double deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
-        ServiceRequest request = new ServiceRequest(
-            10000 + activeOrders.size() + requests.size(),
-            pickupId,
-            deliveryId,
-            meal,
-            "Express".equalsIgnoreCase(priority) ? 4 : ("Family Pack".equalsIgnoreCase(priority) ? 3 : 2),
-            480.0,
-            480.0 + deliveryDuration,
-            "ASSIGNED",
-            result.rider.getResourceId()
-        );
 
-        // Persist the new request and update rider status in the database so reloads reflect changes
+        // update request as assigned with deadline
+        request.setAssignedRiderId(result.rider.getResourceId());
+        request.setStatus("ASSIGNED");
+        request = new ServiceRequest(request.getRequestId(), request.getSourceLocationId(), request.getDestLocationId(), request.getCategory(), request.getUrgency(), request.getTimeSubmittedMin(), 480.0 + deliveryDuration, request.getStatus(), request.getAssignedRiderId());
         try {
-            DatabaseManager.addServiceRequest(request);
+            DatabaseManager.saveServiceRequest(request);
             DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
         } catch (Exception ex) {
             log("Warning: could not persist request or update rider status: " + ex.getMessage());
         }
 
-        requests.add(request);
         activeOrders.add(order);
 
         log("New order received for " + customerName + " from " + restaurant + " — " + meal);
@@ -535,6 +802,16 @@ public class UGSwiftApp extends JFrame {
             stationListModel.addElement(station + " • " + rider.getName() + " • " + rider.getType());
         }
 
+        incomingListModel.clear();
+        // show a summary of incoming manager queues
+        if (incomingManager != null) {
+            incomingListModel.addElement("FIFO pending: " + incomingManager.fifoSize());
+            incomingListModel.addElement("Priority pending: " + incomingManager.prioritySize());
+            incomingListModel.addElement("Total pending: " + incomingManager.pendingCount());
+        } else {
+            incomingListModel.addElement("No incoming manager");
+        }
+
         StringBuilder builder = new StringBuilder();
         if (activeOrders.isEmpty()) {
             builder.append("No active deliveries.\n");
@@ -553,7 +830,13 @@ public class UGSwiftApp extends JFrame {
                         .append("\n");
             }
         }
+        builder.append("\nCompleted deliveries: " + completedOrders.size() + "\n");
         activeOrdersArea.setText(builder.toString());
+        // completed list
+        completedListModel.clear();
+        for (Order o : completedOrders) {
+            completedListModel.addElement("#" + o.getOrderId() + " | " + o.getFoodItem() + " | " + o.getRestaurant());
+        }
     }
 
     private void refreshSummary() {
