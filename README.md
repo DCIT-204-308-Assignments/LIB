@@ -1,103 +1,365 @@
-# UG Swift — Campus Service Operations Prototype
+# UG Swift
+### Campus Service Operations Prototype
 
-This repository is a Java desktop application demonstrating a campus logistics and routing system (UG Swift). It was built as a Data Structures & Algorithms (DSA) semester project and contains custom implementations of core data structures, graph routing, scheduling engines, and a Swing-based UI.
+![Java](https://img.shields.io/badge/Java-17+-orange)
+![SQLite](https://img.shields.io/badge/Database-SQLite-blue)
+![Swing](https://img.shields.io/badge/UI-Java%20Swing-green)
+![License](https://img.shields.io/badge/License-Academic-lightgrey)
 
-## Highlights
+UG Swift is a **Java desktop application** that simulates a smart campus courier and service dispatch system for the **University of Ghana**. The project was developed as part of the **DCIT 204/308 Data Structures & Algorithms Semester Project**, demonstrating practical applications of custom data structures, graph algorithms, scheduling techniques, and database systems.
 
-- Interactive Swing UI for placing orders, managing riders, viewing incoming and completed queues, and demoing data-structures.
-- SQLite-backed persistent store for locations, roads, resources (riders), and service requests.
-- Custom data-structure library under `src/ds/` (Stack, Queue, Deque, MinHeap, Graph, HashTable, DynamicArray, etc.).
-- Engines for routing (Dijkstra), dispatch (FIFO/priority/circular), and simple optimisation.
+---
 
-## Prerequisites
+## Features
 
-- Java JDK 17 or later (ensure `javac` and `java` are on PATH).
-- SQLite JDBC driver JAR. The project expects `sqlite-jdbc-3.42.0.0.jar` in the repository root — download and place it there if missing.
+- Interactive Java Swing desktop interface
+- Campus routing using **Dijkstra's Shortest Path Algorithm**
+- SQLite persistent database
+- Custom implementations of core Data Structures
+- Service request management
+- Rider dispatch and scheduling
+- Automatic request processing
+- DSA demonstration module
+- Performance testing suite
 
-## Quick start — Windows (PowerShell)
+---
 
-1. Clone the repository and change directory:
+# Technologies
 
-	git clone <repo-url>
-	cd LIB
+| Technology | Purpose |
+|------------|---------|
+| Java 17+ | Application Development |
+| Java Swing | Desktop UI |
+| SQLite | Database |
+| JDBC | Database Connectivity |
+| CSV | Initial Dataset |
+| Custom DSA Library | Core Algorithms |
 
-2. Compile all sources and create the `bin` directory:
+---
 
-	javac -d bin @(Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName })
+# Custom Data Structures
 
-3. Seed the database from CSV files (headless):
+Located in:
 
-	java -cp "bin;sqlite-jdbc-3.42.0.0.jar" SeedDB
+```
+src/ds/
+```
 
-	This creates `ug_swift.db` with seeded locations, roads, riders and 300 service requests.
+Implemented without relying on Java's built-in equivalents.
 
-4. Launch the GUI:
+- Dynamic Array
+- Stack
+- Queue
+- Circular Queue
+- Deque
+- Priority Queue (Min Heap)
+- Hash Table
+- Weighted Graph
+- Linked Lists
 
-	java -cp "bin;sqlite-jdbc-3.42.0.0.jar" UGSwiftApp
+---
 
-## Quick start — macOS / Linux (bash)
+# Algorithms
 
-1. Clone and cd into project root.
+The project demonstrates several classic algorithms including:
 
-2. Compile:
+- Dijkstra's Shortest Path
+- FIFO Scheduling
+- Priority Scheduling
+- Circular Dispatch
+- Graph Traversal
+- Heap Operations
+- Hashing
+- Queue Management
 
-	find src -name "*.java" > sources.txt
-	javac -d bin @sources.txt
-	rm sources.txt
+---
 
-3. Seed DB:
+# Project Structure
 
-	java -cp "bin:sqlite-jdbc-3.42.0.0.jar" SeedDB
+```
+UG-Swift
+│
+├── data/
+│   ├── locations.csv
+│   ├── roads.csv
+│   └── ...
+│
+├── src/
+│   ├── ds/
+│   ├── engines/
+│   ├── models/
+│   ├── ui/
+│   ├── SeedDB.java
+│   ├── UGSwiftApp.java
+│   └── UGSwiftTestSuite.java
+│
+├── bin/
+│
+├── ug_swift.db
+│
+├── sqlite-jdbc-3.42.0.0.jar
+│
+└── README.md
+```
 
-4. Run app:
+---
 
-	java -cp "bin:sqlite-jdbc-3.42.0.0.jar" UGSwiftApp
+# Prerequisites
 
-## Key UI features
+Before running the project, install:
 
-- `Initialize Data` / `Generate Roads` — seed and (re)create CSV-based datasets.
-- `Show Seeded Requests` — modal lists the 300 seeded service requests.
-- `DS Demo` — tabbed modal demonstrating `Stack`, `Queue`, `Deque`, and `Priority Queue` (MinHeap) with step-by-step trace output useful for reports and live demos.
-- Incoming queue controls: `Process next`, `Start Auto` (auto-process interval), and `Process N` (bulk processing).
+- Java JDK 17 or newer
+- SQLite JDBC Driver
 
-## Seeding notes
+Place the JDBC driver in the project root:
 
-- CSV files are expected in a `data/` folder (the data resolver tries several common candidate directories). The `SeedDB` runner calls `DatabaseManager.initializeDatabase(locations.csv, roads.csv)` which will seed tables if empty.
+```
+sqlite-jdbc-3.42.0.0.jar
+```
 
-## Running tests and demos
+---
 
-- A simple DSA validation harness is available at `src/UGSwiftTestSuite.java`.
+# Getting Started
 
-  java -cp "bin;sqlite-jdbc-3.42.0.0.jar" UGSwiftTestSuite
+## Clone the Repository
 
-## Developer notes (important paths)
+```bash
+git clone <repository-url>
+cd UG-Swift
+```
 
-- `src/UGSwiftApp.java` — main Swing application GUI.
-- `src/SeedDB.java` — headless seeder utility.
-- `src/engines` — routing, scheduling, database manager, and other engines.
-- `src/ds` — custom data-structure implementations.
-- `src/models` — domain models (`ServiceRequest`, `Resource`, `Location`, etc.).
+---
 
-## Evidence for coursework
+## Windows (PowerShell)
 
-- The project implements core structures (Queue, Stack, Deque, MinHeap, Graph, HashTable) without using Java built-ins for those components. Use the `DS Demo` modal and the `UGSwiftTestSuite` harness to produce trace outputs and screenshots for your report.
+### Compile
 
-## Troubleshooting
+```powershell
+mkdir bin
 
-- "`javac` not recognized": install a JDK and ensure `javac` is on PATH.
-- Missing `sqlite-jdbc-3.42.0.0.jar`: download the JDBC driver and place it in the project root or update the classpath with your local JAR name.
-- If `SeedDB` reports no CSVs found, ensure the `data/locations.csv` and `data/roads.csv` files exist or use the `Generate Roads` button in the UI.
+javac -d bin @(Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object {$_.FullName})
+```
 
-## .gitignore
+### Seed Database
 
-- The repository includes a `.gitignore` that excludes `ug_swift.db`, JDBC jars, build artifacts and common IDE files. If you need to keep CSVs under version control, remove them from the ignore file.
+```powershell
+java -cp "bin;sqlite-jdbc-3.42.0.0.jar" SeedDB
+```
 
-## Contributing
+### Run Application
 
-- Fork, implement a feature branch, add tests, update docs, and submit a PR. If you change the DB schema include migration SQL and update `DatabaseManager` accordingly.
+```powershell
+java -cp "bin;sqlite-jdbc-3.42.0.0.jar" UGSwiftApp
+```
 
-## License
+---
 
-- Add an appropriate license file if the submission requires one.
+## macOS / Linux
 
- 
+### Compile
+
+```bash
+mkdir -p bin
+
+find src -name "*.java" > sources.txt
+
+javac -d bin @sources.txt
+
+rm sources.txt
+```
+
+### Seed Database
+
+```bash
+java -cp "bin:sqlite-jdbc-3.42.0.0.jar" SeedDB
+```
+
+### Run Application
+
+```bash
+java -cp "bin:sqlite-jdbc-3.42.0.0.jar" UGSwiftApp
+```
+
+---
+
+# User Interface
+
+The desktop application includes the following modules:
+
+| Module | Description |
+|---------|-------------|
+| Dashboard | Overview of the system |
+| Place Request | Create service requests |
+| Rider Management | Manage delivery riders |
+| Incoming Queue | View waiting requests |
+| Completed Requests | Processed deliveries |
+| DSA Demo | Interactive data structure demonstrations |
+| Reports | Statistics and analytics |
+
+---
+
+# DSA Demonstration
+
+The built-in DSA Demo provides live visual demonstrations of:
+
+- Stack Operations
+- Queue Operations
+- Deque Operations
+- Priority Queue
+- Min Heap Behaviour
+
+These demonstrations generate trace outputs suitable for coursework reports and presentations.
+
+---
+
+# Database Seeding
+
+The project automatically imports data from CSV files.
+
+Required files:
+
+```
+data/
+├── locations.csv
+└── roads.csv
+```
+
+Running
+
+```bash
+SeedDB
+```
+
+creates
+
+```
+ug_swift.db
+```
+
+and seeds:
+
+- Campus Locations
+- Road Network
+- Riders
+- 300 Service Requests
+
+---
+
+# Testing
+
+Run the included validation suite:
+
+```bash
+java -cp "bin:sqlite-jdbc-3.42.0.0.jar" UGSwiftTestSuite
+```
+
+The suite verifies:
+
+- Queue
+- Stack
+- Heap
+- Graph
+- Hash Table
+- Routing Algorithms
+
+---
+
+# Important Source Files
+
+| File | Purpose |
+|------|---------|
+| `UGSwiftApp.java` | Main desktop application |
+| `SeedDB.java` | Database seeder |
+| `UGSwiftTestSuite.java` | DSA validation suite |
+| `src/ds/` | Custom data structures |
+| `src/engines/` | Routing, scheduling and database logic |
+| `src/models/` | Domain models |
+
+---
+
+# Coursework Objectives Demonstrated
+
+This project showcases practical implementations of:
+
+- Custom Data Structures
+- Graph Algorithms
+- Database Management
+- Scheduling Algorithms
+- Algorithm Analysis
+- Performance Benchmarking
+- Software Engineering Principles
+
+---
+
+# Troubleshooting
+
+### `javac` not recognized
+
+Install Java JDK 17+ and ensure `javac` is added to your system PATH.
+
+---
+
+### SQLite Driver Missing
+
+Download the SQLite JDBC driver and place
+
+```
+sqlite-jdbc-3.42.0.0.jar
+```
+
+in the project root.
+
+---
+
+### CSV Files Not Found
+
+Ensure the following exist:
+
+```
+data/
+├── locations.csv
+└── roads.csv
+```
+
+or regenerate the dataset from the application.
+
+---
+
+# Git Ignore
+
+The repository ignores:
+
+- Database files
+- Build artifacts
+- IDE configuration
+- JDBC libraries
+
+Examples:
+
+```
+bin/
+*.class
+ug_swift.db
+.idea/
+.vscode/
+```
+
+---
+
+# Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Implement your changes
+4. Test thoroughly
+5. Submit a Pull Request
+
+---
+
+# License
+
+This repository was developed for academic purposes as part of the University of Ghana Data Structures & Algorithms coursework.
+
+```
+Copyright © 2026 UG Swift Team
+```
