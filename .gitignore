@@ -64,4 +64,3 @@ node_modules/
 *.bak
 *~
 
-# Allow list: if you want to keep specific csv files under version control, remove them from the ignore above.
