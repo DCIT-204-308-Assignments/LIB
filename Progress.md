@@ -1,387 +1,337 @@
-# DSA Smart Service Operations Optimizer
+# UG Swift — Codebase Completion & DSA Implementation Specification
 
-## Codebase Completion & Implementation Requirements
+## 1. Project Overview
 
-### 1. Purpose
+UG Swift is a Java-based campus delivery and logistics optimization system designed to demonstrate practical applications of Data Structures and Algorithms.
 
-The current codebase should be treated as a **skeleton/reference implementation**, not a completed system. The existing files provide enough structure and guidance to complete the major components, particularly the implementations under the `ds` and `engines` directories.
+The current repository is a **skeleton implementation with many of the required classes already present**. The objective is not to rebuild the project from scratch, but to complete, integrate, test, and optimize the existing architecture.
 
-The objective of this work is to transform the existing skeleton into a **fully functional, integrated DSA-based delivery and service optimization system** where the data structures, models, algorithms, engines, and test suite actually work together.
-
-The implementation should remain focused on demonstrating the required **Data Structures and Algorithms concepts**, rather than simply producing a functional delivery application.
-
----
-
-# 2. Core Areas That Must Be Completed
-
-The following areas require implementation or significant improvement:
-
-1. Test Suite
-2. Driver Pool
-3. Delivery Engine
-4. Scheduling Engine
-5. Incoming Order Manager
-6. Order Model
-7. Data Structure Integration
-8. Optimization Engine
-9. Algorithm Run Model
-10. Rider Assignment
-11. Distance-Based Vehicle Selection
-12. End-to-End Integration Testing
-
----
-
-# 3. Test Suite Overhaul
-
-## Current Problem
-
-The current test suite is too generic. It may verify that classes and methods exist, but it does not adequately verify whether the actual data structures and algorithms behave correctly.
-
-The tests need to test the **actual implementations**, not merely whether the application runs.
-
-## Required Work
-
-Create proper unit and integration tests for every major data structure.
-
-### Data structures that should be explicitly tested
-
-* Stack
-* Queue
-* Priority Queue
-* Linked List
-* Hash Table / Hash Map implementation
-* Binary Search Tree
-* B-Tree
-* Red-Black Tree
-* Graph
-* Heap, where applicable
-
-### Tests should verify
-
-* Correct insertion
-* Correct deletion
-* Correct searching
-* Correct traversal
-* Correct ordering
-* Correct handling of duplicate values
-* Correct handling of empty structures
-* Correct handling of invalid operations
-* Correct size/count tracking
-* Correct complexity-sensitive behavior where applicable
-
-### Example
-
-A stack test should not simply check:
-
-> `Stack object exists`
-
-It should verify:
+The repository already contains:
 
 ```text
-push(A)
-push(B)
-push(C)
-
-Expected:
-pop() → C
-pop() → B
-pop() → A
+UG-Swift/
+│
+├── bin/
+│   ├── ds/
+│   ├── engines/
+│   ├── models/
+│   ├── utils/
+│   └── *.class
+│
+├── data/
+│   ├── locations.csv
+│   └── roads.csv
+│
+├── src/
+│   ├── ds/
+│   │   ├── BST.java
+│   │   ├── BTree.java
+│   │   ├── CircularQueue.java
+│   │   ├── Deque.java
+│   │   ├── DisjointSet.java
+│   │   ├── DynamicArray.java
+│   │   ├── Graph.java
+│   │   ├── HashTable.java
+│   │   ├── LinkedList.java
+│   │   ├── MinHeap.java
+│   │   ├── Queue.java
+│   │   ├── RedBlackTree.java
+│   │   └── Stack.java
+│   │
+│   ├── engines/
+│   │   ├── DatabaseManager.java
+│   │   ├── DeliveryEngine.java
+│   │   ├── DriverPool.java
+│   │   ├── IncomingOrderManager.java
+│   │   ├── IndexingEngine.java
+│   │   ├── OptimisationEngine.java
+│   │   ├── RouteEngine.java
+│   │   ├── SchedulingEngine.java
+│   │   └── SortingEngine.java
+│   │
+│   ├── models/
+│   │   ├── AlgorithmRun.java
+│   │   ├── AuditEvent.java
+│   │   ├── Location.java
+│   │   ├── Order.java
+│   │   ├── Resource.java
+│   │   ├── RoadEdge.java
+│   │   └── ServiceRequest.java
+│   │
+│   ├── tools/
+│   │   ├── CampusMapLauncher.java
+│   │   ├── ExportLocations.java
+│   │   └── ExportRoute.java
+│   │
+│   ├── utils/
+│   │
+│   ├── Main.java
+│   ├── RoadNetworkGenerator.java
+│   ├── SeedDB.java
+│   ├── UGSwiftApp.java
+│   ├── UGSwiftLauncher.java
+│   └── UGSwiftTestSuite.java
+│
+├── web/
+│   └── campus_map/
+│       ├── index.html
+│       ├── locations.js
+│       ├── script.js
+│       └── style.css
+│
+├── data/
+├── sqlite-jdbc-3.42.0.0.jar
+├── ug_swift.db
+├── Progress.md
+└── README.md
 ```
 
-Similarly, a priority queue should verify that elements are actually returned according to priority rather than insertion order.
+---
 
-## Integration Testing
+# 2. Overall Objective
 
-The test suite must also verify that the engines actually use the custom data structures.
-
-For example:
+The final system must demonstrate a complete pipeline:
 
 ```text
-Incoming Order
-       ↓
-Order Manager
-       ↓
-Priority Queue
-       ↓
-Scheduling Engine
-       ↓
-Driver Pool
-       ↓
-Optimization Engine
-       ↓
-Driver Assignment
-       ↓
-Delivery Engine
+Campus Location/Road Data
+          ↓
+        Graph
+          ↓
+     Route Engine
+          ↓
+   Incoming Order
+          ↓
+   Order Management
+          ↓
+   Scheduling Engine
+          ↓
+  Optimisation Engine
+          ↓
+      Driver Pool
+          ↓
+    Delivery Engine
+          ↓
+     Completed Order
+          ↓
+   Database / Audit
+          ↓
+ Algorithm Performance
 ```
 
-The test suite should be able to demonstrate that this pipeline works.
+The key objective is to ensure that the existing data structures in `src/ds` are **actually used by the engines in `src/engines`**.
+
+Simply having a `BTree.java`, `Stack.java`, or `RedBlackTree.java` file is not enough.
 
 ---
 
-# 4. Driver Pool
+# 3. Priority 1 — Complete the Data Structures
 
-## Current Problem
-
-The driver pool model is currently too basic to support intelligent driver assignment.
-
-The system needs to distinguish between different riders and maintain information necessary for dispatch decisions.
-
-## Required Driver/Rider Information
-
-A rider should have information such as:
+The following data structures already exist:
 
 ```text
-driverId
+BST
+BTree
+CircularQueue
+Deque
+DisjointSet
+DynamicArray
+Graph
+HashTable
+LinkedList
+MinHeap
+Queue
+RedBlackTree
+Stack
+```
+
+Each implementation must be reviewed for:
+
+* Correctness
+* Edge cases
+* Empty-state behavior
+* Duplicate handling
+* Searching
+* Insertion
+* Deletion
+* Traversal
+* Size tracking
+* Performance
+* Integration with the engines
+
+## Required
+
+The data structures must not exist only as standalone demonstrations.
+
+They must be connected to actual system operations.
+
+---
+
+# 4. Data Structure Usage Map
+
+The following is the intended mapping.
+
+| Data Structure   | Primary System Usage                              |
+| ---------------- | ------------------------------------------------- |
+| `Graph`          | Campus road network                               |
+| `MinHeap`        | Shortest path / priority processing               |
+| `Priority Queue` | Order scheduling                                  |
+| `Queue`          | Incoming delivery requests                        |
+| `CircularQueue`  | Rotating/round-robin operations where appropriate |
+| `Deque`          | Flexible scheduling/order processing              |
+| `Stack`          | Scheduling/backtracking/history                   |
+| `HashTable`      | Fast rider/order/resource lookup                  |
+| `BST`            | Ordered searchable records                        |
+| `BTree`          | Large-scale order/index lookup                    |
+| `RedBlackTree`   | Dynamically ordered records                       |
+| `LinkedList`     | Sequential history/records                        |
+| `DynamicArray`   | Dynamic collections                               |
+| `DisjointSet`    | Connectivity/network analysis                     |
+
+The final implementation may adjust this mapping where the existing architecture suggests a better use, but every major DSA implementation should have a justified purpose.
+
+---
+
+# 5. Priority 2 — `models/` Overhaul
+
+The models currently provide the foundation for the system.
+
+The following classes require review:
+
+```text
+AlgorithmRun.java
+AuditEvent.java
+Location.java
+Order.java
+Resource.java
+RoadEdge.java
+ServiceRequest.java
+```
+
+---
+
+## 5.1 `Location.java`
+
+`Location` should represent a physical point on the University of Ghana campus.
+
+It should provide enough information for:
+
+* Mapping
+* Distance calculation
+* Route calculation
+* Rider location tracking
+* Pickup location
+* Delivery location
+
+Potential information:
+
+```text
+id
 name
-vehicleType
-currentLocation
-availabilityStatus
-currentOrder
-completedDeliveries
-totalDistance
-averageDeliveryTime
+latitude
+longitude
+type
 ```
 
-### Vehicle Types
+---
+
+# 6. `Order.java` Overhaul
+
+The current Order model needs to be sufficiently detailed for scheduling and optimization.
+
+An order should contain information such as:
+
+```text
+orderId
+customer/requester
+pickupLocation
+deliveryLocation
+creationTime
+requestedDeliveryTime
+priority
+status
+distance
+estimatedDeliveryTime
+assignedResource
+vehicleType
+```
+
+The exact field names should follow the existing project conventions.
+
+## Required Order States
 
 At minimum:
+
+```text
+CREATED
+QUEUED
+SCHEDULED
+ASSIGNED
+PICKED_UP
+IN_TRANSIT
+COMPLETED
+CANCELLED
+```
+
+The state must be updated throughout the delivery lifecycle.
+
+---
+
+# 7. `Resource.java` — Rider Model
+
+Resources should support the project's delivery riders.
+
+At minimum, the system must distinguish:
 
 ```text
 BICYCLE
 MOTORCYCLE
 ```
 
-### Availability
-
-The rider should have a clear state such as:
+Each rider/resource should have:
 
 ```text
-AVAILABLE
-BUSY
-OFFLINE
+resourceId
+name
+vehicleType
+currentLocation
+availability
+currentOrder
+completedDeliveries
 ```
 
-Additional states can be added if useful.
-
-## Driver Pool Responsibilities
-
-The Driver Pool should be responsible for:
-
-* Adding riders
-* Removing riders
-* Updating rider status
-* Tracking current rider locations
-* Finding available riders
-* Finding riders within a geographic radius
-* Finding the nearest suitable rider
-* Filtering riders by vehicle type
-* Assigning orders
-* Releasing riders after delivery completion
-
-The implementation should use appropriate data structures rather than relying entirely on basic arrays or lists.
+The resource must be capable of changing location as deliveries progress.
 
 ---
 
-# 5. Delivery Engine
+# 8. `ServiceRequest.java`
 
-## Current Problem
+`ServiceRequest` should represent an incoming request before or during conversion into an operational order.
 
-The Delivery Engine does not currently model the delivery lifecycle in enough detail.
-
-It should manage an order from assignment until completion.
-
-## Required Delivery Lifecycle
-
-The system should support a lifecycle similar to:
+The flow should be:
 
 ```text
-ORDER_CREATED
+ServiceRequest
       ↓
-ORDER_RECEIVED
+IncomingOrderManager
       ↓
-ORDER_QUEUED
+Order
       ↓
-RIDER_ASSIGNED
+Scheduling
       ↓
-PICKUP_PENDING
+Optimisation
       ↓
-PICKED_UP
-      ↓
-IN_TRANSIT
-      ↓
-DELIVERED
+Delivery
 ```
 
-There should also be appropriate failure/cancellation states where necessary.
-
-## Delivery Engine Responsibilities
-
-The engine should:
-
-* Receive scheduled delivery jobs
-* Assign riders
-* Track pickup
-* Track delivery
-* Update rider availability
-* Calculate delivery distance
-* Calculate estimated delivery time
-* Mark orders as completed
-* Release riders after completion
-* Record delivery statistics
+The distinction between `ServiceRequest` and `Order` should be clear.
 
 ---
 
-# 6. Order Model
+# 9. `AlgorithmRun.java`
 
-## Current Problem
+`AlgorithmRun` must be used to record actual algorithm executions.
 
-The current Order model is not sufficiently detailed.
-
-An order needs to contain enough information for the scheduling and optimization algorithms to make decisions.
-
-## Required Order Attributes
-
-An order should contain information such as:
-
-```text
-orderId
-customerId
-pickupLocation
-deliveryLocation
-creationTime
-requestedDeliveryTime
-priority
-distance
-estimatedDeliveryTime
-status
-assignedDriver
-vehicleRequirement
-```
-
-Additional fields can be introduced where necessary.
-
-## Important Requirement
-
-Orders should not simply sit indefinitely in a queue.
-
-The system should process incoming orders and determine:
-
-1. Which rider should handle the order?
-2. Whether that rider is currently available.
-3. Which vehicle is appropriate?
-4. How far the rider is from the pickup point.
-5. How long the delivery is expected to take.
-6. Whether assigning the rider would produce an efficient delivery.
-
----
-
-# 7. Incoming Order Manager
-
-## Current Problem
-
-The Incoming Order Manager does not properly process delivery requests.
-
-It should serve as the entry point for new delivery requests.
-
-## Required Workflow
-
-When an order arrives:
-
-```text
-Incoming Order
-      ↓
-Validate Order
-      ↓
-Calculate Distance
-      ↓
-Determine Priority
-      ↓
-Determine Suitable Vehicle
-      ↓
-Find Available Riders
-      ↓
-Calculate Best Rider
-      ↓
-Assign Rider
-      ↓
-Create Delivery Job
-      ↓
-Send to Delivery Engine
-```
-
-The manager should not simply append an order to a list.
-
-It should initiate the appropriate scheduling and assignment process.
-
----
-
-# 8. Scheduling Engine
-
-## Current Problem
-
-The Scheduling Engine is currently too skeletal and does not sufficiently demonstrate the required DSA concepts.
-
-A proper scheduling mechanism needs to be implemented.
-
-## Stack Integration
-
-The scheduling engine must contain a **real implementation/use of the Stack data structure** where appropriate.
-
-The stack should not simply exist in the `ds` folder without being integrated into the system.
-
-The implementation should clearly demonstrate why a stack is useful in the scheduling process.
-
-For example, it could be used for:
-
-* Scheduling operations
-* Undoing scheduling decisions
-* Maintaining temporary scheduling states
-* Backtracking through assignment decisions
-* Reversing processing order where appropriate
-
-The exact use should be justified by the algorithm rather than adding a stack artificially.
-
----
-
-# 9. B-Tree and Red-Black Tree Integration
-
-The B-Tree and Red-Black Tree implementations already exist in the `ds` directory but are not properly integrated into the system.
-
-They need to be connected to the relevant models/engines.
-
-## B-Tree
-
-The B-Tree should be used where a balanced multi-way search structure is appropriate, particularly for large ordered datasets.
-
-Potential uses include:
-
-* Order indexing
-* Large-scale order lookup
-* Delivery records
-* Customer/order indexing
-
-## Red-Black Tree
-
-The Red-Black Tree should be used for dynamically changing ordered data where efficient search, insertion, and deletion are required.
-
-Potential uses include:
-
-* Active delivery records
-* Time-based scheduling
-* Priority-based records
-* Ordered rider/order information
-
-The implementation must demonstrate an actual use case rather than simply importing the classes.
-
----
-
-# 10. Algorithm Run Model
-
-A proper model for executing and recording algorithm runs is required.
-
-The system should have a standardized way of running algorithms and recording their results.
-
-## Algorithm Run should capture information such as
+It should capture information such as:
 
 ```text
 algorithmName
@@ -390,457 +340,1099 @@ startTime
 endTime
 executionTime
 result
-numberOfOperations
+operations
 comparisons
-distanceCalculated
-assignmentsMade
-success/failure
+status
 ```
 
-Where practical, complexity-related metrics should also be collected.
+Where appropriate, additional metrics should be recorded.
 
-## Purpose
-
-This allows the project to demonstrate empirical analysis.
-
-For example:
-
-```text
-Algorithm: Nearest Rider
-Input Size: 100 riders
-Execution Time: X ms
-Distance Calculations: Y
-Assignments: Z
-```
-
-The system should make it possible to compare algorithms based on measurable performance.
+This is important because the project is not only expected to implement algorithms but also demonstrate **empirical analysis**.
 
 ---
 
-# 11. Optimization Engine Overhaul
+# 10. Priority 3 — `DriverPool.java`
 
-The Optimization Engine should be significantly improved.
+`DriverPool.java` needs significant improvement.
 
-It should not simply select the first available rider.
+The Driver Pool must maintain all active delivery resources and support efficient lookup.
 
-Its purpose should be to determine the **best feasible rider and vehicle for each delivery request**.
-
-## Optimization Factors
-
-The engine should consider:
-
-### 1. Distance to Pickup
-
-A rider closer to the pickup point should generally be preferred.
-
-### 2. Vehicle Type
-
-The system must distinguish between:
+## Required operations
 
 ```text
-BICYCLE
-MOTORCYCLE
+addDriver()
+removeDriver()
+findDriver()
+updateDriverLocation()
+setDriverAvailable()
+setDriverBusy()
+getAvailableDrivers()
+getDriversByVehicleType()
+findNearestDriver()
 ```
 
-### 3. Delivery Distance
-
-The delivery distance should influence which vehicle is assigned.
-
-### 4. Rider Availability
-
-Busy or offline riders must not be assigned new deliveries.
-
-### 5. Estimated Delivery Time
-
-The system should prefer assignments that minimize expected delivery time.
-
-### 6. Current Rider Location
-
-The rider's current location must be used rather than assuming every rider starts from the same location.
-
-### 7. Order Priority
-
-High-priority orders should receive appropriate scheduling preference.
+The implementation should use the project's custom data structures where appropriate.
 
 ---
 
-# 12. Distance-Based Rider Assignment
+# 11. Rider Assignment
 
-One of the most important requirements is intelligent vehicle selection.
+The Driver Pool and Optimisation Engine must work together.
 
-The system has both **motorcycle riders and bicycle riders**.
-
-The assignment algorithm must consider delivery distance.
-
-## Proposed Rule
-
-For example:
+When an order arrives, the system should:
 
 ```text
-Distance ≤ 6 km
-    ↓
-Bicycle or Motorcycle may be considered
-
-Distance > 6 km
-    ↓
-Motorcycle preferred/required
+1. Get pickup location
+2. Get delivery location
+3. Calculate delivery distance
+4. Determine acceptable vehicle types
+5. Retrieve available riders
+6. Calculate rider-to-pickup distance
+7. Estimate delivery time
+8. Score eligible riders
+9. Select the optimal rider
+10. Assign rider
 ```
 
-Therefore, bicycle riders should not be assigned deliveries exceeding the defined threshold.
+---
 
-The threshold should ideally be configurable rather than hard-coded throughout the codebase.
+# 12. Bicycle vs Motorcycle Logic
+
+The system contains:
+
+```text
+Bicycle Riders
+Motorcycle Riders
+```
+
+The vehicle must be selected intelligently.
+
+## Required rule
+
+A configurable threshold should be implemented.
 
 Example:
 
 ```text
-MAX_BICYCLE_DISTANCE = 6 km
+MAX_BICYCLE_DISTANCE = 6.0 km
 ```
+
+Then:
+
+```text
+IF delivery distance <= 6 km
+    Bicycle and Motorcycle riders can be considered
+
+IF delivery distance > 6 km
+    Bicycle riders are excluded
+    Motorcycle riders are considered
+```
+
+This should be implemented inside the optimization/assignment logic rather than scattered throughout the application.
 
 ---
 
 # 13. Nearest Rider Algorithm
 
-The system should implement an algorithm that maps a delivery request to the rider closest to the pickup location.
+The system needs a proper algorithm to map an order to the rider closest to its pickup point.
 
-Conceptually:
-
-```text
-For every available rider:
-
-    Calculate distance between:
-        rider.currentLocation
-        pickupLocation
-
-    If rider is eligible:
-        calculate assignment score
-
-Select rider with best score
-```
-
-However, the algorithm should not necessarily choose the rider with the shortest distance alone.
-
-A better scoring model could consider:
+For every eligible rider:
 
 ```text
-Assignment Score =
-    Pickup Distance
-    + Estimated Delivery Time
-    + Vehicle Suitability
-    + Current Workload
-    + Order Priority
+distance =
+    distance(rider.currentLocation, order.pickupLocation)
 ```
 
-The exact mathematical formulation can be refined during implementation.
+The system then selects the best candidate.
+
+A basic implementation is:
+
+```text
+bestDistance = infinity
+
+for each available rider:
+    if rider is eligible:
+        calculate distance
+
+        if distance < bestDistance:
+            bestDistance = distance
+            bestDriver = rider
+```
+
+However, the final Optimisation Engine should consider more than distance.
 
 ---
 
-# 14. Vehicle Selection Algorithm
+# 14. Optimisation Score
 
-The system should first determine whether a rider is eligible based on vehicle type.
+The optimization engine should be capable of considering:
+
+```text
+Pickup Distance
++
+Delivery Distance
++
+Estimated Delivery Time
++
+Vehicle Suitability
++
+Rider Availability
++
+Order Priority
+```
+
+A scoring model can be introduced.
+
+For example:
+
+```text
+score =
+    w1 * pickupDistance
+  + w2 * estimatedDeliveryTime
+  + w3 * workload
+  + w4 * vehiclePenalty
+  - w5 * priority
+```
+
+The weights should be configurable.
+
+The objective is to minimize delivery time while respecting constraints.
+
+---
+
+# 15. Priority 4 — `IncomingOrderManager.java`
+
+This class currently does not properly handle delivery requests.
+
+It should become the main gateway for incoming requests.
+
+Required flow:
+
+```text
+ServiceRequest received
+        ↓
+Validate request
+        ↓
+Create Order
+        ↓
+Calculate distance
+        ↓
+Determine priority
+        ↓
+Queue/Schedule order
+        ↓
+Find suitable rider
+        ↓
+Assign rider
+        ↓
+Send to DeliveryEngine
+```
+
+The manager should not simply store incoming requests.
+
+---
+
+# 16. Priority 5 — `SchedulingEngine.java`
+
+This is one of the most important components requiring implementation.
+
+The Scheduling Engine must perform actual scheduling rather than acting as a placeholder.
+
+It should manage:
+
+* Incoming orders
+* Order priority
+* Rider availability
+* Scheduling decisions
+* Delivery time
+* Assignment sequence
+
+---
+
+# 17. Stack Integration in Scheduling Engine
+
+A proper `Stack` implementation already exists:
+
+```text
+src/ds/Stack.java
+```
+
+It must be properly integrated into the Scheduling Engine.
+
+Possible uses include:
+
+* Backtracking scheduling decisions
+* Maintaining scheduling history
+* Undoing/revisiting decisions
+* Temporary scheduling states
+
+The stack must have an actual algorithmic purpose.
+
+Do not simply instantiate a stack to satisfy a requirement.
+
+---
+
+# 18. Priority Queue / MinHeap Scheduling
+
+The scheduling engine should use an appropriate priority-based structure.
+
+For example:
+
+```text
+Priority Queue
+      ↓
+High Priority Order
+      ↓
+Earlier Requested Time
+      ↓
+Shortest/Most Suitable Delivery
+```
+
+The exact priority rules should be documented.
+
+The system must prevent an arbitrary insertion order from becoming the scheduling order unless that is intentionally part of the algorithm.
+
+---
+
+# 19. Priority 6 — B-Tree Integration
+
+`src/ds/BTree.java` already exists.
+
+It must be reviewed and properly integrated.
+
+Potential application:
+
+```text
+Order Index
+```
 
 Example:
 
 ```text
-IF deliveryDistance > 6 km
-    EXCLUDE bicycle riders
-ELSE
-    INCLUDE eligible bicycle and motorcycle riders
+Order ID
+   ↓
+B-Tree
+   ↓
+Fast ordered lookup
 ```
 
-Then select the best rider among the eligible candidates.
-
-This prevents situations where a bicycle rider is assigned an unnecessarily long delivery.
+The project should demonstrate why a B-Tree is appropriate for the selected use case.
 
 ---
 
-# 15. Geographic Distance Calculation
+# 20. Priority 7 — Red-Black Tree Integration
 
-The system should use the existing geographic/mapping functionality where available.
+`src/ds/RedBlackTree.java` also exists.
 
-For coordinates, a proper geographic distance calculation such as the **Haversine formula** can be used:
+It must be integrated into an actual engine.
+
+Potential applications:
 
 ```text
-distance =
-2R × asin(
-    sqrt(
-        sin²((lat₂-lat₁)/2)
-        +
-        cos(lat₁) × cos(lat₂) × sin²((lon₂-lon₁)/2)
-    )
-)
+Active Orders
+Ordered Riders
+Time-based Scheduling
+Dynamic Priority Records
 ```
 
-This provides a more realistic distance calculation between rider and pickup coordinates than simple coordinate subtraction.
-
----
-
-# 16. Data Structure-to-Component Mapping
-
-The implementation should clearly demonstrate where the major data structures are used.
-
-| Component                   | Suggested Data Structure             |
-| --------------------------- | ------------------------------------ |
-| Incoming Orders             | Queue / Priority Queue               |
-| Urgent Orders               | Priority Queue                       |
-| Scheduling Operations       | Stack                                |
-| Rider Lookup                | Hash Table / Hash Map                |
-| Ordered Rider Records       | Red-Black Tree                       |
-| Large Order Index           | B-Tree                               |
-| Route Network               | Graph                                |
-| Shortest Path               | Priority Queue + Graph               |
-| Delivery History            | Linked List / appropriate collection |
-| Rider Ranking               | Heap / Priority Queue                |
-| Algorithm Execution History | Queue/List                           |
-| Location/Route Data         | Graph                                |
-
-The team should justify the final selection based on the requirements of each component.
-
----
-
-# 17. End-to-End Processing Pipeline
-
-The final system should support a complete workflow:
+The Red-Black Tree should support efficient:
 
 ```text
-                    ┌──────────────────┐
-                    │ Incoming Request │
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │  Order Manager   │
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │ Distance Engine  │
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │ Scheduling Engine│
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │Optimization Engine│
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │   Driver Pool    │
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │ Delivery Engine  │
-                    └────────┬─────────┘
-                             ↓
-                    ┌──────────────────┐
-                    │Completed Delivery│
-                    └──────────────────┘
+Insert
+Search
+Delete
 ```
 
-Every stage should communicate using proper models and data structures.
+while maintaining balance.
 
 ---
 
-# 18. Engine Integration
+# 21. Priority 8 — `RouteEngine.java`
 
-The existing files in the `engines` directory should be treated as the primary architectural reference.
-
-Before creating completely new architectures, inspect the existing:
+The Route Engine should operate on:
 
 ```text
-engines/
-ds/
-models/
-tests/
+Location
+RoadEdge
+Graph
+MinHeap
 ```
 
-and determine what has already been provided.
+The road data is already available:
 
-There is already enough information in the existing engine classes to infer:
+```text
+data/locations.csv
+data/roads.csv
+```
 
-* Expected responsibilities
-* Existing method signatures
-* Required models
-* Expected data flow
-* Intended algorithms
-* Data structure usage
+The engine should construct and operate on the campus graph.
 
-The goal is to **complete and integrate the existing architecture**, not unnecessarily replace everything.
+Conceptually:
 
----
+```text
+locations.csv
+     ↓
+Location objects
+     ↓
+Graph vertices
 
-# 19. Error Handling
-
-The completed system should properly handle:
-
-* Empty order queues
-* No available riders
-* No eligible vehicle
-* Invalid locations
-* Invalid orders
-* Duplicate order IDs
-* Duplicate rider IDs
-* Completed orders being reassigned
-* Busy riders being assigned new orders
-* Missing pickup/delivery coordinates
-* Invalid distances
-* Empty data structures
-
-The system should fail gracefully rather than crashing unexpectedly.
+roads.csv
+     ↓
+RoadEdge objects
+     ↓
+Graph edges
+```
 
 ---
 
-# 20. Performance and Complexity Analysis
+# 22. Shortest Path
 
-Every major algorithm should have its expected time complexity documented.
+The Route Engine should provide a shortest-path algorithm such as Dijkstra's algorithm where appropriate.
+
+Expected structure:
+
+```text
+Graph
+  ↓
+MinHeap
+  ↓
+Dijkstra
+  ↓
+Shortest Path
+  ↓
+Estimated Distance
+```
+
+The algorithm should record its execution through `AlgorithmRun`.
+
+---
+
+# 23. Geographic Distance
+
+Where latitude and longitude are used, the system should calculate geographic distance correctly.
+
+The Haversine formula should be considered for direct geographic distance:
+
+```text
+a =
+sin²(Δφ/2)
++
+cos(φ1)cos(φ2)sin²(Δλ/2)
+
+c = 2 atan2(√a, √(1-a))
+
+d = R × c
+```
+
+This can be used for:
+
+* Rider-to-pickup distance
+* Pickup-to-delivery distance
+* Distance estimation
+* Vehicle selection
+
+Road-network distance should be used where actual campus routing is required.
+
+---
+
+# 24. Priority 9 — `DeliveryEngine.java`
+
+The Delivery Engine should control the actual delivery lifecycle.
+
+Required flow:
+
+```text
+Order
+ ↓
+Assigned Rider
+ ↓
+Travel to Pickup
+ ↓
+Pickup
+ ↓
+Travel to Destination
+ ↓
+Delivery
+ ↓
+Complete
+ ↓
+Rider Available
+```
+
+The engine must update:
+
+```text
+Order status
+Rider status
+Rider location
+Delivery statistics
+Audit events
+```
+
+---
+
+# 25. Rider Location Updates
+
+After completing a delivery, the rider's location must become the delivery destination.
+
+Example:
+
+```text
+Before:
+Rider → Location A
+
+Pickup → Location B
+Delivery → Location C
+
+After completion:
+Rider → Location C
+```
+
+This is important because the next order should calculate distance from the rider's **actual current location**.
+
+---
+
+# 26. Priority 10 — `OptimisationEngine.java`
+
+The existing optimization engine should be overhauled.
+
+It should become the main decision-making component for:
+
+```text
+Which rider?
+Which vehicle?
+Which order?
+Which route?
+```
+
+It should use information from:
+
+```text
+DriverPool
+RouteEngine
+SchedulingEngine
+Order
+Location
+```
+
+---
+
+# 27. Suggested Optimization Pipeline
+
+```text
+New Order
+   ↓
+Calculate Delivery Distance
+   ↓
+Check Vehicle Constraints
+   ↓
+Get Available Riders
+   ↓
+Filter Ineligible Riders
+   ↓
+Calculate Rider → Pickup Distance
+   ↓
+Estimate Delivery Time
+   ↓
+Calculate Assignment Score
+   ↓
+Select Best Rider
+   ↓
+Assign Delivery
+```
+
+---
+
+# 28. Priority 11 — `IndexingEngine.java`
+
+The Indexing Engine should demonstrate the practical use of the project's search structures.
+
+Possible indexes:
+
+```text
+Order ID
+Driver ID
+Location ID
+Service Request ID
+```
+
+Potential structures:
+
+```text
+HashTable
+BTree
+RedBlackTree
+BST
+```
+
+The engine should provide efficient lookup operations rather than repeatedly scanning every record.
+
+---
+
+# 29. Priority 12 — `SortingEngine.java`
+
+The Sorting Engine should provide meaningful sorting operations.
+
+Potential sorting targets:
+
+```text
+Orders by priority
+Orders by delivery time
+Drivers by distance
+Drivers by workload
+Deliveries by completion time
+```
+
+Where appropriate, the engine should expose algorithm performance.
+
+Example:
+
+```text
+Algorithm: Merge Sort
+Input Size: 1000
+Execution Time: X ms
+Comparisons: Y
+```
+
+---
+
+# 30. Database Integration
+
+The existing:
+
+```text
+DatabaseManager.java
+SeedDB.java
+ug_swift.db
+```
+
+should be integrated with the operational engines.
+
+The database should persist important information such as:
+
+```text
+Orders
+Resources/Riders
+Locations
+Deliveries
+Audit Events
+Algorithm Runs
+```
+
+The database should not become a replacement for the DSA structures.
+
+The custom data structures should still be used for in-memory algorithmic operations.
+
+---
+
+# 31. Audit Events
+
+`AuditEvent.java` should record important system events.
 
 Examples:
 
 ```text
-Nearest Rider Search
-O(n)
+ORDER_CREATED
+ORDER_ASSIGNED
+RIDER_STATUS_CHANGED
+ORDER_PICKED_UP
+ORDER_DELIVERED
+ORDER_CANCELLED
+ROUTE_CALCULATED
+ALGORITHM_EXECUTED
 ```
 
-if every rider is checked.
-
-A more optimized structure could potentially reduce search complexity depending on the implementation.
-
-Similarly:
-
-```text
-Hash Table Lookup
-Average: O(1)
-
-Red-Black Tree Search
-O(log n)
-
-B-Tree Search
-O(log n)
-
-Priority Queue Insert
-O(log n)
-
-Priority Queue Removal
-O(log n)
-```
-
-The final implementation should explain why a particular structure was selected.
+This provides traceability during demonstrations and testing.
 
 ---
 
-# 21. Required Testing Scenarios
+# 32. Algorithm Run Model
 
-The completed test suite should include realistic scenarios.
+Every major algorithm should be measurable.
 
-### Scenario 1 — Basic Delivery
-
-```text
-1 order
-1 available motorcycle
-→ Order successfully assigned
-→ Delivery completed
-→ Rider becomes available
-```
-
-### Scenario 2 — Multiple Riders
+Examples:
 
 ```text
-1 order
-5 available riders
-→ Algorithm calculates distances
-→ Closest eligible rider selected
+Dijkstra
+Nearest Rider
+Sorting
+Searching
+Scheduling
+Optimization
 ```
 
-### Scenario 3 — Bicycle Distance Restriction
+The system should capture:
+
+```text
+Algorithm Name
+Input Size
+Execution Time
+Number of Operations
+Result
+Timestamp
+```
+
+This allows the project to demonstrate empirical algorithm analysis.
+
+---
+
+# 33. Test Suite Overhaul
+
+`UGSwiftTestSuite.java` currently needs to move beyond generic tests.
+
+It should test the actual implementation.
+
+## Data Structure Tests
+
+Test:
+
+```text
+Stack
+Queue
+CircularQueue
+Deque
+LinkedList
+DynamicArray
+HashTable
+BST
+BTree
+RedBlackTree
+MinHeap
+Graph
+DisjointSet
+```
+
+Each should test:
+
+* Normal operations
+* Empty operations
+* Boundary cases
+* Duplicate values
+* Invalid operations
+* Correct output
+* Size/state changes
+
+---
+
+# 34. Engine Tests
+
+The test suite should test:
+
+```text
+DriverPool
+IncomingOrderManager
+SchedulingEngine
+OptimisationEngine
+RouteEngine
+DeliveryEngine
+SortingEngine
+IndexingEngine
+```
+
+Tests must verify actual behavior.
+
+---
+
+# 35. End-to-End Test
+
+At least one test should execute the complete delivery lifecycle.
+
+Example:
+
+```text
+Create Order
+     ↓
+IncomingOrderManager
+     ↓
+Calculate Distance
+     ↓
+SchedulingEngine
+     ↓
+OptimisationEngine
+     ↓
+Select Rider
+     ↓
+DeliveryEngine
+     ↓
+Complete Delivery
+     ↓
+Update Rider
+     ↓
+Persist Result
+```
+
+Expected result:
+
+```text
+Order = COMPLETED
+Rider = AVAILABLE
+Rider Location = Delivery Location
+Database = Updated
+Audit Event = Recorded
+Algorithm Run = Recorded
+```
+
+---
+
+# 36. Critical Test — 6 km Vehicle Rule
+
+The following test must exist.
+
+### Input
 
 ```text
 Delivery distance = 8 km
-
 Bicycle rider = available
 Motorcycle rider = available
-
-Expected:
-Motorcycle selected
 ```
 
-### Scenario 4 — Short Delivery
+### Expected
+
+```text
+Bicycle = rejected
+Motorcycle = eligible
+Motorcycle = selected
+```
+
+---
+
+# 37. Critical Test — Short Distance
+
+### Input
 
 ```text
 Delivery distance = 3 km
-
 Bicycle rider = available
 Motorcycle rider = available
-
-Expected:
-Both considered
-Best assignment selected
 ```
 
-### Scenario 5 — No Available Riders
+### Expected
 
 ```text
-Order arrives
-All riders are busy
+Both vehicles are eligible.
+
+The optimization algorithm selects the rider
+with the best assignment score.
+```
+
+---
+
+# 38. Critical Test — Nearest Rider
+
+Example:
+
+```text
+Rider A → 1.2 km from pickup
+Rider B → 3.4 km from pickup
+Rider C → 0.8 km from pickup
+```
 
 Expected:
+
+```text
+Rider C
+```
+
+provided Rider C satisfies all other constraints.
+
+---
+
+# 39. Critical Test — No Available Rider
+
+If all riders are busy:
+
+```text
+New Order
+    ↓
+No eligible rider
+    ↓
 Order remains queued/scheduled
-No invalid assignment occurs
 ```
 
-### Scenario 6 — Priority Orders
+The application must not crash or assign the order to a busy rider.
+
+---
+
+# 40. Critical Test — Multiple Orders
+
+The system should be tested with multiple simultaneous orders.
+
+Example:
 
 ```text
-Normal order
-Normal order
-High-priority order
-
-Expected:
-Scheduling mechanism processes the high-priority order appropriately
+10 Orders
+5 Riders
 ```
 
-### Scenario 7 — Multiple Incoming Orders
+The system must:
 
-Test simultaneous/sequential order requests and ensure riders are not assigned to conflicting deliveries.
+* Queue orders correctly
+* Apply priorities
+* Avoid double assignment
+* Assign eligible riders
+* Update rider states
+* Complete deliveries
+* Release riders for subsequent jobs
 
 ---
 
-# 22. Definition of Done
+# 41. `web/campus_map`
 
-The codebase should only be considered substantially complete when:
+The campus map should remain integrated with the backend data.
 
-* [ ] The test suite tests actual data structure behavior.
-* [ ] All major data structures have meaningful tests.
-* [ ] The Stack is properly integrated into scheduling.
-* [ ] The B-Tree is implemented and integrated.
-* [ ] The Red-Black Tree is implemented and integrated.
-* [ ] The Driver Pool properly manages riders.
-* [ ] Riders have location, availability, vehicle type, and delivery state.
-* [ ] The Delivery Engine handles the complete delivery lifecycle.
-* [ ] The Incoming Order Manager properly processes requests.
-* [ ] The Order model contains sufficient delivery information.
-* [ ] The Scheduling Engine performs actual scheduling.
-* [ ] The Optimization Engine selects suitable assignments.
+The map currently contains:
+
+```text
+index.html
+locations.js
+script.js
+style.css
+```
+
+The map should be capable of visualizing:
+
+* Campus locations
+* Roads
+* Pickup points
+* Delivery points
+* Rider locations
+* Routes
+
+Where possible, the route generated by `RouteEngine` should correspond to the route visualized on the map.
+
+---
+
+# 42. Tools
+
+The existing tools:
+
+```text
+CampusMapLauncher.java
+ExportLocations.java
+ExportRoute.java
+```
+
+should be reviewed to ensure they work with the completed route and location system.
+
+They should not contain duplicate routing logic.
+
+The actual route calculation should remain inside `RouteEngine`.
+
+---
+
+# 43. `Main.java`, `UGSwiftApp.java`, and Launchers
+
+The application entry points should primarily coordinate the system rather than contain large amounts of business logic.
+
+The architecture should remain:
+
+```text
+Application Layer
+      ↓
+Engines
+      ↓
+Models
+      ↓
+Data Structures
+```
+
+Business logic should not be unnecessarily placed inside:
+
+```text
+Main.java
+UGSwiftApp.java
+UGSwiftLauncher.java
+```
+
+---
+
+# 44. Code Quality Requirements
+
+The final implementation should:
+
+* Use meaningful method names
+* Avoid duplicated algorithms
+* Avoid unnecessary global variables
+* Avoid hard-coded values where configuration is appropriate
+* Handle exceptions properly
+* Document complex algorithms
+* Keep models separate from engines
+* Keep DSA implementations separate from business logic
+* Avoid unnecessary third-party dependencies
+
+---
+
+# 45. Complexity Documentation
+
+Every important algorithm should have documented complexity.
+
+Examples:
+
+| Operation             |  Expected Complexity |
+| --------------------- | -------------------: |
+| Hash Table Search     |         Average O(1) |
+| BST Search            |     O(log n) average |
+| Red-Black Tree Search |             O(log n) |
+| B-Tree Search         |             O(log n) |
+| Heap Insert           |             O(log n) |
+| Heap Remove           |             O(log n) |
+| Stack Push            |                 O(1) |
+| Stack Pop             |                 O(1) |
+| Queue Enqueue         |                 O(1) |
+| Queue Dequeue         |                 O(1) |
+| Dijkstra with MinHeap |     O((V + E) log V) |
+| Linear Rider Search   |                 O(n) |
+| Sorting               | Depends on algorithm |
+
+The actual complexity should match the implementation.
+
+---
+
+# 46. Definition of Done
+
+The project should not be considered complete simply because it compiles.
+
+The following must be completed:
+
+## Data Structures
+
+* [ ] All DSA implementations compile and behave correctly.
+* [ ] Stack is integrated into scheduling.
+* [ ] BTree is integrated into a meaningful operation.
+* [ ] RedBlackTree is integrated into a meaningful operation.
+* [ ] Graph is used by the Route Engine.
+* [ ] MinHeap is used where priority processing is required.
+* [ ] HashTable is used for efficient lookup.
+* [ ] Queue/Priority Queue is used for incoming/scheduled orders.
+
+## Models
+
+* [ ] `Order` contains sufficient delivery information.
+* [ ] `Resource` properly represents riders.
+* [ ] Bicycle and motorcycle riders are distinguished.
+* [ ] Rider availability is tracked.
+* [ ] Rider location is tracked.
+* [ ] Order lifecycle is tracked.
+* [ ] `AlgorithmRun` records algorithm execution.
+* [ ] `AuditEvent` records important system events.
+
+## Engines
+
+* [ ] `DriverPool` properly manages riders.
+* [ ] `IncomingOrderManager` properly handles requests.
+* [ ] `SchedulingEngine` performs actual scheduling.
+* [ ] `OptimisationEngine` performs actual optimization.
+* [ ] `DeliveryEngine` handles the complete delivery lifecycle.
+* [ ] `RouteEngine` calculates routes.
+* [ ] `SortingEngine` performs meaningful sorting.
+* [ ] `IndexingEngine` provides efficient lookup.
+* [ ] `DatabaseManager` persists important information.
+
+## Optimization
+
 * [ ] Rider-to-pickup distance is calculated.
-* [ ] Vehicle type is considered during assignment.
-* [ ] Bicycle riders are excluded from deliveries beyond the configured distance threshold.
+* [ ] Delivery distance is calculated.
+* [ ] Vehicle type is considered.
+* [ ] Bicycle riders are excluded beyond the configured 6 km threshold.
 * [ ] Motorcycle riders are considered for long-distance deliveries.
-* [ ] The Algorithm Run Model records algorithm execution information.
-* [ ] End-to-end order processing works.
-* [ ] Error cases are handled.
-* [ ] Algorithm complexity is documented.
-* [ ] Performance can be measured.
-* [ ] The system can demonstrate the practical use of the required DSA concepts.
+* [ ] Rider availability is considered.
+* [ ] Current rider location is considered.
+* [ ] A clear assignment algorithm exists.
+* [ ] The algorithm can select the optimal eligible rider.
+
+## Testing
+
+* [ ] All major data structures have dedicated tests.
+* [ ] All major engines have dedicated tests.
+* [ ] Edge cases are tested.
+* [ ] Multiple orders are tested.
+* [ ] Multiple riders are tested.
+* [ ] Vehicle restrictions are tested.
+* [ ] No-rider scenarios are tested.
+* [ ] End-to-end delivery is tested.
+* [ ] Algorithm performance is measured.
 
 ---
 
-# 23. Final Objective
+# 47. Final Architecture
 
-The goal is **not simply to make the code compile**.
+The completed architecture should ultimately resemble:
 
-The goal is to produce a working DSA project where the relationship between:
+```text
+                         UG SWIFT
+                            │
+                    ┌───────┴───────┐
+                    │ Application   │
+                    │ Main / UI     │
+                    └───────┬───────┘
+                            │
+                    ┌───────▼───────┐
+                    │    ENGINES    │
+                    ├───────────────┤
+                    │ IncomingOrder │
+                    │ Scheduling    │
+                    │ Optimisation  │
+                    │ DriverPool    │
+                    │ Delivery      │
+                    │ Route         │
+                    │ Sorting       │
+                    │ Indexing      │
+                    │ Database      │
+                    └───────┬───────┘
+                            │
+                    ┌───────▼───────┐
+                    │    MODELS     │
+                    ├───────────────┤
+                    │ Order         │
+                    │ Resource      │
+                    │ Location      │
+                    │ ServiceReq.   │
+                    │ RoadEdge      │
+                    │ AlgorithmRun  │
+                    │ AuditEvent    │
+                    └───────┬───────┘
+                            │
+                    ┌───────▼───────┐
+                    │ DATA STRUCTURES│
+                    ├───────────────┤
+                    │ Graph         │
+                    │ MinHeap       │
+                    │ Queue         │
+                    │ Stack         │
+                    │ HashTable     │
+                    │ BTree         │
+                    │ RedBlackTree  │
+                    │ BST           │
+                    │ LinkedList    │
+                    │ Deque         │
+                    │ CircularQueue │
+                    │ DynamicArray  │
+                    │ DisjointSet   │
+                    └───────────────┘
+```
 
-**Data Structures → Algorithms → Models → Engines → Optimization → Delivery Operations**
+---
 
-is clearly demonstrated.
+# 48. Final Goal
 
-Every major component should have a real responsibility, use an appropriate data structure or algorithm, and integrate correctly with the rest of the system.
+The final UG Swift system should demonstrate that the project is not merely a Java application with several data structure classes attached to it.
 
-The existing codebase is the starting point. The files already contain enough architectural information to guide the implementation. The remaining work is to properly implement, connect, test, optimize, and validate the components until the entire delivery workflow operates as one coherent system.
+It should demonstrate a genuine relationship between:
+
+```text
+DATA STRUCTURES
+       ↓
+ALGORITHMS
+       ↓
+MODELS
+       ↓
+ENGINES
+       ↓
+OPTIMISATION
+       ↓
+REAL-WORLD CAMPUS DELIVERY
+```
+
+A delivery request should be able to enter the system, move through the appropriate data structures and algorithms, be assigned to the most suitable rider, have its route calculated, be delivered, and have the complete operation recorded and measured.
+
+The existing codebase should therefore be **completed and integrated rather than rewritten unnecessarily**.
