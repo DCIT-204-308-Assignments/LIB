@@ -1296,61 +1296,61 @@ The following must be completed:
 
 ## Data Structures
 
-* [ ] All DSA implementations compile and behave correctly.
-* [ ] Stack is integrated into scheduling.
-* [ ] BTree is integrated into a meaningful operation.
-* [ ] RedBlackTree is integrated into a meaningful operation.
-* [ ] Graph is used by the Route Engine.
-* [ ] MinHeap is used where priority processing is required.
-* [ ] HashTable is used for efficient lookup.
-* [ ] Queue/Priority Queue is used for incoming/scheduled orders.
+* [x] All DSA implementations compile and behave correctly.
+* [x] Stack is integrated into scheduling.
+* [x] BTree is integrated into a meaningful operation.
+* [x] RedBlackTree is integrated into a meaningful operation.
+* [x] Graph is used by the Route Engine.
+* [x] MinHeap is used where priority processing is required.
+* [x] HashTable is used for efficient lookup.
+* [x] Queue/Priority Queue is used for incoming/scheduled orders.
 
 ## Models
 
-* [ ] `Order` contains sufficient delivery information.
-* [ ] `Resource` properly represents riders.
-* [ ] Bicycle and motorcycle riders are distinguished.
-* [ ] Rider availability is tracked.
-* [ ] Rider location is tracked.
-* [ ] Order lifecycle is tracked.
-* [ ] `AlgorithmRun` records algorithm execution.
-* [ ] `AuditEvent` records important system events.
+* [x] `Order` contains sufficient delivery information.
+* [x] `Resource` properly represents riders.
+* [x] Bicycle and motorcycle riders are distinguished.
+* [x] Rider availability is tracked.
+* [x] Rider location is tracked.
+* [x] Order lifecycle is tracked.
+* [x] `AlgorithmRun` records algorithm execution.
+* [x] `AuditEvent` records important system events.
 
 ## Engines
 
-* [ ] `DriverPool` properly manages riders.
-* [ ] `IncomingOrderManager` properly handles requests.
-* [ ] `SchedulingEngine` performs actual scheduling.
-* [ ] `OptimisationEngine` performs actual optimization.
-* [ ] `DeliveryEngine` handles the complete delivery lifecycle.
-* [ ] `RouteEngine` calculates routes.
-* [ ] `SortingEngine` performs meaningful sorting.
-* [ ] `IndexingEngine` provides efficient lookup.
-* [ ] `DatabaseManager` persists important information.
+* [x] `DriverPool` properly manages riders.
+* [x] `IncomingOrderManager` properly handles requests.
+* [x] `SchedulingEngine` performs actual scheduling.
+* [x] `OptimisationEngine` performs actual optimization.
+* [x] `DeliveryEngine` handles the complete delivery lifecycle.
+* [x] `RouteEngine` calculates routes.
+* [x] `SortingEngine` performs meaningful sorting.
+* [x] `IndexingEngine` provides efficient lookup.
+* [x] `DatabaseManager` persists important information.
 
 ## Optimization
 
-* [ ] Rider-to-pickup distance is calculated.
-* [ ] Delivery distance is calculated.
-* [ ] Vehicle type is considered.
-* [ ] Bicycle riders are excluded beyond the configured 6 km threshold.
-* [ ] Motorcycle riders are considered for long-distance deliveries.
-* [ ] Rider availability is considered.
-* [ ] Current rider location is considered.
-* [ ] A clear assignment algorithm exists.
-* [ ] The algorithm can select the optimal eligible rider.
+* [x] Rider-to-pickup distance is calculated.
+* [x] Delivery distance is calculated.
+* [x] Vehicle type is considered.
+* [x] Bicycle riders are excluded beyond the configured 6 km threshold.
+* [x] Motorcycle riders are considered for long-distance deliveries.
+* [x] Rider availability is considered.
+* [x] Current rider location is considered.
+* [x] A clear assignment algorithm exists.
+* [x] The algorithm can select the optimal eligible rider.
 
 ## Testing
 
-* [ ] All major data structures have dedicated tests.
-* [ ] All major engines have dedicated tests.
-* [ ] Edge cases are tested.
-* [ ] Multiple orders are tested.
-* [ ] Multiple riders are tested.
-* [ ] Vehicle restrictions are tested.
-* [ ] No-rider scenarios are tested.
-* [ ] End-to-end delivery is tested.
-* [ ] Algorithm performance is measured.
+* [x] All major data structures have dedicated tests.
+* [x] All major engines have dedicated tests.
+* [x] Edge cases are tested.
+* [x] Multiple orders are tested.
+* [x] Multiple riders are tested.
+* [x] Vehicle restrictions are tested.
+* [x] No-rider scenarios are tested.
+* [x] End-to-end delivery is tested.
+* [x] Algorithm performance is measured.
 
 ---
 

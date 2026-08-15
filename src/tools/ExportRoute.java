@@ -2,7 +2,6 @@ package tools;
 
 import ds.Graph;
 import models.Location;
-import models.RoadEdge;
 import engines.DatabaseManager;
 import engines.RouteEngine;
 
@@ -12,13 +11,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Export a computed route (sequence of lat/lon nodes) to web/campus_map/route.json
- */
+
 public class ExportRoute {
 
     public static Path exportRoute(int fromLocationId, int toLocationId) throws Exception {
-        // Load data from DB
         var locs = DatabaseManager.loadLocations();
         var roads = DatabaseManager.loadRoads();
 
