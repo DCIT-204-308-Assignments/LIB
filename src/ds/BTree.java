@@ -7,7 +7,6 @@ public class BTree<K extends Comparable<K>, V> {
         public int n; // Number of keys currently stored
         @SuppressWarnings("unchecked")
         public K[] keys = (K[]) new Comparable[2 * T - 1];
-        @SuppressWarnings("unchecked")
         public Object[] values = new Object[2 * T - 1];
         @SuppressWarnings("unchecked")
         public BTreeNode<K, V>[] children = (BTreeNode<K, V>[]) new BTreeNode[2 * T];
@@ -58,7 +57,14 @@ public class BTree<K extends Comparable<K>, V> {
         return search(node.children[i], key);
     }
 
+    public boolean containsKey(K key) {
+        return search(key) != null;
+    }
+
     public void insert(K key, V value) {
+        if (updateValue(root, key, value)) {
+            return;
+        }
         BTreeNode<K, V> r = root;
         if (r.n == 2 * T - 1) {
             BTreeNode<K, V> s = new BTreeNode<>(false);
@@ -70,6 +76,25 @@ public class BTree<K extends Comparable<K>, V> {
             insertNonFull(r, key, value);
         }
         size++;
+    }
+
+    private boolean updateValue(BTreeNode<K, V> node, K key, V value) {
+        if (node == null) return false;
+        int i = 0;
+        while (i < node.n && key.compareTo(node.keys[i]) > 0) {
+            i++;
+        }
+        if (i < node.n && key.compareTo(node.keys[i]) == 0) {
+            node.values[i] = value;
+            return true;
+        }
+        if (node.isLeaf) return false;
+        return updateValue(node.children[i], key, value);
+    }
+
+    public void clear() {
+        root = new BTreeNode<>(true);
+        size = 0;
     }
 
     private void insertNonFull(BTreeNode<K, V> node, K key, V value) {

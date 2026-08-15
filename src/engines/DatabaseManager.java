@@ -81,6 +81,13 @@ public class DatabaseManager {
                     "FOREIGN KEY(destLocationId) REFERENCES locations(locationId)" +
                     ");");
 
+            // Migration check: ensure deliveredTimeMin exists if table was created previously without it
+            try {
+                stmt.execute("ALTER TABLE service_requests ADD COLUMN deliveredTimeMin REAL;");
+            } catch (SQLException ignored) {
+                // Column already exists
+            }
+
             stmt.execute("CREATE TABLE IF NOT EXISTS algorithm_runs (" +
                     "runId INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "algorithmName TEXT NOT NULL," +
@@ -131,11 +138,22 @@ public class DatabaseManager {
         return true;
     }
 
+    private static java.io.File resolveFile(String path) {
+        java.io.File f = new java.io.File(path);
+        if (f.exists()) return f;
+        java.io.File inData = new java.io.File("data", path);
+        if (inData.exists()) return inData;
+        java.io.File stripped = new java.io.File("data", f.getName());
+        if (stripped.exists()) return stripped;
+        return f;
+    }
+
     private static void seedLocations(Connection conn, String path) throws Exception {
         String insertSql = "INSERT INTO locations (locationId, name, zone, type, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)";
+        java.io.File csvFile = resolveFile(path);
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql);
-             BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            String header = reader.readLine(); // skip header
+             BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+            reader.readLine(); // skip header
             String line;
             conn.setAutoCommit(false);
             while ((line = reader.readLine()) != null) {
@@ -158,9 +176,10 @@ public class DatabaseManager {
 
     private static void seedRoads(Connection conn, String path) throws Exception {
         String insertSql = "INSERT INTO roads (roadId, fromLocationId, toLocationId, fromName, toName, distanceKm, travelTimeMin, trafficLevel, roadCondition, roadConditionWeight, isOneWay, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        java.io.File csvFile = resolveFile(path);
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql);
-             BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            String header = reader.readLine(); // skip header
+             BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+            reader.readLine(); // skip header
             String line;
             conn.setAutoCommit(false);
             while ((line = reader.readLine()) != null) {
@@ -312,9 +331,20 @@ public class DatabaseManager {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
+            boolean hasDeliveredCol = false;
+            ResultSetMetaData meta = rs.getMetaData();
+            for (int i = 1; i <= meta.getColumnCount(); i++) {
+                if ("deliveredTimeMin".equalsIgnoreCase(meta.getColumnName(i))) {
+                    hasDeliveredCol = true;
+                    break;
+                }
+            }
             while (rs.next()) {
-                double delivered = rs.getDouble("deliveredTimeMin");
-                if (rs.wasNull()) delivered = -1.0;
+                double delivered = -1.0;
+                if (hasDeliveredCol) {
+                    delivered = rs.getDouble("deliveredTimeMin");
+                    if (rs.wasNull()) delivered = -1.0;
+                }
                 list.add(new ServiceRequest(
                         rs.getInt("requestId"),
                         rs.getInt("sourceLocationId"),

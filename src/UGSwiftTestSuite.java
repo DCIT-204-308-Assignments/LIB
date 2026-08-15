@@ -1,5 +1,4 @@
 import java.util.Comparator;
-import java.util.Random;
 import ds.*;
 import engines.*;
 import models.*;
@@ -27,6 +26,7 @@ public class UGSwiftTestSuite {
         testDisjointSet();
         testSortingSearch();
         testBTree();
+        testModelsAndBSTDeletion();
 
         System.out.println("\n══════════════════════════════════════════════════════════════");
         System.out.printf("  RESULTS: %d passed, %d failed  (out of %d total)%n", passed, failed, passed + failed);
@@ -387,6 +387,36 @@ public class UGSwiftTestSuite {
         assertTrue("T58 BTree search(1) == Zone1", "Zone1".equals(bt.search(1)));
         assertTrue("T59 BTree search(20) == Zone20", "Zone20".equals(bt.search(20)));
         assertTrue("T60 BTree search(99) == null (missing key)", bt.search(99) == null);
+    }
+
+    // ── Models & BST Deletion ─────────────────────────────────────────────
+    private static void testModelsAndBSTDeletion() {
+        section("BST Deletion & Models Overhaul");
+        BST<Integer, String> bst = new BST<>();
+        bst.insert(50, "Root"); bst.insert(30, "Left"); bst.insert(70, "Right"); bst.insert(20, "L-L");
+        assertTrue("T61 BST delete(30) returns true", bst.delete(30));
+        assertTrue("T62 BST search(30) after delete is null", bst.search(30) == null);
+        assertTrue("T63 BST size after delete is 3", bst.size() == 3);
+
+        Location loc1 = new Location(1, "Balme Library", "Academic", "LIBRARY", 5.6500, -0.1870);
+        Location loc2 = new Location(2, "Night Market", "Commercial", "MARKET", 5.6550, -0.1820);
+        double dist = loc1.distanceTo(loc2);
+        assertTrue("T64 Location Haversine distance > 0", dist > 0.4 && dist < 1.0);
+
+        Order order = new Order(101, "Kofi", "JCS", "Jollof", 0.5, 1, 2, 120.0, "CREATED", -1);
+        order.setStatus(Order.OrderState.SCHEDULED);
+        order.setAssignedRiderId(5);
+        assertTrue("T65 Order status transition to SCHEDULED", "SCHEDULED".equals(order.getStatus()) && order.getAssignedRiderId() == 5);
+
+        Resource rider = new Resource(5, "Kwame", "BICYCLE", 1, 15.0, "AVAILABLE");
+        rider.assignOrder(101);
+        assertTrue("T66 Rider assigned order -> BUSY", rider.getCurrentOrderId() == 101 && "BUSY".equals(rider.getAvailabilityStatus()));
+        rider.completeOrder(2);
+        assertTrue("T67 Rider completed order -> location=2, AVAILABLE", rider.getCurrentLocationId() == 2 && rider.isAvailable() && rider.getCompletedDeliveries() == 1);
+
+        ServiceRequest req = new ServiceRequest(201, 1, 2, "Food", 4, 120.0, 150.0, "PENDING", -1);
+        Order converted = req.toOrder(102);
+        assertTrue("T68 ServiceRequest toOrder conversion", converted.getOrderId() == 102 && converted.getPickupLocationId() == 1);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

@@ -2,9 +2,7 @@ package engines;
 
 import ds.MinHeap;
 import ds.Queue;
-import ds.DynamicArray;
 import models.ServiceRequest;
-import java.util.Comparator;
 
 public class IncomingOrderManager {
     private final Queue<ServiceRequest> fifo;

@@ -158,12 +158,47 @@ public class HashTable<K, V> {
         return true;
     }
 
+    public boolean containsKey(K key) {
+        return get(key) != null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void clear() {
+        this.buckets = (LinkedList<Entry<K, V>>[]) new LinkedList[capacity];
+        this.size = 0;
+        this.collisionCount = 0;
+    }
+
     public DynamicArray<Entry<K, V>> entries() {
         DynamicArray<Entry<K, V>> list = new DynamicArray<>();
         for (int i = 0; i < capacity; i++) {
             if (buckets[i] != null) {
                 for (Entry<K, V> entry : buckets[i]) {
                     list.add(entry);
+                }
+            }
+        }
+        return list;
+    }
+
+    public DynamicArray<K> keys() {
+        DynamicArray<K> list = new DynamicArray<>();
+        for (int i = 0; i < capacity; i++) {
+            if (buckets[i] != null) {
+                for (Entry<K, V> entry : buckets[i]) {
+                    list.add(entry.key);
+                }
+            }
+        }
+        return list;
+    }
+
+    public DynamicArray<V> values() {
+        DynamicArray<V> list = new DynamicArray<>();
+        for (int i = 0; i < capacity; i++) {
+            if (buckets[i] != null) {
+                for (Entry<K, V> entry : buckets[i]) {
+                    list.add(entry.value);
                 }
             }
         }

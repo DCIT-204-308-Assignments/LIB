@@ -58,12 +58,49 @@ public class BST<K extends Comparable<K>, V> {
         return node == null ? null : node.value;
     }
 
+    public boolean containsKey(K key) {
+        return search(key) != null;
+    }
+
     private Node<K, V> searchRec(Node<K, V> node, K key) {
         if (node == null) return null;
         int cmp = key.compareTo(node.key);
         if (cmp < 0) return searchRec(node.left, key);
         if (cmp > 0) return searchRec(node.right, key);
         return node;
+    }
+
+    public boolean delete(K key) {
+        if (key == null || !containsKey(key)) return false;
+        root = deleteRec(root, key);
+        size--;
+        return true;
+    }
+
+    private Node<K, V> deleteRec(Node<K, V> node, K key) {
+        if (node == null) return null;
+        int cmp = key.compareTo(node.key);
+        if (cmp < 0) {
+            node.left = deleteRec(node.left, key);
+        } else if (cmp > 0) {
+            node.right = deleteRec(node.right, key);
+        } else {
+            if (node.left == null) return node.right;
+            if (node.right == null) return node.left;
+            Node<K, V> minNode = minValueNode(node.right);
+            node.key = minNode.key;
+            node.value = minNode.value;
+            node.right = deleteRec(node.right, minNode.key);
+        }
+        return node;
+    }
+
+    private Node<K, V> minValueNode(Node<K, V> node) {
+        Node<K, V> current = node;
+        while (current.left != null) {
+            current = current.left;
+        }
+        return current;
     }
 
     public DynamicArray<V> inorder() {

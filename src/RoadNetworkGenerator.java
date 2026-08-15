@@ -304,7 +304,7 @@ public class RoadNetworkGenerator {
     private static List<Location> readLocations(String path) throws IOException {
         List<Location> result = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            String header = reader.readLine(); // locationId,name,zone,type,latitude,longitude[,sourceSlug]
+            reader.readLine(); // locationId,name,zone,type,latitude,longitude[,sourceSlug]
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;

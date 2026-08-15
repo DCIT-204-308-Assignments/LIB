@@ -8,8 +8,8 @@ import ds.DynamicArray;
 import ds.Graph;
 import engines.DatabaseManager;
 import engines.DeliveryEngine;
-import engines.IncomingOrderManager;
 import engines.DriverPool;
+import engines.IncomingOrderManager;
 import engines.RouteEngine;
 import engines.SchedulingEngine;
 import models.Location;
@@ -50,7 +50,6 @@ public class UGSwiftApp extends JFrame {
     private final Map<String, List<String>> restaurantMenus = new LinkedHashMap<>();
     private final Map<String, Double> menuWeights = new LinkedHashMap<>();
 
-    // Auto-processing controls
     private javax.swing.Timer autoProcessTimer;
     private boolean autoProcessing = false;
     private JButton autoToggleBtn;
@@ -443,7 +442,8 @@ public class UGSwiftApp extends JFrame {
         dsDemoBtn.addActionListener(e -> showDSDemo());
         openMapBtn.addActionListener(e -> {
             try {
-                tools.CampusMapLauncher.openMap();
+                Class<?> launcherClass = Class.forName("tools.CampusMapLauncher");
+                launcherClass.getMethod("openMap").invoke(null);
             } catch (Exception ex) {
                 log("Failed to open campus map: " + ex.getMessage());
             }
@@ -560,7 +560,7 @@ public class UGSwiftApp extends JFrame {
             populateLocationSelectors();
             populateRestaurantMenus();
             refreshDashboard();
-            refreshSummary();
+            showSummary();
         } catch (Exception ex) {
             log("Failed to reload data: " + ex.getMessage());
         }
@@ -826,109 +826,302 @@ public class UGSwiftApp extends JFrame {
     }
 
     private void showDSDemo() {
-        JDialog dlg = new JDialog(this, "Data Structures Demo", true);
-        dlg.setSize(900, 600);
+        JDialog dlg = new JDialog(this, "UG Swift — System Data Structures & Algorithm Demos", true);
+        dlg.setSize(960, 640);
         dlg.setLocationRelativeTo(this);
         JTabbedPane tabs = new JTabbedPane();
 
-        // Stack demo
+        // 1. Graph & MinHeap (Campus Network & Dijkstra)
+        JTextArea graphArea = new JTextArea();
+        graphArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        graphArea.setEditable(false);
+        JButton runGraph = new JButton("Run Campus Graph & Dijkstra Demo");
+        runGraph.addActionListener(e -> {
+            graphArea.setText("");
+            graphArea.append("═══ CAMPUS ROAD NETWORK & DIJKSTRA (Graph + MinHeap) ═══\n");
+            DynamicArray<Location> locs = DatabaseManager.loadLocations();
+            DynamicArray<RoadEdge> rds = DatabaseManager.loadRoads();
+            graphArea.append(String.format("Loaded %d Campus Locations & %d Road Edges into Graph.\n", locs.size(), rds.size()));
+            Graph graph = buildGraph();
+            long t0 = System.nanoTime();
+            RouteEngine.PathResult res = RouteEngine.dijkstra(graph, 1, 75); // Balme Library -> Night Market
+            long t1 = System.nanoTime();
+            if (res != null) {
+                graphArea.append(String.format("Shortest Path from Node 1 (%s) to Node 75 (%s):\n", findLocationName(1), findLocationName(75)));
+                graphArea.append(String.format("  • Total Distance : %.3f km\n", res.totalDistanceKm));
+                graphArea.append(String.format("  • Travel Time    : %.2f mins\n", res.totalTimeMin));
+                graphArea.append(String.format("  • Vertices Traversed: %d\n", res.path.size()));
+                graphArea.append("  • Path Nodes     : ");
+                for (int i = 0; i < res.path.size(); i++) {
+                    int nid = res.path.get(i);
+                    graphArea.append(findLocationName(nid) + (i < res.path.size() - 1 ? " → " : ""));
+                }
+                graphArea.append(String.format("\n  • Execution Time : %,d ns (%.3f ms)\n", (t1 - t0), (t1 - t0) / 1e6));
+            } else {
+                graphArea.append("No route found between Node 1 and Node 75.\n");
+            }
+        });
+        JPanel graphPanel = new JPanel(new BorderLayout());
+        graphPanel.add(new JScrollPane(graphArea), BorderLayout.CENTER);
+        JPanel gp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); gp.add(runGraph); graphPanel.add(gp, BorderLayout.SOUTH);
+        tabs.addTab("Graph & Dijkstra", graphPanel);
+
+        // 2. B-Tree (Multi-Way Order Indexing)
+        JTextArea btreeArea = new JTextArea();
+        btreeArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        btreeArea.setEditable(false);
+        JButton runBTree = new JButton("Run B-Tree Order Indexing Demo");
+        runBTree.addActionListener(e -> {
+            btreeArea.setText("");
+            btreeArea.append("═══ B-TREE LARGE-SCALE ORDER INDEXING DEMO (degree t=3) ═══\n");
+            ds.BTree<Integer, ServiceRequest> btree = new ds.BTree<>();
+            DynamicArray<ServiceRequest> reqs = DatabaseManager.loadServiceRequests();
+            btreeArea.append(String.format("Indexing %,d Service Requests into B-Tree...\n", reqs.size()));
+            for (ServiceRequest r : reqs) {
+                btree.insert(r.getRequestId(), r);
+            }
+            btreeArea.append(String.format("B-Tree Index Built successfully. Total Indexed Elements: %d\n\n", btree.size()));
+            int[] testIds = {1, 42, 150, 300, 999};
+            for (int id : testIds) {
+                long start = System.nanoTime();
+                ServiceRequest found = btree.search(id);
+                long elapsed = System.nanoTime() - start;
+                if (found != null) {
+                    btreeArea.append(String.format("[FOUND] Request #%-3d | Category: %-15s | Priority: %.2f | Search Time: %,d ns\n",
+                            id, found.getCategory(), found.getPriority(), elapsed));
+                } else {
+                    btreeArea.append(String.format("[MISS ] Request #%-3d | Key not found in B-Tree index | Search Time: %,d ns\n", id, elapsed));
+                }
+            }
+        });
+        JPanel btreePanel = new JPanel(new BorderLayout());
+        btreePanel.add(new JScrollPane(btreeArea), BorderLayout.CENTER);
+        JPanel bp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bp.add(runBTree); btreePanel.add(bp, BorderLayout.SOUTH);
+        tabs.addTab("B-Tree Indexing", btreePanel);
+
+        // 3. Red-Black Tree (Self-Balancing Order Registry)
+        JTextArea rbtArea = new JTextArea();
+        rbtArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        rbtArea.setEditable(false);
+        JButton runRBT = new JButton("Run Red-Black Tree Balance Demo");
+        runRBT.addActionListener(e -> {
+            rbtArea.setText("");
+            rbtArea.append("═══ RED-BLACK TREE SELF-BALANCING ORDER REGISTRY DEMO ═══\n");
+            ds.RedBlackTree<Integer, ServiceRequest> rbt = new ds.RedBlackTree<>();
+            DynamicArray<ServiceRequest> reqs = DatabaseManager.loadServiceRequests();
+            int count = Math.min(50, reqs.size());
+            for (int i = 0; i < count; i++) {
+                rbt.insert(reqs.get(i).getRequestId(), reqs.get(i));
+            }
+            btreeArea.append(String.format("Inserted %d Active Orders into Red-Black Tree.\n", count));
+            rbtArea.append("Properties Verified:\n");
+            rbtArea.append("  • Root Node Color : " + (rbt.getRoot() != null && rbt.getRoot().color == ds.RedBlackTree.BLACK ? "BLACK (Valid)" : "RED") + "\n");
+            int h = rbt.height();
+            double maxAllowedH = 2 * (Math.log(count + 1) / Math.log(2));
+            rbtArea.append(String.format("  • Tree Height     : %d (Max theoretical bound: %.1f)\n", h, maxAllowedH));
+            rbtArea.append("  • Size            : " + rbt.size() + "\n");
+            rbtArea.append("\nIn-order Traversal (Sorted Keys):\n");
+            DynamicArray<ServiceRequest> inorder = rbt.inorder();
+            for (int i = 0; i < Math.min(10, inorder.size()); i++) {
+                ServiceRequest r = inorder.get(i);
+                rbtArea.append(String.format("  Order #%d [%s] -> %s\n", r.getRequestId(), r.getCategory(), r.getStatus()));
+            }
+            if (inorder.size() > 10) rbtArea.append(String.format("  ... and %d more items.\n", inorder.size() - 10));
+        });
+        JPanel rbtPanel = new JPanel(new BorderLayout());
+        rbtPanel.add(new JScrollPane(rbtArea), BorderLayout.CENTER);
+        JPanel rbp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); rbp.add(runRBT); rbtPanel.add(rbp, BorderLayout.SOUTH);
+        tabs.addTab("Red-Black Tree", rbtPanel);
+
+        // 4. Hash Table (Rider O(1) Lookup)
+        JTextArea hashArea = new JTextArea();
+        hashArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        hashArea.setEditable(false);
+        JButton runHash = new JButton("Run Hash Table Benchmark");
+        runHash.addActionListener(e -> {
+            hashArea.setText("");
+            hashArea.append("═══ HASH TABLE RIDER O(1) LOOKUP DEMO ═══\n");
+            ds.HashTable<Integer, Resource> table = new ds.HashTable<>(211);
+            DynamicArray<Resource> ridersList = DatabaseManager.loadResources();
+            for (Resource r : ridersList) {
+                table.put(r.getResourceId(), r);
+            }
+            hashArea.append(String.format("HashTable Capacity: %d buckets | Stored Items: %d\n", table.getCapacity(), table.size()));
+            hashArea.append(String.format("Collision Count   : %d | Load Factor: %.2f%%\n\n", table.getCollisionCount(), (double) table.size() / table.getCapacity() * 100));
+            
+            int targetId = 5;
+            long t0 = System.nanoTime();
+            Resource r = table.get(targetId);
+            long t1 = System.nanoTime();
+            if (r != null) {
+                hashArea.append(String.format("Lookup Rider #%d -> Name: '%s' | Vehicle: %s | Home Loc: %d | Time: %,d ns\n",
+                        targetId, r.getName(), r.getType(), r.getHomeLocationId(), (t1 - t0)));
+            }
+            hashArea.append("\nIndexed Rider Directory (Sample):\n");
+            DynamicArray<ds.HashTable.Entry<Integer, Resource>> entries = table.entries();
+            for (int i = 0; i < Math.min(8, entries.size()); i++) {
+                Resource res = entries.get(i).value;
+                hashArea.append(String.format("  Key: %-2d | %-18s | %-10s | Status: %s\n", res.getResourceId(), res.getName(), res.getType(), res.getAvailabilityStatus()));
+            }
+        });
+        JPanel hashPanel = new JPanel(new BorderLayout());
+        hashPanel.add(new JScrollPane(hashArea), BorderLayout.CENTER);
+        JPanel hp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); hp.add(runHash); hashPanel.add(hp, BorderLayout.SOUTH);
+        tabs.addTab("Hash Table", hashPanel);
+
+        // 5. Disjoint Set (Campus Connectivity)
+        JTextArea dsetArea = new JTextArea();
+        dsetArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        dsetArea.setEditable(false);
+        JButton runDSet = new JButton("Run Disjoint Set Connectivity Demo");
+        runDSet.addActionListener(e -> {
+            dsetArea.setText("");
+            dsetArea.append("═══ DISJOINT SET (UNION-FIND) CAMPUS ZONE CONNECTIVITY ═══\n");
+            DynamicArray<Location> locs = DatabaseManager.loadLocations();
+            int maxId = 0;
+            for (Location l : locs) maxId = Math.max(maxId, l.getLocationId());
+            ds.DisjointSet dset = new ds.DisjointSet(maxId + 1);
+
+            // Union locations in the same zone
+            for (int i = 0; i < locs.size(); i++) {
+                for (int j = i + 1; j < locs.size(); j++) {
+                    if (locs.get(i).getZone().equalsIgnoreCase(locs.get(j).getZone())) {
+                        dset.union(locs.get(i).getLocationId(), locs.get(j).getLocationId());
+                    }
+                }
+            }
+            dsetArea.append(String.format("Grouped %d Campus Locations into Disjoint Zone Sets.\n\n", locs.size()));
+            Location l1 = locs.get(0); // Balme Library
+            Location l2 = locs.get(1); // Great Hall
+            Location l3 = locs.get(locs.size() - 1);
+            
+            dsetArea.append(String.format("Connectivity Check: '%s' vs '%s': %s\n",
+                    l1.getName(), l2.getName(), (dset.find(l1.getLocationId()) == dset.find(l2.getLocationId()) ? "CONNECTED (Same Zone)" : "DISCONNECTED")));
+            dsetArea.append(String.format("Connectivity Check: '%s' vs '%s': %s\n",
+                    l1.getName(), l3.getName(), (dset.find(l1.getLocationId()) == dset.find(l3.getLocationId()) ? "CONNECTED (Same Zone)" : "DISCONNECTED")));
+        });
+        JPanel dsetPanel = new JPanel(new BorderLayout());
+        dsetPanel.add(new JScrollPane(dsetArea), BorderLayout.CENTER);
+        JPanel dsp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); dsp.add(runDSet); dsetPanel.add(dsp, BorderLayout.SOUTH);
+        tabs.addTab("Disjoint Set", dsetPanel);
+
+        // 6. CircularQueue (Round-Robin Rider Dispatch)
+        JTextArea cqArea = new JTextArea();
+        cqArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        cqArea.setEditable(false);
+        JButton runCQ = new JButton("Run Round-Robin Pool Rotation Demo");
+        runCQ.addActionListener(e -> {
+            cqArea.setText("");
+            cqArea.append("═══ CIRCULAR QUEUE ROUND-ROBIN RIDER POOL DISPATCH DEMO ═══\n");
+            ds.CircularQueue<Resource> pool = new ds.CircularQueue<>(8);
+            DynamicArray<Resource> rList = DatabaseManager.loadResources();
+            int count = Math.min(6, rList.size());
+            for (int i = 0; i < count; i++) pool.enqueue(rList.get(i));
+
+            cqArea.append(String.format("Initial Circular Rider Queue Size: %d | Front Pointer: %d | Rear Pointer: %d\n\n",
+                    pool.size(), pool.getFrontPointer(), pool.getRearPointer()));
+
+            cqArea.append("Simulating 4 Consecutive Round-Robin Rider Assignments:\n");
+            for (int step = 1; step <= 4; step++) {
+                Resource dispatched = pool.dequeue();
+                pool.enqueue(dispatched); // Rotate to back
+                cqArea.append(String.format("  Step %d: Dispatched Rider '%s' (%s) -> Rotated to rear | Front Pointer: %d | Rear Pointer: %d\n",
+                        step, dispatched.getName(), dispatched.getType(), pool.getFrontPointer(), pool.getRearPointer()));
+            }
+        });
+        JPanel cqPanel = new JPanel(new BorderLayout());
+        cqPanel.add(new JScrollPane(cqArea), BorderLayout.CENTER);
+        JPanel cqp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); cqp.add(runCQ); cqPanel.add(cqp, BorderLayout.SOUTH);
+        tabs.addTab("Circular Queue", cqPanel);
+
+        // 7. Deque (Express vs Standard Buffer)
+        JTextArea dqArea = new JTextArea();
+        dqArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        dqArea.setEditable(false);
+        JButton runDQ = new JButton("Run Deque Priority Buffer Demo");
+        runDQ.addActionListener(e -> {
+            dqArea.setText("");
+            dqArea.append("═══ DEQUE DUAL-ENDED DISPATCH BUFFER DEMO ═══\n");
+            ds.Deque<String> buffer = new ds.Deque<>();
+            dqArea.append("Queueing Standard Order #101 at REAR...\n"); buffer.addRear("Order #101 (Standard)");
+            dqArea.append("Queueing Standard Order #102 at REAR...\n"); buffer.addRear("Order #102 (Standard)");
+            dqArea.append("Queueing EXPRESS Order #999 at FRONT (High Priority)...\n"); buffer.addFront("Order #999 (EXPRESS)");
+
+            dqArea.append(String.format("\nBuffer State | Front: '%s' | Rear: '%s' | Total: %d\n\n",
+                    buffer.peekFront(), buffer.peekRear(), buffer.size()));
+
+            dqArea.append("Dispatching from FRONT: " + buffer.removeFront() + "\n");
+            dqArea.append("Dispatching from FRONT: " + buffer.removeFront() + "\n");
+            dqArea.append("Remaining in Buffer  : " + buffer.peekFront() + "\n");
+        });
+        JPanel dqPanel = new JPanel(new BorderLayout());
+        dqPanel.add(new JScrollPane(dqArea), BorderLayout.CENTER);
+        JPanel dqp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); dqp.add(runDQ); dqPanel.add(dqp, BorderLayout.SOUTH);
+        tabs.addTab("Deque", dqPanel);
+
+        // 8. Stack (Scheduling Backtracking)
         JTextArea stackArea = new JTextArea();
         stackArea.setFont(new Font("Consolas", Font.PLAIN, 12));
         stackArea.setEditable(false);
-        JButton runStack = new JButton("Run Stack Demo");
+        JButton runStack = new JButton("Run Scheduling Stack Demo");
         runStack.addActionListener(e -> {
             stackArea.setText("");
-            ds.Stack<Integer> s = new ds.Stack<>();
-            stackArea.append("Initial: empty\n");
-            stackArea.append("push 10\n"); s.push(10);
-            stackArea.append("push 20\n"); s.push(20);
-            stackArea.append("push 30\n"); s.push(30);
-            stackArea.append("peek -> " + s.peek() + "\n");
-            stackArea.append("pop -> " + s.pop() + "\n");
-            stackArea.append("pop -> " + s.pop() + "\n");
-            stackArea.append("isEmpty -> " + s.isEmpty() + "\n");
-            stackArea.append("pop -> " + s.pop() + "\n");
-            stackArea.append("isEmpty -> " + s.isEmpty() + "\n");
+            stackArea.append("═══ STACK SCHEDULING HISTORY & BACKTRACKING DEMO ═══\n");
+            ds.Stack<String> history = new ds.Stack<>();
+            stackArea.append("Pushing state: Order #101 assigned to Rider Kwame\n"); history.push("State 1: Order #101 -> Kwame");
+            stackArea.append("Pushing state: Order #102 assigned to Rider Ama\n"); history.push("State 2: Order #102 -> Ama");
+            stackArea.append("Pushing state: Order #103 assigned to Rider Yaw\n"); history.push("State 3: Order #103 -> Yaw");
+
+            stackArea.append("\nCurrent History Stack Top (LIFO): " + history.peek() + "\n\n");
+            stackArea.append("Undoing last scheduling decision: " + history.pop() + "\n");
+            stackArea.append("New Current Top State           : " + history.peek() + "\n");
+            stackArea.append("Remaining Stack Depth           : " + history.size() + "\n");
         });
         JPanel stackPanel = new JPanel(new BorderLayout());
         stackPanel.add(new JScrollPane(stackArea), BorderLayout.CENTER);
-        JPanel sp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); sp.add(runStack); stackPanel.add(sp, BorderLayout.SOUTH);
+        JPanel stp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); stp.add(runStack); stackPanel.add(stp, BorderLayout.SOUTH);
         tabs.addTab("Stack", stackPanel);
 
-        // Queue demo
-        JTextArea queueArea = new JTextArea();
-        queueArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        queueArea.setEditable(false);
-        JButton runQueue = new JButton("Run Queue Demo");
-        runQueue.addActionListener(e -> {
-            queueArea.setText("");
-            ds.Queue<String> q = new ds.Queue<>();
-            queueArea.append("enqueue A\n"); q.enqueue("A");
-            queueArea.append("enqueue B\n"); q.enqueue("B");
-            queueArea.append("enqueue C\n"); q.enqueue("C");
-            queueArea.append("peek -> " + q.peek() + "\n");
-            queueArea.append("dequeue -> " + q.dequeue() + "\n");
-            queueArea.append("dequeue -> " + q.dequeue() + "\n");
-            queueArea.append("size -> " + q.size() + "\n");
-            queueArea.append("dequeue -> " + q.dequeue() + "\n");
-            queueArea.append("isEmpty -> " + q.isEmpty() + "\n");
+        // 9. BST 
+        JTextArea bstArea = new JTextArea();
+        bstArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        bstArea.setEditable(false);
+        JButton runBST = new JButton("Run BST Search & Deletion Demo");
+        runBST.addActionListener(e -> {
+            bstArea.setText("");
+            bstArea.append("═══ BINARY SEARCH TREE SEARCH & DELETION DEMO ═══\n");
+            ds.BST<Integer, String> bst = new ds.BST<>();
+            DynamicArray<Location> locs = DatabaseManager.loadLocations();
+            for (int i = 0; i < Math.min(15, locs.size()); i++) {
+                Location l = locs.get(i);
+                bst.insert(l.getLocationId(), l.getName());
+            }
+            bstArea.append("Inserted 15 Locations into BST.\n");
+            bstArea.append("Initial Tree Size: " + bst.size() + "\n");
+            bstArea.append("Search Key 4: " + bst.search(4) + "\n\n");
+            
+            bstArea.append("Executing BST Deletion on Key 4...\n");
+            boolean deleted = bst.delete(4);
+            bstArea.append("delete(4) Success: " + deleted + "\n");
+            bstArea.append("Search Key 4 after delete: " + bst.search(4) + "\n");
+            bstArea.append("New Tree Size: " + bst.size() + "\n\n");
+            
+            bstArea.append("In-order Traversal (Sorted Location Names):\n");
+            DynamicArray<String> inorder = bst.inorder();
+            for (int i = 0; i < inorder.size(); i++) {
+                bstArea.append("  [" + i + "] " + inorder.get(i) + "\n");
+            }
         });
-        JPanel queuePanel = new JPanel(new BorderLayout());
-        queuePanel.add(new JScrollPane(queueArea), BorderLayout.CENTER);
-        JPanel qp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); qp.add(runQueue); queuePanel.add(qp, BorderLayout.SOUTH);
-        tabs.addTab("Queue", queuePanel);
-
-        // Deque demo
-        JTextArea dequeArea = new JTextArea();
-        dequeArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        dequeArea.setEditable(false);
-        JButton runDeque = new JButton("Run Deque Demo");
-        runDeque.addActionListener(e -> {
-            dequeArea.setText("");
-            ds.Deque<Integer> d = new ds.Deque<>();
-            dequeArea.append("addRear 1\n"); d.addRear(1);
-            dequeArea.append("addFront 0\n"); d.addFront(0);
-            dequeArea.append("addRear 2\n"); d.addRear(2);
-            dequeArea.append("peekFront -> " + d.peekFront() + "\n");
-            dequeArea.append("peekRear -> " + d.peekRear() + "\n");
-            dequeArea.append("removeFront -> " + d.removeFront() + "\n");
-            dequeArea.append("removeRear -> " + d.removeRear() + "\n");
-            dequeArea.append("size -> " + d.size() + "\n");
-        });
-        JPanel dequePanel = new JPanel(new BorderLayout());
-        dequePanel.add(new JScrollPane(dequeArea), BorderLayout.CENTER);
-        JPanel dp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); dp.add(runDeque); dequePanel.add(dp, BorderLayout.SOUTH);
-        tabs.addTab("Deque", dequePanel);
-
-        // Priority queue (MinHeap) demo
-        JTextArea heapArea = new JTextArea();
-        heapArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        heapArea.setEditable(false);
-        JButton runHeap = new JButton("Run Priority Queue Demo");
-        runHeap.addActionListener(e -> {
-            heapArea.setText("");
-            ds.MinHeap<Integer> h = new ds.MinHeap<>(16, Integer::compareTo);
-            heapArea.append("insert 50\n"); h.insert(50);
-            heapArea.append("insert 20\n"); h.insert(20);
-            heapArea.append("insert 30\n"); h.insert(30);
-            heapArea.append("insert 10\n"); h.insert(10);
-            heapArea.append("peek -> " + h.peek() + "\n");
-            heapArea.append("extractMin -> " + h.extractMin() + "\n");
-            heapArea.append("extractMin -> " + h.extractMin() + "\n");
-            heapArea.append("size -> " + h.size() + "\n");
-        });
-        JPanel heapPanel = new JPanel(new BorderLayout());
-        heapPanel.add(new JScrollPane(heapArea), BorderLayout.CENTER);
-        JPanel hp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); hp.add(runHeap); heapPanel.add(hp, BorderLayout.SOUTH);
-        tabs.addTab("Priority Queue", heapPanel);
+        JPanel bstPanel = new JPanel(new BorderLayout());
+        bstPanel.add(new JScrollPane(bstArea), BorderLayout.CENTER);
+        JPanel bstp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bstp.add(runBST); bstPanel.add(bstp, BorderLayout.SOUTH);
+        tabs.addTab("BST", bstPanel);
 
         dlg.add(tabs, BorderLayout.CENTER);
         JButton close = new JButton("Close"); close.addActionListener(e -> dlg.dispose());
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bottom.add(close);
         dlg.add(bottom, BorderLayout.SOUTH);
         dlg.setVisible(true);
-        // mark task done
-        try { engines.DatabaseManager.getConnection().close(); } catch (Exception ignored) {}
     }
 
     private void populateLocationSelectors() {

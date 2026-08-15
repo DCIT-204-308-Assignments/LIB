@@ -78,6 +78,15 @@ public class RedBlackTree<K extends Comparable<K>, V> {
         return node == null ? null : node.value;
     }
 
+    public boolean containsKey(K key) {
+        return search(key) != null;
+    }
+
+    public void clear() {
+        root = null;
+        size = 0;
+    }
+
     private Node<K, V> searchNode(Node<K, V> node, K key) {
         while (node != null) {
             int cmp = key.compareTo(node.key);

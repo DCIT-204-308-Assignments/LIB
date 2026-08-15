@@ -62,6 +62,26 @@ public class ServiceRequest {
     public double getDeliveredTimeMin() { return deliveredTimeMin; }
     public void setDeliveredTimeMin(double t) { this.deliveredTimeMin = t; }
 
+    public Order toOrder(int newOrderId) {
+        return new Order(
+            newOrderId,
+            "Customer_" + requestId,
+            "Campus Merchant",
+            category != null ? category : "Package",
+            1.5,
+            sourceLocationId,
+            destLocationId,
+            timeSubmittedMin,
+            deadlineMin,
+            priority,
+            Order.OrderState.CREATED.name(),
+            assignedRiderId,
+            0.0,
+            0.0,
+            "ANY"
+        );
+    }
+
     @Override
     public String toString() {
         return String.format("Request{id=%d, %s, urg=%d, priority=%.2f, status='%s'}",

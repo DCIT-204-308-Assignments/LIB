@@ -69,6 +69,7 @@ public class SchedulingEngine {
         }
 
         // Create queues for each zone
+        @SuppressWarnings("unchecked")
         CircularQueue<ServiceRequest>[] zoneQueues = (CircularQueue<ServiceRequest>[]) new CircularQueue[zones.size()];
         for (int i = 0; i < zones.size(); i++) {
             zoneQueues[i] = new CircularQueue<>(10);
