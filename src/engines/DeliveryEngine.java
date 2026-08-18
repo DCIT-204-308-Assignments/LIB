@@ -2,6 +2,7 @@ package engines;
 
 import ds.DynamicArray;
 import ds.Graph;
+import ds.MinHeap;
 import models.Location;
 import models.Order;
 import models.Resource;
@@ -21,55 +22,150 @@ public class DeliveryEngine {
         }
     }
 
-    public static AssignmentResult assignRider(Order order, DynamicArray<Resource> riders, DynamicArray<Location> locations, DynamicArray<RoadEdge> roads) {
-        if (riders == null || riders.isEmpty()) {
-            return null;
+    private static class RiderCandidate {
+        final Resource rider;
+        final double distanceKm;
+        final double travelTimeMin;
+        final double score;
+
+        RiderCandidate(Resource rider, double distanceKm, double travelTimeMin, double score) {
+            this.rider = rider;
+            this.distanceKm = distanceKm;
+            this.travelTimeMin = travelTimeMin;
+            this.score = score;
         }
-
-        Graph graph = buildGraph(locations, roads);
-        Resource best = null;
-        double bestScore = Double.POSITIVE_INFINITY;
-        double bestDistance = Double.POSITIVE_INFINITY;
-        double bestTime = Double.POSITIVE_INFINITY;
-
-        for (Resource rider : riders) {
-            if (!"AVAILABLE".equalsIgnoreCase(rider.getAvailabilityStatus())) {
-                continue;
-            }
-            if (rider.getCapacityKg() < order.getFoodWeightKg()) {
-                continue;
-            }
-
-            Location riderLoc = findLocation(locations, rider.getHomeLocationId());
-            Location pickup = findLocation(locations, order.getPickupLocationId());
-            if (riderLoc == null || pickup == null) {
-                continue;
-            }
-
-            RouteEngine.PathResult path = RouteEngine.dijkstra(graph, riderLoc.getLocationId(), pickup.getLocationId());
-            if (path == null) {
-                continue;
-            }
-
-            double score = scoreRider(rider, order, path.totalDistanceKm, path.totalTimeMin);
-            if (score < bestScore) {
-                bestScore = score;
-                bestDistance = path.totalDistanceKm;
-                bestTime = path.totalTimeMin;
-                best = rider;
-            }
-        }
-
-        if (best == null) {
-            return null;
-        }
-
-        return new AssignmentResult(best, bestDistance, bestTime);
     }
+
+
+    public static AssignmentResult assignRider(
+        Order order,
+        DynamicArray<Resource> riders,
+        DynamicArray<Location> locations,
+        DynamicArray<RoadEdge> roads) {
+
+    if (order == null || riders == null || locations == null || roads == null) {
+        return null;
+    }
+
+    if (riders.isEmpty() || locations.isEmpty()) {
+        return null;
+    }
+
+    double orderWeight = order.getFoodWeightKg();
+
+    if (orderWeight <= 0
+            || Double.isNaN(orderWeight)
+            || Double.isInfinite(orderWeight)) {
+        return null;
+    }
+
+    Location pickup = findLocation(locations, order.getPickupLocationId());
+
+    if (pickup == null) {
+        return null;
+    }
+
+    Graph graph = buildGraph(locations, roads);
+
+    MinHeap<RiderCandidate> candidateHeap = new MinHeap<>(
+        Math.max(1, riders.size()),
+        (a, b) -> {
+            int byScore = Double.compare(a.score, b.score);
+            if (byScore != 0) {
+                return byScore;
+            }
+
+            int byDistance = Double.compare(a.distanceKm, b.distanceKm);
+            if (byDistance != 0) {
+                return byDistance;
+            }
+
+            return Integer.compare(
+                    a.rider.getResourceId(),
+                    b.rider.getResourceId()
+            );
+        }
+    );
+
+    for (Resource rider : riders) {
+
+        if (rider == null) {
+            continue;
+        }
+
+        if (!rider.isAvailable()) {
+            continue;
+        }
+
+        double capacity = rider.getCapacityKg();
+
+        if (capacity <= 0
+                || Double.isNaN(capacity)
+                || Double.isInfinite(capacity)
+                || capacity < orderWeight) {
+            continue;
+        }
+
+        int riderLocationId = rider.getCurrentLocationId();
+
+        Location riderLocation = findLocation(locations, riderLocationId);
+
+        if (riderLocation == null) {
+            continue;
+        }
+
+        RouteEngine.PathResult path = RouteEngine.dijkstra(
+                graph,
+                riderLocationId,
+                pickup.getLocationId()
+        );
+
+        if (path == null
+                || Double.isNaN(path.totalDistanceKm)
+                || Double.isInfinite(path.totalDistanceKm)
+                || Double.isNaN(path.totalTimeMin)
+                || Double.isInfinite(path.totalTimeMin)) {
+            continue;
+        }
+
+        double score = scoreRider(
+                rider,
+                order,
+                path.totalDistanceKm,
+                path.totalTimeMin
+        );
+
+        if (Double.isNaN(score) || Double.isInfinite(score)) {
+            continue;
+        }
+
+        candidateHeap.insert(
+                new RiderCandidate(
+                        rider,
+                        path.totalDistanceKm,
+                        path.totalTimeMin,
+                        score
+                )
+        );
+    }
+
+    if (candidateHeap.isEmpty()) {
+        return null;
+    }
+
+    RiderCandidate best = candidateHeap.extractMin();
+
+    return new AssignmentResult(
+            best.rider,
+            best.distanceKm,
+            best.travelTimeMin
+    );
+}
 
     public static double estimateDeliveryDuration(Order order, double distanceKm, Resource rider) {
         double baseMinutes = Math.max(8.0, distanceKm * 6.0);
-        if ("MOTORBIKE".equalsIgnoreCase(rider.getType())) {
+        if ("MOTORBIKE".equalsIgnoreCase(rider.getType())
+            || "MOTORCYCLE".equalsIgnoreCase(rider.getType())) {
             return Math.round((baseMinutes * 0.7) * 10.0) / 10.0;
         }
         return Math.round((baseMinutes * 1.05) * 10.0) / 10.0;
@@ -79,7 +175,8 @@ public class DeliveryEngine {
         double score = distanceKm;
         boolean longTrip = distanceKm >= 2.0;
 
-        if ("MOTORBIKE".equalsIgnoreCase(rider.getType())) {
+        if ("MOTORBIKE".equalsIgnoreCase(rider.getType())
+            || "MOTORCYCLE".equalsIgnoreCase(rider.getType())) {
             score -= longTrip ? 0.35 : 0.1;
         } else if ("BICYCLE".equalsIgnoreCase(rider.getType())) {
             score += longTrip ? 1.4 : 0.25;
@@ -99,25 +196,55 @@ public class DeliveryEngine {
 
     private static Graph buildGraph(DynamicArray<Location> locations, DynamicArray<RoadEdge> roads) {
         int maxId = 0;
+
         for (Location loc : locations) {
-            maxId = Math.max(maxId, loc.getLocationId());
+            if (loc != null && loc.getLocationId() >= 0) {
+                maxId = Math.max(maxId, loc.getLocationId());
+            }
         }
+
         Graph graph = new Graph(maxId);
+
         for (Location loc : locations) {
-            graph.addLocation(loc);
+            if (loc != null && loc.getLocationId() >= 0) {
+                graph.addLocation(loc);
+            }
         }
+
         for (RoadEdge road : roads) {
+            if (road == null) {
+                continue;
+            }
+
+            int from = road.getFromLocationId();
+            int to = road.getToLocationId();
+
+            if (from < 0 || to < 0 || from > maxId || to > maxId) {
+                continue;
+            }
+
+            if (graph.getLocation(from) == null || graph.getLocation(to) == null) {
+                continue;
+            }
+
             graph.addRoad(road);
         }
+
         return graph;
     }
 
     private static Location findLocation(DynamicArray<Location> locations, int id) {
+        if (locations == null || id < 0) {
+            return null;
+        }
+
         for (Location loc : locations) {
-            if (loc.getLocationId() == id) {
+            if (loc != null && loc.getLocationId() == id) {
                 return loc;
             }
         }
+
         return null;
     }
+
 }
