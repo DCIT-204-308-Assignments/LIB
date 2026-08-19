@@ -28,55 +28,127 @@ public class Graph {
     private final HashTable<Integer, Location> locations;
 
     public Graph(int maxNodeId) {
+        if (maxNodeId < 0) {
+            throw new IllegalArgumentException(
+                    "maxNodeId cannot be negative"
+            );
+        }
+
         this.maxNodeId = maxNodeId;
-        this.adjMatrix = new double[maxNodeId + 1][maxNodeId + 1];
-        // Initialize adjacency matrix with infinity (or 0 for self-loops)
+        this.adjMatrix =
+                new double[maxNodeId + 1][maxNodeId + 1];
+
         for (int i = 0; i <= maxNodeId; i++) {
             for (int j = 0; j <= maxNodeId; j++) {
-                if (i == j) {
-                    adjMatrix[i][j] = 0.0;
-                } else {
-                    adjMatrix[i][j] = Double.POSITIVE_INFINITY;
-                }
+                adjMatrix[i][j] =
+                        (i == j)
+                                ? 0.0
+                                : Double.POSITIVE_INFINITY;
             }
         }
-        this.adjList = new HashTable<>(maxNodeId * 2);
-        this.locations = new HashTable<>(maxNodeId * 2);
+
+        int tableCapacity =
+                Math.max(3, (maxNodeId + 1) * 2);
+
+        this.adjList = new HashTable<>(tableCapacity);
+        this.locations = new HashTable<>(tableCapacity);
     }
 
     public void addLocation(Location loc) {
-        locations.put(loc.getLocationId(), loc);
-        if (adjList.get(loc.getLocationId()) == null) {
-            adjList.put(loc.getLocationId(), new LinkedList<>());
+        if (loc == null) {
+            return;
+        }
+
+        int id = loc.getLocationId();
+
+        if (!isValidNodeId(id)) {
+            return;
+        }
+
+        locations.put(id, loc);
+
+        if (adjList.get(id) == null) {
+            adjList.put(id, new LinkedList<>());
         }
     }
 
     public Location getLocation(int id) {
+        if (!isValidNodeId(id)) {
+            return null;
+        }
+
         return locations.get(id);
     }
 
     public void addRoad(RoadEdge road) {
+        if (road == null) {
+            return;
+        }
+
         int u = road.getFromLocationId();
         int v = road.getToLocationId();
-        double w = road.getWeight();
 
-        // 1. Matrix representation
-        adjMatrix[u][v] = w;
-        if (!road.isOneWay()) {
-            adjMatrix[v][u] = w;
+        if (!isValidNodeId(u) || !isValidNodeId(v)) {
+            return;
         }
 
-        // 2. Adjacency List representation
-        if (adjList.get(u) == null) {
-            adjList.put(u, new LinkedList<>());
+        if (locations.get(u) == null
+                || locations.get(v) == null) {
+            return;
         }
-        adjList.get(u).addLast(new Edge(v, w, road.getDistanceKm(), road.getTravelTimeMin(), road.getRoadCondition(), road.getTrafficLevel()));
+
+        double weight = road.getWeight();
+        double distanceKm = road.getDistanceKm();
+        double travelTimeMin = road.getTravelTimeMin();
+
+        if (!isValidNonNegativeNumber(weight)
+                || !isValidNonNegativeNumber(distanceKm)
+                || !isValidNonNegativeNumber(travelTimeMin)) {
+            return;
+        }
+
+        adjMatrix[u][v] = weight;
 
         if (!road.isOneWay()) {
-            if (adjList.get(v) == null) {
-                adjList.put(v, new LinkedList<>());
+            adjMatrix[v][u] = weight;
+        }
+
+        LinkedList<Edge> fromNeighbors = adjList.get(u);
+
+        if (fromNeighbors == null) {
+            fromNeighbors = new LinkedList<>();
+            adjList.put(u, fromNeighbors);
+        }
+
+        fromNeighbors.addLast(
+                new Edge(
+                        v,
+                        weight,
+                        distanceKm,
+                        travelTimeMin,
+                        road.getRoadCondition(),
+                        road.getTrafficLevel()
+                )
+        );
+
+        if (!road.isOneWay()) {
+            LinkedList<Edge> toNeighbors = adjList.get(v);
+
+            if (toNeighbors == null) {
+                toNeighbors = new LinkedList<>();
+                adjList.put(v, toNeighbors);
             }
-            adjList.get(v).addLast(new Edge(u, w, road.getDistanceKm(), road.getTravelTimeMin(), road.getRoadCondition(), road.getTrafficLevel()));
+
+            toNeighbors.addLast(
+                    new Edge(
+                            u,
+                            weight,
+                            distanceKm,
+                            travelTimeMin,
+                            road.getRoadCondition(),
+                            road.getTrafficLevel()
+                    )
+            );
         }
     }
 
@@ -85,6 +157,10 @@ public class Graph {
     }
 
     public LinkedList<Edge> getNeighbors(int u) {
+        if (!isValidNodeId(u)) {
+            return null;
+        }
+
         return adjList.get(u);
     }
 
@@ -99,4 +175,15 @@ public class Graph {
         }
         return result;
     }
+
+    private boolean isValidNodeId(int id) {
+        return id >= 0 && id <= maxNodeId;
+    }
+
+    private boolean isValidNonNegativeNumber(double value) {
+        return !Double.isNaN(value)
+                && !Double.isInfinite(value)
+                && value >= 0.0;
+    }
+
 }
