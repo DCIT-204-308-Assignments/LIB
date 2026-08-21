@@ -262,6 +262,111 @@ public class OptimisationEngine {
         return selectedRequests;
     }
 
+
+        /**
+     * Brute-force Strategy:
+     * exhaustively checks every possible subset of a small request set
+     * and returns the feasible batch with the highest total priority.
+     *
+     * This acts as an exact baseline for comparing the DP knapsack solution.
+     * Because brute force is O(2^n), the method intentionally supports only
+     * small inputs.
+     */
+    public static DynamicArray<ServiceRequest> bruteForceBatching(
+            DynamicArray<ServiceRequest> requests,
+            double capacityKg
+    ) {
+        DynamicArray<ServiceRequest> bestSelection =
+                new DynamicArray<>();
+
+        if (requests == null
+                || requests.isEmpty()
+                || !Double.isFinite(capacityKg)
+                || capacityKg <= 0.0) {
+            return bestSelection;
+        }
+
+        final int MAX_BRUTE_FORCE_ITEMS = 20;
+        int n = requests.size();
+
+        // Brute force grows exponentially, so keep this deliberately small.
+        if (n > MAX_BRUTE_FORCE_ITEMS) {
+            return bestSelection;
+        }
+
+        long totalSubsets = 1L << n;
+
+        double bestPriority = 0.0;
+        double bestWeight = 0.0;
+        long bestMask = 0L;
+
+        for (long mask = 0; mask < totalSubsets; mask++) {
+            double totalWeight = 0.0;
+            double totalPriority = 0.0;
+            boolean validSubset = true;
+
+            for (int i = 0; i < n; i++) {
+                if ((mask & (1L << i)) == 0) {
+                    continue;
+                }
+
+                ServiceRequest request = requests.get(i);
+
+                if (request == null) {
+                    validSubset = false;
+                    break;
+                }
+
+                double weight =
+                        getWeightByCategory(request.getCategory());
+
+                double priority =
+                        request.getPriority();
+
+                if (!Double.isFinite(weight)
+                        || weight <= 0.0
+                        || !Double.isFinite(priority)) {
+                    validSubset = false;
+                    break;
+                }
+
+                totalWeight += weight;
+
+                if (totalWeight > capacityKg) {
+                    validSubset = false;
+                    break;
+                }
+
+                totalPriority += priority;
+            }
+
+            if (!validSubset) {
+                continue;
+            }
+
+            boolean betterPriority =
+                    totalPriority > bestPriority;
+
+            boolean samePriorityLessWeight =
+                    Double.compare(totalPriority, bestPriority) == 0
+                            && totalWeight < bestWeight;
+
+            if (betterPriority || samePriorityLessWeight) {
+                bestPriority = totalPriority;
+                bestWeight = totalWeight;
+                bestMask = mask;
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            if ((bestMask & (1L << i)) != 0) {
+                bestSelection.add(requests.get(i));
+            }
+        }
+
+        return bestSelection;
+    }
+
     private static double getWeightByCategory(String category) {
         if (category == null) return 1.0;
         String cat = category.toLowerCase();

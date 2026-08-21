@@ -27,6 +27,8 @@ public class UGSwiftTestSuite {
         testSortingSearch();
         testBTree();
         testModelsAndBSTDeletion();
+        testOptimisationAlgorithms();
+        testRoutingAlgorithms();
 
         System.out.println("\n══════════════════════════════════════════════════════════════");
         System.out.printf("  RESULTS: %d passed, %d failed  (out of %d total)%n", passed, failed, passed + failed);
@@ -419,6 +421,266 @@ public class UGSwiftTestSuite {
         assertTrue("T68 ServiceRequest toOrder conversion", converted.getOrderId() == 102 && converted.getPickupLocationId() == 1);
     }
 
+    // ── Optimisation Algorithms ───────────────────────────────────────────
+    private static void testOptimisationAlgorithms() {
+        section("Optimisation Algorithms");
+
+        DynamicArray<ServiceRequest> requests = new DynamicArray<>();
+
+        ServiceRequest documents = new ServiceRequest(
+                301, 1, 2, "Documents", 5,
+                480.0, 500.0, "PENDING", -1
+        );
+
+        ServiceRequest pizza = new ServiceRequest(
+                302, 1, 3, "Pizza", 4,
+                490.0, 600.0, "PENDING", -1
+        );
+
+        ServiceRequest waakye = new ServiceRequest(
+                303, 1, 4, "Waakye", 5,
+                500.0, 700.0, "PENDING", -1
+        );
+
+        ServiceRequest groceries = new ServiceRequest(
+                304, 1, 5, "Groceries", 5,
+                510.0, 400.0, "PENDING", -1
+        );
+
+        requests.add(documents);
+        requests.add(pizza);
+        requests.add(waakye);
+        requests.add(groceries);
+
+        double capacityKg = 2.0;
+
+        DynamicArray<ServiceRequest> bruteForce =
+                OptimisationEngine.bruteForceBatching(requests, capacityKg);
+
+        assertTrue(
+                "T69 Brute force selects optimal feasible batch",
+                bruteForce.size() == 2
+                        && containsRequest(bruteForce, 301)
+                        && containsRequest(bruteForce, 302)
+        );
+
+        assertTrue(
+                "T70 Brute force excludes overweight requests",
+                !containsRequest(bruteForce, 304)
+        );
+
+        DynamicArray<ServiceRequest> dp =
+                OptimisationEngine.dpKnapsackBatching(requests, capacityKg);
+
+        assertTrue(
+                "T71 DP and brute force produce equal optimal priority",
+                Math.abs(
+                        totalPriority(bruteForce)
+                                - totalPriority(dp)
+                ) < 0.0001
+        );
+
+        DynamicArray<ServiceRequest> invalidCapacity =
+                OptimisationEngine.bruteForceBatching(requests, -1.0);
+
+        assertTrue(
+                "T72 Brute force rejects invalid capacity",
+                invalidCapacity.isEmpty()
+        );
+
+        DynamicArray<ServiceRequest> tooMany = new DynamicArray<>();
+
+        for (int i = 0; i < 21; i++) {
+            tooMany.add(
+                    new ServiceRequest(
+                            400 + i, 1, 2,
+                            "Documents", 1,
+                            500.0, 900.0,
+                            "PENDING", -1
+                    )
+            );
+        }
+
+        DynamicArray<ServiceRequest> guarded =
+                OptimisationEngine.bruteForceBatching(tooMany, 10.0);
+
+        assertTrue(
+                "T73 Brute force guards against exponential input growth",
+                guarded.isEmpty()
+        );
+    }
+
+    // ── Routing Algorithms ───────────────────────────────────────────────
+    private static void testRoutingAlgorithms() {
+        section("Routing Algorithms");
+
+        Graph graph = new Graph(4);
+
+        DynamicArray<Location> locations = new DynamicArray<>();
+        for (int id = 1; id <= 4; id++) {
+            Location location = new Location(
+                    id,
+                    "Location " + id,
+                    "Test Zone",
+                    "TEST",
+                    5.6500 + (id * 0.001),
+                    -0.1870
+            );
+
+            locations.add(location);
+            graph.addLocation(location);
+        }
+
+        DynamicArray<RoadEdge> roads = new DynamicArray<>();
+
+        RoadEdge r12 = new RoadEdge(
+                1, 1, 2, "Location 1", "Location 2",
+                1.0, 2.0, "LOW", "GOOD",
+                1.0, false, 1.0
+        );
+
+        RoadEdge r23 = new RoadEdge(
+                2, 2, 3, "Location 2", "Location 3",
+                2.0, 3.0, "LOW", "GOOD",
+                1.0, false, 2.0
+        );
+
+        RoadEdge r13 = new RoadEdge(
+                3, 1, 3, "Location 1", "Location 3",
+                5.0, 7.0, "LOW", "GOOD",
+                1.0, false, 5.0
+        );
+
+        RoadEdge r34 = new RoadEdge(
+                4, 3, 4, "Location 3", "Location 4",
+                1.0, 2.0, "LOW", "GOOD",
+                1.0, false, 1.0
+        );
+
+        RoadEdge r24 = new RoadEdge(
+                5, 2, 4, "Location 2", "Location 4",
+                6.0, 8.0, "LOW", "GOOD",
+                1.0, false, 6.0
+        );
+
+        roads.add(r12);
+        roads.add(r23);
+        roads.add(r13);
+        roads.add(r34);
+        roads.add(r24);
+
+        for (RoadEdge road : roads) {
+            graph.addRoad(road);
+        }
+
+        DynamicArray<Integer> bfs =
+                RouteEngine.bfsReachable(graph, 1);
+
+        assertTrue(
+                "T74 BFS reaches all connected locations",
+                bfs.size() == 4
+                        && containsInt(bfs, 1)
+                        && containsInt(bfs, 2)
+                        && containsInt(bfs, 3)
+                        && containsInt(bfs, 4)
+        );
+
+        DynamicArray<Integer> dfs =
+                RouteEngine.dfsTraversal(graph, 1);
+
+        assertTrue(
+                "T75 DFS visits all connected locations",
+                dfs.size() == 4
+                        && containsInt(dfs, 1)
+                        && containsInt(dfs, 2)
+                        && containsInt(dfs, 3)
+                        && containsInt(dfs, 4)
+        );
+
+        RouteEngine.PathResult shortest =
+                RouteEngine.dijkstra(graph, 1, 4);
+
+        assertTrue(
+                "T76 Dijkstra finds minimum-weight path 1-2-3-4",
+                shortest != null
+                        && shortest.path.size() == 4
+                        && shortest.path.get(0) == 1
+                        && shortest.path.get(1) == 2
+                        && shortest.path.get(2) == 3
+                        && shortest.path.get(3) == 4
+                        && Math.abs(shortest.totalWeight - 4.0) < 0.0001
+                        && Math.abs(shortest.totalDistanceKm - 4.0) < 0.0001
+                        && Math.abs(shortest.totalTimeMin - 7.0) < 0.0001
+        );
+
+        Graph disconnectedGraph = new Graph(5);
+
+        disconnectedGraph.addLocation(
+                new Location(
+                        1,
+                        "Start",
+                        "Test Zone",
+                        "TEST",
+                        5.65,
+                        -0.18
+                )
+        );
+
+        disconnectedGraph.addLocation(
+                new Location(
+                        5,
+                        "Isolated",
+                        "Test Zone",
+                        "TEST",
+                        5.66,
+                        -0.18
+                )
+        );
+
+        assertTrue(
+                "T77 Dijkstra returns null for unreachable location",
+                RouteEngine.dijkstra(
+                        disconnectedGraph,
+                        1,
+                        5
+                ) == null
+        );
+
+        DynamicArray<RoadEdge> prim =
+                RouteEngine.primMST(graph);
+
+        double primWeight =
+                totalRoadWeight(prim);
+
+        assertTrue(
+                "T78 Prim builds a 3-edge MST with total weight 4",
+                prim.size() == 3
+                        && Math.abs(primWeight - 4.0) < 0.0001
+        );
+
+        DynamicArray<RoadEdge> kruskal =
+                RouteEngine.kruskalMST(
+                        locations,
+                        roads
+                );
+
+        double kruskalWeight =
+                totalRoadWeight(kruskal);
+
+        assertTrue(
+                "T79 Kruskal builds a 3-edge MST with total weight 4",
+                kruskal.size() == 3
+                        && Math.abs(kruskalWeight - 4.0) < 0.0001
+        );
+
+        assertTrue(
+                "T80 Prim and Kruskal agree on MST total weight",
+                Math.abs(
+                        primWeight - kruskalWeight
+                ) < 0.0001
+        );
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
     private static void assertTrue(String name, boolean condition) {
         if (condition) {
@@ -439,4 +701,60 @@ public class UGSwiftTestSuite {
         for (int v : src) copy.add(v);
         return copy;
     }
+
+    private static boolean containsRequest(
+            DynamicArray<ServiceRequest> requests,
+            int requestId
+    ) {
+        for (ServiceRequest request : requests) {
+            if (request != null
+                    && request.getRequestId() == requestId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static double totalPriority(
+            DynamicArray<ServiceRequest> requests
+    ) {
+        double total = 0.0;
+
+        for (ServiceRequest request : requests) {
+            if (request != null) {
+                total += request.getPriority();
+            }
+        }
+
+        return total;
+    }
+
+    private static boolean containsInt(
+            DynamicArray<Integer> values,
+            int target
+    ) {
+        for (int value : values) {
+            if (value == target) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static double totalRoadWeight(
+            DynamicArray<RoadEdge> roads
+    ) {
+        double total = 0.0;
+
+        for (RoadEdge road : roads) {
+            if (road != null) {
+                total += road.getWeight();
+            }
+        }
+
+        return total;
+    }
+
 }
