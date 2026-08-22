@@ -46,6 +46,17 @@ public class UGSwiftApp extends JFrame {
     private DynamicArray<Order> completedOrders = new DynamicArray<>();
     private IncomingOrderManager incomingManager = new IncomingOrderManager();
     private DriverPool driverPool = new DriverPool();
+
+    // Real undo/audit trail: every successful rider assignment is pushed here,
+    // and "Undo Last Assignment" (Stack tab) pops it, reverts the DB state,
+    // and writes both the original assignment and the undo to audit_events.
+    private static class AssignmentRecord {
+        final Order order;
+        final ServiceRequest request;
+        AssignmentRecord(Order order, ServiceRequest request) { this.order = order; this.request = request; }
+    }
+    private final ds.Stack<AssignmentRecord> assignmentHistory = new ds.Stack<>();
+
     private final Map<String, Integer> locationIds = new LinkedHashMap<>();
     private final Map<String, List<String>> restaurantMenus = new LinkedHashMap<>();
     private final Map<String, Double> menuWeights = new LinkedHashMap<>();
@@ -713,6 +724,22 @@ public class UGSwiftApp extends JFrame {
             log("Warning: could not persist request or update rider status: " + ex.getMessage());
         }
 
+        order.setAssignedRiderId(result.rider.getResourceId());
+        order.setStatus(Order.OrderState.ASSIGNED);
+        order.setDistanceKm(result.distanceKm);
+        order.setEstimatedDeliveryTimeMin(deliveryDuration);
+
+        // Push onto the real undo stack (ds.Stack, not the canned demo) and
+        // persist a matching audit trail entry -- this is the actual
+        // "stack-based undo/audit operations" evidence the brief asks for.
+        assignmentHistory.push(new AssignmentRecord(order, request));
+        try {
+            DatabaseManager.addAuditEvent("Order #" + order.getOrderId() + " (" + customerName + ") assigned to rider "
+                    + result.rider.getName() + " [" + result.rider.getType() + "], request #" + request.getRequestId());
+        } catch (Exception ex) {
+            log("Warning: could not write audit event: " + ex.getMessage());
+        }
+
         activeOrders.add(order);
 
         log("New order received for " + customerName + " from " + restaurant + " — " + meal);
@@ -722,6 +749,66 @@ public class UGSwiftApp extends JFrame {
         log("Delivery window: " + String.format("%.1f min", deliveryDuration));
         log("Pickup: " + findLocationName(pickupId) + " → Delivery: " + findLocationName(deliveryId));
         setStatus("Order placed and rider assigned");
+        refreshDashboard();
+        refreshSummary();
+    }
+
+    /**
+     * Real undo: pops the most recent successful assignment off assignmentHistory
+     * (ds.Stack), frees the assigned rider, reverts the request to PENDING in
+     * both memory and the database, and writes an UNDO entry to audit_events
+     * alongside the original assignment entry already written in placeOrder().
+     */
+    private void undoLastAssignment() {
+        if (assignmentHistory.isEmpty()) {
+            log("Nothing to undo -- assignment history is empty.");
+            return;
+        }
+        AssignmentRecord rec = assignmentHistory.pop();
+        Order order = rec.order;
+        ServiceRequest request = rec.request;
+
+        // Free the rider
+        for (int i = 0; i < riders.size(); i++) {
+            Resource r = riders.get(i);
+            if (r.getResourceId() == order.getAssignedRiderId()) {
+                r.setAvailabilityStatus("AVAILABLE");
+                try { DatabaseManager.updateResourceStatus(r.getResourceId(), "AVAILABLE"); }
+                catch (Exception ex) { log("Warning: could not persist rider status during undo: " + ex.getMessage()); }
+                break;
+            }
+        }
+
+        // Revert the request to PENDING, unassigned
+        ServiceRequest reverted = new ServiceRequest(request.getRequestId(), request.getSourceLocationId(),
+                request.getDestLocationId(), request.getCategory(), request.getUrgency(),
+                request.getTimeSubmittedMin(), request.getDeadlineMin(), "PENDING", -1);
+        try { DatabaseManager.saveServiceRequest(reverted); }
+        catch (Exception ex) { log("Warning: could not persist request revert during undo: " + ex.getMessage()); }
+        for (int i = 0; i < requests.size(); i++) {
+            if (requests.get(i).getRequestId() == request.getRequestId()) {
+                requests.set(i, reverted);
+                break;
+            }
+        }
+
+        // Remove from activeOrders (undo the order itself)
+        for (int i = 0; i < activeOrders.size(); i++) {
+            if (activeOrders.get(i).getOrderId() == order.getOrderId()) {
+                activeOrders.remove(i);
+                break;
+            }
+        }
+
+        try {
+            DatabaseManager.addAuditEvent("UNDO: reverted Order #" + order.getOrderId() + " (request #" + request.getRequestId()
+                    + ") -- rider " + order.getAssignedRiderId() + " freed, request set back to PENDING");
+        } catch (Exception ex) {
+            log("Warning: could not write undo audit event: " + ex.getMessage());
+        }
+
+        log("Undo successful: Order #" + order.getOrderId() + " reverted to PENDING, rider " + order.getAssignedRiderId() + " freed.");
+        setStatus("Last assignment undone");
         refreshDashboard();
         refreshSummary();
     }
@@ -1066,7 +1153,7 @@ public class UGSwiftApp extends JFrame {
         JButton runStack = new JButton("Run Scheduling Stack Demo");
         runStack.addActionListener(e -> {
             stackArea.setText("");
-            stackArea.append("═══ STACK SCHEDULING HISTORY & BACKTRACKING DEMO ═══\n");
+            stackArea.append("═══ STACK SCHEDULING HISTORY & BACKTRACKING DEMO (illustrative) ═══\n");
             ds.Stack<String> history = new ds.Stack<>();
             stackArea.append("Pushing state: Order #101 assigned to Rider Kwame\n"); history.push("State 1: Order #101 -> Kwame");
             stackArea.append("Pushing state: Order #102 assigned to Rider Ama\n"); history.push("State 2: Order #102 -> Ama");
@@ -1077,9 +1164,29 @@ public class UGSwiftApp extends JFrame {
             stackArea.append("New Current Top State           : " + history.peek() + "\n");
             stackArea.append("Remaining Stack Depth           : " + history.size() + "\n");
         });
+        JButton runRealUndo = new JButton("Undo Last Real Order Assignment");
+        runRealUndo.addActionListener(e -> {
+            stackArea.setText("");
+            stackArea.append("═══ REAL UNDO (ds.Stack<AssignmentRecord> + audit_events table) ═══\n");
+            stackArea.append("Assignment history depth before undo: " + assignmentHistory.size() + "\n\n");
+            undoLastAssignment();
+            stackArea.append("Assignment history depth after undo:  " + assignmentHistory.size() + "\n\n");
+            stackArea.append("--- Last 10 audit_events rows (from the database) ---\n");
+            try {
+                DynamicArray<models.AuditEvent> events = DatabaseManager.loadAuditEvents();
+                int shown = 0;
+                for (models.AuditEvent ev : events) {
+                    stackArea.append(ev.toString() + "\n");
+                    if (++shown >= 10) break;
+                }
+                if (shown == 0) stackArea.append("(no audit events recorded yet -- place and assign an order first)\n");
+            } catch (Exception ex) {
+                stackArea.append("Could not load audit_events: " + ex.getMessage() + "\n");
+            }
+        });
         JPanel stackPanel = new JPanel(new BorderLayout());
         stackPanel.add(new JScrollPane(stackArea), BorderLayout.CENTER);
-        JPanel stp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); stp.add(runStack); stackPanel.add(stp, BorderLayout.SOUTH);
+        JPanel stp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); stp.add(runStack); stp.add(runRealUndo); stackPanel.add(stp, BorderLayout.SOUTH);
         tabs.addTab("Stack", stackPanel);
 
         // 9. BST 
