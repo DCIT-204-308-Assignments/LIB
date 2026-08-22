@@ -1,4 +1,5 @@
 # UG Swift
+
 ### Campus Service Operations Prototype
 
 ![Java](https://img.shields.io/badge/Java-17+-orange)
@@ -26,14 +27,14 @@ UG Swift is a **Java desktop application** that simulates a smart campus courier
 
 # Technologies
 
-| Technology | Purpose |
-|------------|---------|
-| Java 17+ | Application Development |
-| Java Swing | Desktop UI |
-| SQLite | Database |
-| JDBC | Database Connectivity |
-| CSV | Initial Dataset |
-| Custom DSA Library | Core Algorithms |
+| Technology         | Purpose                 |
+| ------------------ | ----------------------- |
+| Java 17+           | Application Development |
+| Java Swing         | Desktop UI              |
+| SQLite             | Database                |
+| JDBC               | Database Connectivity   |
+| CSV                | Initial Dataset         |
+| Custom DSA Library | Core Algorithms         |
 
 ---
 
@@ -61,16 +62,43 @@ Implemented without relying on Java's built-in equivalents.
 
 # Algorithms
 
-The project demonstrates several classic algorithms including:
+The project implements and demonstrates:
 
+### Searching
+
+- Linear Search
+- Binary Search
+
+### Sorting
+
+- Selection Sort
+- Insertion Sort
+- Merge Sort
+- Quick Sort
+
+### Graph Algorithms
+
+- Breadth-First Search (BFS)
+- Depth-First Search (DFS)
 - Dijkstra's Shortest Path
+- Prim's Minimum Spanning Tree
+- Kruskal's Minimum Spanning Tree
+
+### Optimisation
+
+- Greedy Nearest Neighbor
+- Greedy Fastest Available Rider
+- Dynamic Programming Knapsack
+- Brute-Force Batching Baseline
+
+### Scheduling and Supporting Algorithms
+
 - FIFO Scheduling
 - Priority Scheduling
 - Circular Dispatch
-- Graph Traversal
 - Heap Operations
 - Hashing
-- Queue Management
+- Union-Find / Disjoint Set
 
 ---
 
@@ -186,15 +214,15 @@ java -cp "bin:sqlite-jdbc-3.42.0.0.jar" UGSwiftApp
 
 The desktop application includes the following modules:
 
-| Module | Description |
-|---------|-------------|
-| Dashboard | Overview of the system |
-| Place Request | Create service requests |
-| Rider Management | Manage delivery riders |
-| Incoming Queue | View waiting requests |
-| Completed Requests | Processed deliveries |
-| DSA Demo | Interactive data structure demonstrations |
-| Reports | Statistics and analytics |
+| Module             | Description                               |
+| ------------------ | ----------------------------------------- |
+| Dashboard          | Overview of the system                    |
+| Place Request      | Create service requests                   |
+| Rider Management   | Manage delivery riders                    |
+| Incoming Queue     | View waiting requests                     |
+| Completed Requests | Processed deliveries                      |
+| DSA Demo           | Interactive data structure demonstrations |
+| Reports            | Statistics and analytics                  |
 
 ---
 
@@ -264,6 +292,20 @@ The suite verifies:
 
 ---
 
+# Algorithm Testing and Performance Evidence
+
+The current validation suite contains **80 automated tests** covering custom
+data structures, searching, sorting, routing, optimisation, models, and edge
+cases.
+
+Latest verified result:
+
+```text
+RESULTS: 80 passed, 0 failed
+ALL TESTS PASSED!
+
+---
+
 # Important Source Files
 
 | File | Purpose |
@@ -271,9 +313,14 @@ The suite verifies:
 | `UGSwiftApp.java` | Main desktop application |
 | `SeedDB.java` | Database seeder |
 | `UGSwiftTestSuite.java` | DSA validation suite |
+| `AlgorithmBenchmark.java` | Algorithm performance benchmark runner |
 | `src/ds/` | Custom data structures |
 | `src/engines/` | Routing, scheduling and database logic |
 | `src/models/` | Domain models |
+| `evidence/algorithm/algorithm_evidence.md` | Trace tables, proofs and analysis |
+| `evidence/performance/performance_results.csv` | Raw benchmark results |
+| `evidence/performance/graphs/` | Generated performance charts |
+| `tools/generate_performance_graphs.py` | Performance graph generator |
 
 ---
 
@@ -304,7 +351,9 @@ Install Java JDK 17+ and ensure `javac` is added to your system PATH.
 Download the SQLite JDBC driver and place
 
 ```
+
 sqlite-jdbc-3.42.0.0.jar
+
 ```
 
 in the project root.
@@ -316,9 +365,11 @@ in the project root.
 Ensure the following exist:
 
 ```
+
 data/
 ├── locations.csv
 └── roads.csv
+
 ```
 
 or regenerate the dataset from the application.
@@ -337,11 +388,13 @@ The repository ignores:
 Examples:
 
 ```
+
 bin/
-*.class
+\*.class
 ug_swift.db
 .idea/
 .vscode/
+
 ```
 
 ---
@@ -361,5 +414,9 @@ ug_swift.db
 This repository was developed for academic purposes as part of the University of Ghana Data Structures & Algorithms coursework.
 
 ```
+
 Copyright © 2026 UG Swift Team
+
+```
+
 ```

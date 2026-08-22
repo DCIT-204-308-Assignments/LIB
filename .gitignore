@@ -52,6 +52,7 @@ node_modules/
 
 # Exported reports and large data
 *.csv
+!evidence/performance/performance_results.csv
 *.zip
 *.tar.gz
 

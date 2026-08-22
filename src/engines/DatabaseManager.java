@@ -94,8 +94,49 @@ public class DatabaseManager {
                     "inputSize INTEGER NOT NULL," +
                     "timeNs INTEGER NOT NULL," +
                     "memoryKb INTEGER NOT NULL," +
-                    "dateRun TEXT NOT NULL" +
+                    "dateRun TEXT NOT NULL," +
+                    "operationsCount INTEGER NOT NULL DEFAULT 0," +
+                    "comparisonsCount INTEGER NOT NULL DEFAULT 0," +
+                    "status TEXT NOT NULL DEFAULT 'SUCCESS'," +
+                    "resultSummary TEXT NOT NULL DEFAULT 'Completed'" +
                     ");");
+
+            // Migration checks for algorithm performance evidence fields.
+            try {
+                stmt.execute(
+                        "ALTER TABLE algorithm_runs " +
+                        "ADD COLUMN operationsCount INTEGER NOT NULL DEFAULT 0;"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
+
+            try {
+                stmt.execute(
+                        "ALTER TABLE algorithm_runs " +
+                        "ADD COLUMN comparisonsCount INTEGER NOT NULL DEFAULT 0;"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
+
+            try {
+                stmt.execute(
+                        "ALTER TABLE algorithm_runs " +
+                        "ADD COLUMN status TEXT NOT NULL DEFAULT 'SUCCESS';"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
+
+            try {
+                stmt.execute(
+                        "ALTER TABLE algorithm_runs " +
+                        "ADD COLUMN resultSummary TEXT NOT NULL DEFAULT 'Completed';"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
 
             stmt.execute("CREATE TABLE IF NOT EXISTS audit_events (" +
                     "eventId INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -444,15 +485,31 @@ public class DatabaseManager {
     }
 
     public static void addAlgorithmRun(AlgorithmRun run) {
-        String sql = "INSERT INTO algorithm_runs (algorithmName, inputSize, timeNs, memoryKb, dateRun) VALUES (?, ?, ?, ?, ?)";
+        if (run == null) {
+            return;
+        }
+
+        String sql =
+                "INSERT INTO algorithm_runs (" +
+                "algorithmName, inputSize, timeNs, memoryKb, dateRun, " +
+                "operationsCount, comparisonsCount, status, resultSummary" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setString(1, run.getAlgorithmName());
             pstmt.setInt(2, run.getInputSize());
             pstmt.setLong(3, run.getTimeNs());
             pstmt.setLong(4, run.getMemoryKb());
             pstmt.setString(5, run.getDateRun());
+            pstmt.setLong(6, run.getOperationsCount());
+            pstmt.setLong(7, run.getComparisonsCount());
+            pstmt.setString(8, run.getStatus());
+            pstmt.setString(9, run.getResultSummary());
+
             pstmt.executeUpdate();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -460,24 +517,50 @@ public class DatabaseManager {
 
     public static DynamicArray<AlgorithmRun> loadAlgorithmRuns() {
         DynamicArray<AlgorithmRun> list = new DynamicArray<>();
-        String sql = "SELECT * FROM algorithm_runs";
+
+        String sql =
+                "SELECT * FROM algorithm_runs ORDER BY runId";
+
         try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql)) {
+
             while (rs.next()) {
-                list.add(new AlgorithmRun(
-                        rs.getInt("runId"),
-                        rs.getString("algorithmName"),
-                        rs.getInt("inputSize"),
-                        rs.getLong("timeNs"),
-                        rs.getLong("memoryKb"),
-                        rs.getString("dateRun")
-                ));
+                list.add(
+                        new AlgorithmRun(
+                                rs.getInt("runId"),
+                                rs.getString("algorithmName"),
+                                rs.getInt("inputSize"),
+                                rs.getLong("timeNs"),
+                                rs.getLong("memoryKb"),
+                                rs.getString("dateRun"),
+                                rs.getLong("operationsCount"),
+                                rs.getLong("comparisonsCount"),
+                                rs.getString("status"),
+                                rs.getString("resultSummary")
+                        )
+                );
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return list;
+    }
+
+
+    public static void clearAlgorithmRuns() {
+        String sql = "DELETE FROM algorithm_runs";
+
+        try (Connection conn = getConnection();
+            Statement stmt = conn.createStatement()) {
+
+            stmt.executeUpdate(sql);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void addAuditEvent(String description) {
