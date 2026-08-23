@@ -1,5 +1,9 @@
 import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.awt.geom.*;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.List;
@@ -19,6 +23,240 @@ import models.RoadEdge;
 import models.ServiceRequest;
 
 public class UGSwiftApp extends JFrame {
+
+    // --- Theme & Palette System (from red.md) ---
+    static final Color BG_DARK        = new Color(0x1A1B2E);
+    static final Color BG_SIDEBAR     = new Color(0x16213E);
+    static final Color BG_CARD        = new Color(0x0F3460);
+    static final Color BG_CARD2       = new Color(0x1B2A4A);
+    static final Color ACCENT         = new Color(0xF0A500);
+    static final Color ACCENT_HOVER   = new Color(0xFFBB33);
+    static final Color TEXT_PRIMARY   = new Color(0xECEFF4);
+    static final Color TEXT_SECONDARY = new Color(0x8892A4);
+    static final Color TEXT_SUCCESS   = new Color(0x4CAF50);
+    static final Color TEXT_ERROR     = new Color(0xEF5350);
+    static final Color TEXT_INFO      = new Color(0x42A5F5);
+    static final Color BORDER_COLOR   = new Color(0x2D3A5C);
+    static final Color TABLE_HEADER   = new Color(0x0A2647);
+    static final Color TABLE_ROW_ALT  = new Color(0x1C2D4A);
+
+    static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,  20);
+    static final Font FONT_HEADER = new Font("Segoe UI", Font.BOLD,  14);
+    static final Font FONT_BODY   = new Font("Segoe UI", Font.PLAIN, 13);
+    static final Font FONT_MONO   = new Font("Consolas", Font.PLAIN, 12);
+    static final Font FONT_NAV    = new Font("Segoe UI", Font.BOLD,  13);
+    static final Font FONT_SMALL  = new Font("Segoe UI", Font.PLAIN, 11);
+    static final Font FONT_STAT   = new Font("Segoe UI", Font.BOLD,  18);
+
+    // --- Custom Vector Icon Engine (from red.md) ---
+    public enum IconType {
+        HOME, DATA, STRUCTURES, SEARCH, GRAPH, OPTIMISATION, AUDIT, PERFORMANCE,
+        GRADUATION_CAP, LOCATION, ROAD, RESOURCE, REQUEST, REFRESH, IMPORT, RUN, SORT, UNDO
+    }
+
+    public static class VectorIcon implements Icon {
+        private final IconType type;
+        private final int size;
+        private final Color colorOverride;
+
+        public VectorIcon(IconType type, int size) {
+            this(type, size, null);
+        }
+
+        public VectorIcon(IconType type, int size, Color colorOverride) {
+            this.type = type;
+            this.size = size;
+            this.colorOverride = colorOverride;
+        }
+
+        @Override public int getIconWidth() { return size; }
+        @Override public int getIconHeight() { return size; }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+            Color color = colorOverride;
+            if (color == null && c != null) {
+                color = c.getForeground();
+            }
+            if (color == null) color = ACCENT;
+            g2.setColor(color);
+            g2.translate(x, y);
+
+            float s = size;
+            float strokeWidth = Math.max(1.5f, s / 12f);
+            g2.setStroke(new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+            switch (type) {
+                case HOME -> {
+                    Path2D path = new Path2D.Float();
+                    path.moveTo(s * 0.15f, s * 0.45f);
+                    path.lineTo(s * 0.5f,  s * 0.15f);
+                    path.lineTo(s * 0.85f, s * 0.45f);
+                    g2.draw(path);
+                    g2.draw(new Rectangle2D.Float(s * 0.25f, s * 0.45f, s * 0.5f, s * 0.4f));
+                    g2.fill(new Rectangle2D.Float(s * 0.42f, s * 0.62f, s * 0.16f, s * 0.23f));
+                }
+                case DATA -> {
+                    g2.draw(new Ellipse2D.Float(s * 0.15f, s * 0.12f, s * 0.7f, s * 0.22f));
+                    g2.draw(new Arc2D.Float(s * 0.15f, s * 0.35f, s * 0.7f, s * 0.22f, 180, 180, Arc2D.OPEN));
+                    g2.draw(new Arc2D.Float(s * 0.15f, s * 0.58f, s * 0.7f, s * 0.22f, 180, 180, Arc2D.OPEN));
+                    g2.draw(new Line2D.Float(s * 0.15f, s * 0.23f, s * 0.15f, s * 0.69f));
+                    g2.draw(new Line2D.Float(s * 0.85f, s * 0.23f, s * 0.85f, s * 0.69f));
+                }
+                case STRUCTURES -> {
+                    g2.fill(new RoundRectangle2D.Float(s * 0.15f, s * 0.15f, s * 0.7f, s * 0.2f, s * 0.08f, s * 0.08f));
+                    g2.fill(new RoundRectangle2D.Float(s * 0.15f, s * 0.40f, s * 0.7f, s * 0.2f, s * 0.08f, s * 0.08f));
+                    g2.fill(new RoundRectangle2D.Float(s * 0.15f, s * 0.65f, s * 0.7f, s * 0.2f, s * 0.08f, s * 0.08f));
+                }
+                case SEARCH -> {
+                    float r = s * 0.55f;
+                    g2.draw(new Ellipse2D.Float(s * 0.12f, s * 0.12f, r, r));
+                    g2.setStroke(new BasicStroke(strokeWidth * 1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g2.draw(new Line2D.Float(s * 0.52f, s * 0.52f, s * 0.85f, s * 0.85f));
+                }
+                case GRAPH -> {
+                    float r = s * 0.12f;
+                    float ax = s * 0.25f, ay = s * 0.3f;
+                    float bx = s * 0.75f, by = s * 0.35f;
+                    float cx = s * 0.45f, cy = s * 0.75f;
+                    g2.draw(new Line2D.Float(ax, ay, bx, by));
+                    g2.draw(new Line2D.Float(ax, ay, cx, cy));
+                    g2.draw(new Line2D.Float(bx, by, cx, cy));
+                    g2.fill(new Ellipse2D.Float(ax - r, ay - r, r * 2, r * 2));
+                    g2.fill(new Ellipse2D.Float(bx - r, by - r, r * 2, r * 2));
+                    g2.fill(new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2));
+                }
+                case OPTIMISATION -> {
+                    Path2D p = new Path2D.Float();
+                    p.moveTo(s * 0.55f, s * 0.1f);
+                    p.lineTo(s * 0.22f, s * 0.52f);
+                    p.lineTo(s * 0.48f, s * 0.52f);
+                    p.lineTo(s * 0.40f, s * 0.9f);
+                    p.lineTo(s * 0.78f, s * 0.45f);
+                    p.lineTo(s * 0.52f, s * 0.45f);
+                    p.closePath();
+                    g2.fill(p);
+                }
+                case AUDIT -> {
+                    g2.draw(new RoundRectangle2D.Float(s * 0.2f, s * 0.18f, s * 0.6f, s * 0.72f, s * 0.1f, s * 0.1f));
+                    g2.fill(new RoundRectangle2D.Float(s * 0.35f, s * 0.10f, s * 0.3f, s * 0.14f, s * 0.05f, s * 0.05f));
+                    g2.draw(new Line2D.Float(s * 0.32f, s * 0.38f, s * 0.68f, s * 0.38f));
+                    g2.draw(new Line2D.Float(s * 0.32f, s * 0.54f, s * 0.68f, s * 0.54f));
+                    g2.draw(new Line2D.Float(s * 0.32f, s * 0.70f, s * 0.55f, s * 0.70f));
+                }
+                case PERFORMANCE -> {
+                    g2.fill(new Rectangle2D.Float(s * 0.15f, s * 0.55f, s * 0.18f, s * 0.35f));
+                    g2.fill(new Rectangle2D.Float(s * 0.41f, s * 0.35f, s * 0.18f, s * 0.55f));
+                    g2.fill(new Rectangle2D.Float(s * 0.67f, s * 0.15f, s * 0.18f, s * 0.75f));
+                    g2.draw(new Line2D.Float(s * 0.1f, s * 0.9f, s * 0.9f, s * 0.9f));
+                }
+                case GRADUATION_CAP -> {
+                    Path2D cap = new Path2D.Float();
+                    cap.moveTo(s * 0.5f,  s * 0.18f);
+                    cap.lineTo(s * 0.88f, s * 0.38f);
+                    cap.lineTo(s * 0.5f,  s * 0.58f);
+                    cap.lineTo(s * 0.12f, s * 0.38f);
+                    cap.closePath();
+                    g2.fill(cap);
+                    g2.draw(new Arc2D.Float(s * 0.28f, s * 0.45f, s * 0.44f, s * 0.32f, 180, 180, Arc2D.OPEN));
+                    g2.draw(new Line2D.Float(s * 0.85f, s * 0.4f, s * 0.85f, s * 0.75f));
+                    g2.fill(new Ellipse2D.Float(s * 0.81f, s * 0.72f, s * 0.08f, s * 0.15f));
+                }
+                case LOCATION -> {
+                    Path2D pin = new Path2D.Float();
+                    pin.moveTo(s * 0.5f, s * 0.88f);
+                    pin.curveTo(s * 0.2f, s * 0.55f, s * 0.18f, s * 0.38f, s * 0.5f, s * 0.15f);
+                    pin.curveTo(s * 0.82f, s * 0.38f, s * 0.8f, s * 0.55f, s * 0.5f, s * 0.88f);
+                    pin.closePath();
+                    g2.draw(pin);
+                    g2.fill(new Ellipse2D.Float(s * 0.4f, s * 0.32f, s * 0.2f, s * 0.2f));
+                }
+                case ROAD -> {
+                    g2.draw(new Line2D.Float(s * 0.25f, s * 0.15f, s * 0.12f, s * 0.85f));
+                    g2.draw(new Line2D.Float(s * 0.75f, s * 0.15f, s * 0.88f, s * 0.85f));
+                    g2.draw(new Line2D.Float(s * 0.5f,  s * 0.25f, s * 0.5f,  s * 0.42f));
+                    g2.draw(new Line2D.Float(s * 0.5f,  s * 0.58f, s * 0.5f,  s * 0.75f));
+                }
+                case RESOURCE -> {
+                    g2.draw(new RoundRectangle2D.Float(s * 0.15f, s * 0.35f, s * 0.7f, s * 0.38f, s * 0.1f, s * 0.1f));
+                    g2.draw(new Line2D.Float(s * 0.65f, s * 0.35f, s * 0.65f, s * 0.5f));
+                    g2.fill(new Ellipse2D.Float(s * 0.25f, s * 0.68f, s * 0.18f, s * 0.18f));
+                    g2.fill(new Ellipse2D.Float(s * 0.57f, s * 0.68f, s * 0.18f, s * 0.18f));
+                }
+                case REQUEST -> {
+                    Path2D doc = new Path2D.Float();
+                    doc.moveTo(s * 0.2f, s * 0.15f);
+                    doc.lineTo(s * 0.6f, s * 0.15f);
+                    doc.lineTo(s * 0.8f, s * 0.35f);
+                    doc.lineTo(s * 0.8f, s * 0.85f);
+                    doc.lineTo(s * 0.2f, s * 0.85f);
+                    doc.closePath();
+                    g2.draw(doc);
+                    g2.draw(new Line2D.Float(s * 0.6f, s * 0.15f, s * 0.6f, s * 0.35f));
+                    g2.draw(new Line2D.Float(s * 0.6f, s * 0.35f, s * 0.8f, s * 0.35f));
+                    g2.draw(new Line2D.Float(s * 0.32f, s * 0.48f, s * 0.68f, s * 0.48f));
+                    g2.draw(new Line2D.Float(s * 0.32f, s * 0.64f, s * 0.68f, s * 0.64f));
+                }
+                case REFRESH -> {
+                    g2.draw(new Arc2D.Float(s * 0.15f, s * 0.15f, s * 0.7f, s * 0.7f, 45, 270, Arc2D.OPEN));
+                    Path2D arr = new Path2D.Float();
+                    arr.moveTo(s * 0.62f, s * 0.05f);
+                    arr.lineTo(s * 0.85f, s * 0.22f);
+                    arr.lineTo(s * 0.62f, s * 0.35f);
+                    g2.fill(arr);
+                }
+                case IMPORT -> {
+                    g2.draw(new Arc2D.Float(s * 0.15f, s * 0.45f, s * 0.7f, s * 0.4f, 180, 180, Arc2D.OPEN));
+                    g2.draw(new Line2D.Float(s * 0.5f, s * 0.15f, s * 0.5f, s * 0.6f));
+                    Path2D arr = new Path2D.Float();
+                    arr.moveTo(s * 0.35f, s * 0.45f);
+                    arr.lineTo(s * 0.5f,  s * 0.65f);
+                    arr.lineTo(s * 0.65f, s * 0.45f);
+                    g2.fill(arr);
+                }
+                case RUN -> {
+                    Path2D play = new Path2D.Float();
+                    play.moveTo(s * 0.28f, s * 0.18f);
+                    play.lineTo(s * 0.82f, s * 0.5f);
+                    play.lineTo(s * 0.28f, s * 0.82f);
+                    play.closePath();
+                    g2.fill(play);
+                }
+                case SORT -> {
+                    Path2D up = new Path2D.Float();
+                    up.moveTo(s * 0.32f, s * 0.18f);
+                    up.lineTo(s * 0.18f, s * 0.42f);
+                    up.lineTo(s * 0.46f, s * 0.42f);
+                    up.closePath();
+                    g2.fill(up);
+                    g2.draw(new Line2D.Float(s * 0.32f, s * 0.4f, s * 0.32f, s * 0.82f));
+
+                    Path2D down = new Path2D.Float();
+                    down.moveTo(s * 0.68f, s * 0.82f);
+                    down.lineTo(s * 0.54f, s * 0.58f);
+                    down.lineTo(s * 0.82f, s * 0.58f);
+                    down.closePath();
+                    g2.fill(down);
+                    g2.draw(new Line2D.Float(s * 0.68f, s * 0.18f, s * 0.68f, s * 0.6f));
+                }
+                case UNDO -> {
+                    g2.draw(new Arc2D.Float(s * 0.15f, s * 0.25f, s * 0.7f, s * 0.6f, 0, 200, Arc2D.OPEN));
+                    Path2D arr = new Path2D.Float();
+                    arr.moveTo(s * 0.35f, s * 0.12f);
+                    arr.lineTo(s * 0.15f, s * 0.3f);
+                    arr.lineTo(s * 0.38f, s * 0.42f);
+                    g2.fill(arr);
+                }
+            }
+            g2.dispose();
+        }
+    }
+
+    // --- Core Backend State Variables ---
     private final JTextArea logArea = new JTextArea();
     private final JTextArea activeOrdersArea = new JTextArea();
     private final DefaultListModel<String> riderListModel = new DefaultListModel<>();
@@ -37,6 +275,11 @@ public class UGSwiftApp extends JFrame {
     private final JTextField customerField = new JTextField("Amina");
     private final JLabel summaryLabel = new JLabel("Preparing campus food delivery...");
     private final JLabel statusLabel = new JLabel("Status: idle");
+
+    private final JLabel locStatLabel   = new JLabel("0");
+    private final JLabel roadStatLabel  = new JLabel("0");
+    private final JLabel riderStatLabel = new JLabel("0");
+    private final JLabel activeStatLabel= new JLabel("0");
 
     private DynamicArray<Location> locations = new DynamicArray<>();
     private DynamicArray<RoadEdge> roads = new DynamicArray<>();
@@ -57,6 +300,19 @@ public class UGSwiftApp extends JFrame {
     private JButton bulkProcessBtn;
     private JTextField bulkCountField;
 
+    // --- UI Navigation State ---
+    private CardLayout cardLayout;
+    private JPanel contentPanel;
+    private final List<JButton> navButtons = new ArrayList<>();
+    private int activeNavIndex = 0;
+
+    private static final Object[][] NAV_ITEMS = {
+        {IconType.HOME, "Order Console"},
+        {IconType.DATA, "Operations Dashboard"},
+        {IconType.STRUCTURES, "DSA & Algorithms"},
+        {IconType.AUDIT, "Activity & Logs"}
+    };
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             UGSwiftApp app = new UGSwiftApp();
@@ -65,17 +321,722 @@ public class UGSwiftApp extends JFrame {
     }
 
     public UGSwiftApp() {
-        super("UG Swift - Campus Food Delivery");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1280, 780);
-        setLocationRelativeTo(null);
-        buildUI();
+        super("UG Swift Delivery Service");
+        applyGlobalUIDefaults();
+        buildFrame();
         initializeData();
         startCompletionWatcher();
     }
 
+    private void applyGlobalUIDefaults() {
+        UIManager.put("Panel.background",            BG_DARK);
+        UIManager.put("ScrollPane.background",       BG_DARK);
+        UIManager.put("Viewport.background",         BG_DARK);
+        UIManager.put("TextArea.background",         new Color(0x0B1120));
+        UIManager.put("TextArea.foreground",         TEXT_PRIMARY);
+        UIManager.put("TextArea.caretForeground",    ACCENT);
+        UIManager.put("TextField.background",        BG_CARD2);
+        UIManager.put("TextField.foreground",        TEXT_PRIMARY);
+        UIManager.put("TextField.caretForeground",   ACCENT);
+        UIManager.put("ComboBox.background",         BG_CARD2);
+        UIManager.put("ComboBox.foreground",         TEXT_PRIMARY);
+        UIManager.put("ComboBox.selectionBackground",BG_CARD);
+        UIManager.put("ComboBox.selectionForeground",ACCENT);
+        UIManager.put("Label.foreground",            TEXT_PRIMARY);
+        UIManager.put("ProgressBar.background",      BG_CARD2);
+        UIManager.put("ProgressBar.foreground",      ACCENT);
+        UIManager.put("ScrollBar.background",        BG_SIDEBAR);
+        UIManager.put("ScrollBar.thumb",             BG_CARD);
+        UIManager.put("ScrollBar.track",             BG_SIDEBAR);
+        UIManager.put("Table.background",            BG_DARK);
+        UIManager.put("Table.foreground",            TEXT_PRIMARY);
+        UIManager.put("Table.gridColor",             BORDER_COLOR);
+        UIManager.put("Table.selectionBackground",   BG_CARD);
+        UIManager.put("Table.selectionForeground",   ACCENT);
+        UIManager.put("TableHeader.background",      TABLE_HEADER);
+        UIManager.put("TableHeader.foreground",      TEXT_PRIMARY);
+        UIManager.put("ToolTip.background",          BG_CARD);
+        UIManager.put("ToolTip.foreground",          TEXT_PRIMARY);
+        UIManager.put("OptionPane.background",       BG_DARK);
+        UIManager.put("OptionPane.messageForeground",TEXT_PRIMARY);
+    }
+
+    private void buildFrame() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setMinimumSize(new Dimension(1280, 800));
+        setPreferredSize(new Dimension(1440, 880));
+        getContentPane().setBackground(BG_DARK);
+        setLayout(new BorderLayout(0, 0));
+
+        add(buildHeader(),    BorderLayout.NORTH);
+        add(buildSidebar(),   BorderLayout.WEST);
+        add(buildContent(),   BorderLayout.CENTER);
+        add(buildStatusBar(), BorderLayout.SOUTH);
+
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    private JPanel buildHeader() {
+        JPanel header = new JPanel(new BorderLayout(16, 0));
+        header.setBackground(BG_SIDEBAR);
+        header.setBorder(new MatteBorder(0, 0, 2, 0, ACCENT));
+        header.setPreferredSize(new Dimension(0, 64));
+
+        JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
+        brandPanel.setOpaque(false);
+        JLabel logo = new JLabel("UG Swift Delivery Service");
+        logo.setFont(FONT_TITLE);
+        logo.setForeground(ACCENT);
+        brandPanel.add(logo);
+        header.add(brandPanel, BorderLayout.WEST);
+
+        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 16));
+        infoPanel.setOpaque(false);
+        summaryLabel.setFont(FONT_BODY);
+        summaryLabel.setForeground(TEXT_SECONDARY);
+        statusLabel.setFont(FONT_NAV);
+        statusLabel.setForeground(TEXT_SUCCESS);
+
+        infoPanel.add(summaryLabel);
+        infoPanel.add(statusLabel);
+        header.add(infoPanel, BorderLayout.EAST);
+
+        return header;
+    }
+
+    private JPanel buildSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setBackground(BG_SIDEBAR);
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setPreferredSize(new Dimension(220, 0));
+        sidebar.setBorder(new MatteBorder(0, 0, 0, 1, BORDER_COLOR));
+
+        sidebar.add(Box.createVerticalStrut(20));
+
+        for (int i = 0; i < NAV_ITEMS.length; i++) {
+            final int idx = i;
+            IconType iconType = (IconType) NAV_ITEMS[i][0];
+            String label = (String) NAV_ITEMS[i][1];
+            JButton btn = buildNavButton(iconType, label, i == 0);
+            btn.addActionListener(e -> navigateTo(idx));
+            navButtons.add(btn);
+            sidebar.add(btn);
+            sidebar.add(Box.createVerticalStrut(6));
+        }
+
+        sidebar.add(Box.createVerticalGlue());
+
+        JLabel tagline = new JLabel("  University of Ghana, Legon");
+        tagline.setFont(FONT_SMALL);
+        tagline.setForeground(TEXT_SECONDARY);
+        tagline.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(tagline);
+
+        JLabel version = new JLabel("  DCIT 204/308 DSA Engine v1.0");
+        version.setFont(FONT_SMALL);
+        version.setForeground(TEXT_INFO);
+        version.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(version);
+        sidebar.add(Box.createVerticalStrut(16));
+
+        return sidebar;
+    }
+
+    private JButton buildNavButton(IconType iconType, String label, boolean active) {
+        JButton btn = new JButton(label) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (getModel().isRollover()) {
+                    g2.setColor(BG_CARD2);
+                    g2.fillRoundRect(6, 2, getWidth()-12, getHeight()-4, 10, 10);
+                }
+                super.paintComponent(g2);
+                g2.dispose();
+            }
+        };
+        btn.setIcon(new VectorIcon(iconType, 18, active ? ACCENT : TEXT_SECONDARY));
+        btn.setIconTextGap(12);
+        btn.setFont(FONT_NAV);
+        btn.setForeground(active ? ACCENT : TEXT_SECONDARY);
+        btn.setBackground(active ? BG_CARD2 : BG_SIDEBAR);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setMaximumSize(new Dimension(220, 44));
+        btn.setPreferredSize(new Dimension(220, 44));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        if (active) {
+            btn.setBorder(new MatteBorder(0, 4, 0, 0, ACCENT));
+        } else {
+            btn.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+        }
+        btn.setOpaque(false);
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                if (btn.getForeground() != ACCENT) {
+                    btn.setForeground(TEXT_PRIMARY);
+                    btn.setIcon(new VectorIcon(iconType, 18, TEXT_PRIMARY));
+                }
+            }
+            public void mouseExited(MouseEvent e) {
+                if (btn.getForeground() != ACCENT) {
+                    btn.setForeground(TEXT_SECONDARY);
+                    btn.setIcon(new VectorIcon(iconType, 18, TEXT_SECONDARY));
+                }
+            }
+        });
+        return btn;
+    }
+
+    private void navigateTo(int idx) {
+        activeNavIndex = idx;
+        cardLayout.show(contentPanel, (String) NAV_ITEMS[idx][1]);
+        for (int i = 0; i < navButtons.size(); i++) {
+            JButton b = navButtons.get(i);
+            boolean active = (i == idx);
+            IconType iconType = (IconType) NAV_ITEMS[i][0];
+            b.setForeground(active ? ACCENT : TEXT_SECONDARY);
+            b.setIcon(new VectorIcon(iconType, 18, active ? ACCENT : TEXT_SECONDARY));
+            b.setBackground(active ? BG_CARD2 : BG_SIDEBAR);
+            b.setBorder(active
+                ? new MatteBorder(0, 4, 0, 0, ACCENT)
+                : BorderFactory.createEmptyBorder(0, 4, 0, 0));
+        }
+    }
+
+    private JPanel buildContent() {
+        cardLayout   = new CardLayout();
+        contentPanel = new JPanel(cardLayout);
+        contentPanel.setBackground(BG_DARK);
+
+        contentPanel.add(buildOrderConsolePanel(),    (String) NAV_ITEMS[0][1]);
+        contentPanel.add(buildDashboardPanelUI(),     (String) NAV_ITEMS[1][1]);
+        contentPanel.add(buildDSDemoPanelUI(),        (String) NAV_ITEMS[2][1]);
+        contentPanel.add(buildActivityLogsPanelUI(),  (String) NAV_ITEMS[3][1]);
+
+        return contentPanel;
+    }
+
+    private JPanel buildStatusBar() {
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(BG_SIDEBAR);
+        bar.setBorder(new MatteBorder(1, 0, 0, 0, BORDER_COLOR));
+        bar.setPreferredSize(new Dimension(0, 30));
+
+        JLabel info = new JLabel("  [Ready] Campus Dispatch Engine — Background timers active & responsive");
+        info.setFont(FONT_SMALL);
+        info.setForeground(TEXT_SECONDARY);
+        bar.add(info, BorderLayout.WEST);
+
+        JLabel rightHint = new JLabel("University of Ghana, Legon Campus Network  ");
+        rightHint.setFont(FONT_SMALL);
+        rightHint.setForeground(TEXT_SECONDARY);
+        bar.add(rightHint, BorderLayout.EAST);
+
+        return bar;
+    }
+
+    // --- PANEL 1: ORDER & DISPATCH CONSOLE ---
+    private JPanel buildOrderConsolePanel() {
+        JPanel panel = new JPanel(new BorderLayout(16, 16));
+        panel.setBackground(BG_DARK);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+
+        // Top Banner Cards
+        JPanel banner = new JPanel(new GridLayout(1, 4, 16, 0));
+        banner.setOpaque(false);
+        banner.add(statCard("Locations", IconType.LOCATION, locStatLabel, TEXT_INFO));
+        banner.add(statCard("Roads",     IconType.ROAD,     roadStatLabel, ACCENT));
+        banner.add(statCard("Riders",    IconType.RESOURCE, riderStatLabel, TEXT_SUCCESS));
+        banner.add(statCard("Active",    IconType.REQUEST,  activeStatLabel, new Color(0xBE4BDB)));
+        panel.add(banner, BorderLayout.NORTH);
+
+        // Center Split View
+        JPanel center = new JPanel(new GridLayout(1, 2, 16, 0));
+        center.setOpaque(false);
+
+        // Left Column: Order Form
+        JPanel formCard = makeCard("Place Food & Service Order");
+        formCard.setLayout(new BoxLayout(formCard, BoxLayout.Y_AXIS));
+
+        formCard.add(makeFieldLabel("Customer Name:"));
+        formCard.add(styleTextField(customerField));
+        formCard.add(Box.createVerticalStrut(8));
+
+        formCard.add(makeFieldLabel("Restaurant:"));
+        formCard.add(styleComboBox(restaurantCombo));
+        formCard.add(Box.createVerticalStrut(8));
+
+        formCard.add(makeFieldLabel("Meal / Item:"));
+        formCard.add(styleComboBox(foodCombo));
+        formCard.add(Box.createVerticalStrut(8));
+
+        formCard.add(makeFieldLabel("Pickup Location:"));
+        formCard.add(styleComboBox(sourceCombo));
+        formCard.add(Box.createVerticalStrut(8));
+
+        formCard.add(makeFieldLabel("Delivery Location:"));
+        formCard.add(styleComboBox(destinationCombo));
+        formCard.add(Box.createVerticalStrut(8));
+
+        formCard.add(makeFieldLabel("Order Priority:"));
+        formCard.add(styleComboBox(priorityCombo));
+        formCard.add(Box.createVerticalStrut(14));
+
+        // Action Buttons Grid
+        JButton orderBtn = makeAccentButton("Place Order", IconType.REQUEST);
+        JButton routeBtn = makeAccentButton("Preview Route", IconType.LOCATION);
+        JButton dispatchBtn = makeAccentButton("Dispatch", IconType.RUN);
+        JButton refreshBtn = makeSecondaryButton("Refresh DB", IconType.REFRESH);
+        JButton initBtn = makeSecondaryButton("Init Data", IconType.DATA);
+        JButton generateBtn = makeSecondaryButton("Gen Roads", IconType.ROAD);
+        JButton seededBtn = makeSecondaryButton("Seeded Reqs", IconType.AUDIT);
+        JButton dsDemoBtn = makeSecondaryButton("DS Demos", IconType.STRUCTURES);
+        JButton openMapBtn = makeSecondaryButton("Campus Map", IconType.LOCATION);
+
+        JPanel buttonGrid = new JPanel(new GridLayout(3, 3, 6, 6));
+        buttonGrid.setOpaque(false);
+        buttonGrid.setPreferredSize(new Dimension(0, 135));
+        buttonGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 135));
+        buttonGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        buttonGrid.add(orderBtn);
+        buttonGrid.add(routeBtn);
+        buttonGrid.add(dispatchBtn);
+        buttonGrid.add(refreshBtn);
+        buttonGrid.add(initBtn);
+        buttonGrid.add(generateBtn);
+        buttonGrid.add(seededBtn);
+        buttonGrid.add(dsDemoBtn);
+        buttonGrid.add(openMapBtn);
+        formCard.add(buttonGrid);
+
+        restaurantCombo.addActionListener(e -> updateFoodOptions());
+        orderBtn.addActionListener(e -> placeOrder());
+        routeBtn.addActionListener(e -> computeRoute());
+        dispatchBtn.addActionListener(e -> runDispatch("Nearest Rider"));
+        refreshBtn.addActionListener(e -> loadData());
+        initBtn.addActionListener(e -> runAction("initializing data", this::initializeData));
+        generateBtn.addActionListener(e -> runAction("generating roads", this::generateRoadNetwork));
+        seededBtn.addActionListener(e -> showSeededRequests());
+        dsDemoBtn.addActionListener(e -> showDSDemo());
+        openMapBtn.addActionListener(e -> {
+            try {
+                Class<?> launcherClass = Class.forName("tools.CampusMapLauncher");
+                launcherClass.getMethod("openMap").invoke(null);
+            } catch (Exception ex) {
+                log("Failed to open campus map: " + ex.getMessage());
+            }
+        });
+
+        // Right Column: System Overview & Instructions
+        JPanel overviewCard = makeCard("Campus Dispatch Guidance");
+        overviewCard.setLayout(new BorderLayout(12, 12));
+
+        JTextArea guideText = new JTextArea(
+            "★ Ghana Smart Service Operations Optimizer ★\n\n" +
+            "How to dispatch food & service orders:\n" +
+            "  1. Select a campus restaurant and menu meal.\n" +
+            "  2. Choose pickup and delivery locations from the 75+ campus nodes.\n" +
+            "  3. Set priority level (Standard, Express, Family Pack).\n" +
+            "  4. Click 'Place Order' to assign the nearest rider via Dijkstra shortest path.\n\n" +
+            "Key Platform Capabilities:\n" +
+            "  • Automatic Background Delivery Processor\n" +
+            "  • Fair Circular Driver Pool Rotation (O(1))\n" +
+            "  • MinHeap Priority Queue Scheduling\n" +
+            "  • B-Tree & Red-Black Tree Order Indexing\n" +
+            "  • Disjoint-Set Campus Connectivity Verification"
+        );
+        guideText.setFont(FONT_BODY);
+        guideText.setForeground(TEXT_SECONDARY);
+        guideText.setBackground(BG_CARD);
+        guideText.setEditable(false);
+        guideText.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        overviewCard.add(guideText, BorderLayout.CENTER);
+
+        center.add(formCard);
+        center.add(overviewCard);
+        panel.add(center, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    // --- PANEL 2: OPERATIONS DASHBOARD ---
+    private JPanel buildDashboardPanelUI() {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(BG_DARK);
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        // Top 3-Column Section: Riders, Stations, Active Deliveries
+        JPanel topRow = new JPanel(new GridLayout(1, 3, 12, 0));
+        topRow.setOpaque(false);
+        topRow.setPreferredSize(new Dimension(0, 240));
+
+        JPanel ridersCard = makeCard("Available Riders");
+        ridersCard.setLayout(new BorderLayout());
+        styleList(riderList);
+        ridersCard.add(makeScrollPane(riderList), BorderLayout.CENTER);
+
+        JPanel stationsCard = makeCard("Rider Stations");
+        stationsCard.setLayout(new BorderLayout());
+        styleList(stationList);
+        stationsCard.add(makeScrollPane(stationList), BorderLayout.CENTER);
+
+        JPanel ordersCard = makeCard("Active Deliveries");
+        ordersCard.setLayout(new BorderLayout());
+        activeOrdersArea.setFont(FONT_MONO);
+        activeOrdersArea.setBackground(new Color(0x0B1120));
+        activeOrdersArea.setForeground(TEXT_PRIMARY);
+        activeOrdersArea.setEditable(false);
+        ordersCard.add(makeScrollPane(activeOrdersArea), BorderLayout.CENTER);
+
+        topRow.add(ridersCard);
+        topRow.add(stationsCard);
+        topRow.add(ordersCard);
+        panel.add(topRow, BorderLayout.NORTH);
+
+        // Center Row: Incoming Queue & Completed Deliveries
+        JPanel midRow = new JPanel(new GridLayout(1, 2, 12, 0));
+        midRow.setOpaque(false);
+
+        JPanel incomingCard = makeCard("Incoming Request Queue");
+        incomingCard.setLayout(new BorderLayout(8, 8));
+        styleList(incomingList);
+        incomingCard.add(makeScrollPane(incomingList), BorderLayout.CENTER);
+
+        JPanel incomingControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 4));
+        incomingControls.setOpaque(false);
+        JButton processNextBtn = makeAccentButton("Process Next", IconType.RUN);
+        autoToggleBtn = makeSecondaryButton("Start Auto", IconType.REFRESH);
+        intervalField = styleTextField(new JTextField("10", 4));
+        bulkCountField = styleTextField(new JTextField("5", 4));
+        bulkProcessBtn = makeSecondaryButton("Process N", IconType.SORT);
+
+        JLabel intLbl = new JLabel("Interval(s):"); intLbl.setForeground(TEXT_SECONDARY); intLbl.setFont(FONT_SMALL);
+        JLabel bulkLbl = new JLabel("Bulk:"); intLbl.setForeground(TEXT_SECONDARY); intLbl.setFont(FONT_SMALL);
+
+        incomingControls.add(intLbl);
+        incomingControls.add(intervalField);
+        incomingControls.add(autoToggleBtn);
+        incomingControls.add(processNextBtn);
+        incomingControls.add(bulkLbl);
+        incomingControls.add(bulkCountField);
+        incomingControls.add(bulkProcessBtn);
+        incomingCard.add(incomingControls, BorderLayout.SOUTH);
+
+        JPanel completedCard = makeCard("Completed Deliveries");
+        completedCard.setLayout(new BorderLayout());
+        styleList(completedList);
+        completedCard.add(makeScrollPane(completedList), BorderLayout.CENTER);
+
+        midRow.add(incomingCard);
+        midRow.add(completedCard);
+        panel.add(midRow, BorderLayout.CENTER);
+
+        processNextBtn.addActionListener(e -> processNextIncoming());
+        autoToggleBtn.addActionListener(e -> toggleAutoProcessing());
+        bulkProcessBtn.addActionListener(e -> startBulkProcessing());
+
+        return panel;
+    }
+
+    // --- PANEL 3: DSA DEMOS PANEL ---
+    private JPanel buildDSDemoPanelUI() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BG_DARK);
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        JLabel titleLbl = new JLabel("Data Structures & Algorithms Live Verification Suite");
+        titleLbl.setFont(FONT_HEADER);
+        titleLbl.setForeground(ACCENT);
+        panel.add(titleLbl, BorderLayout.NORTH);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(FONT_NAV);
+        tabs.setBackground(BG_SIDEBAR);
+        tabs.setForeground(TEXT_PRIMARY);
+
+        // 1. Graph & Dijkstra
+        JTextArea graphArea = makeOutputArea();
+        JButton runGraph = makeAccentButton("Run Campus Graph & Dijkstra Demo", IconType.GRAPH);
+        runGraph.addActionListener(e -> {
+            graphArea.setText("");
+            graphArea.append("═══ CAMPUS ROAD NETWORK & DIJKSTRA (Graph + MinHeap) ═══\n");
+            DynamicArray<Location> locs = DatabaseManager.loadLocations();
+            DynamicArray<RoadEdge> rds = DatabaseManager.loadRoads();
+            graphArea.append(String.format("Loaded %d Campus Locations & %d Road Edges into Graph.\n", locs.size(), rds.size()));
+            Graph graph = buildGraph();
+            long t0 = System.nanoTime();
+            RouteEngine.PathResult res = RouteEngine.dijkstra(graph, 1, 75);
+            long t1 = System.nanoTime();
+            if (res != null) {
+                graphArea.append(String.format("Shortest Path from Node 1 (%s) to Node 75 (%s):\n", findLocationName(1), findLocationName(75)));
+                graphArea.append(String.format("  • Total Distance : %.3f km\n", res.totalDistanceKm));
+                graphArea.append(String.format("  • Travel Time    : %.2f mins\n", res.totalTimeMin));
+                graphArea.append(String.format("  • Vertices Traversed: %d\n", res.path.size()));
+                graphArea.append("  • Path Nodes     : ");
+                for (int i = 0; i < res.path.size(); i++) {
+                    int nid = res.path.get(i);
+                    graphArea.append(findLocationName(nid) + (i < res.path.size() - 1 ? " → " : ""));
+                }
+                graphArea.append(String.format("\n  • Execution Time : %,d ns (%.3f ms)\n", (t1 - t0), (t1 - t0) / 1e6));
+            } else {
+                graphArea.append("No route found between Node 1 and Node 75.\n");
+            }
+        });
+        JPanel graphPanel = makeDemoPanel(graphArea, runGraph);
+        tabs.addTab("Graph & Dijkstra", graphPanel);
+
+        // 2. B-Tree
+        JTextArea btreeArea = makeOutputArea();
+        JButton runBTree = makeAccentButton("Run B-Tree Order Indexing Demo", IconType.STRUCTURES);
+        runBTree.addActionListener(e -> {
+            btreeArea.setText("");
+            btreeArea.append("═══ B-TREE LARGE-SCALE ORDER INDEXING DEMO (degree t=3) ═══\n");
+            ds.BTree<Integer, ServiceRequest> btree = new ds.BTree<>();
+            DynamicArray<ServiceRequest> reqs = DatabaseManager.loadServiceRequests();
+            btreeArea.append(String.format("Indexing %,d Service Requests into B-Tree...\n", reqs.size()));
+            for (ServiceRequest r : reqs) {
+                btree.insert(r.getRequestId(), r);
+            }
+            btreeArea.append(String.format("B-Tree Index Built successfully. Total Indexed Elements: %d\n\n", btree.size()));
+            int[] testIds = {1, 42, 150, 300, 999};
+            for (int id : testIds) {
+                long start = System.nanoTime();
+                ServiceRequest found = btree.search(id);
+                long elapsed = System.nanoTime() - start;
+                if (found != null) {
+                    btreeArea.append(String.format("[FOUND] Request #%-3d | Category: %-15s | Priority: %.2f | Search Time: %,d ns\n",
+                            id, found.getCategory(), found.getPriority(), elapsed));
+                } else {
+                    btreeArea.append(String.format("[MISS ] Request #%-3d | Key not found in B-Tree index | Search Time: %,d ns\n", id, elapsed));
+                }
+            }
+        });
+        tabs.addTab("B-Tree Indexing", makeDemoPanel(btreeArea, runBTree));
+
+        // 3. Red-Black Tree
+        JTextArea rbtArea = makeOutputArea();
+        JButton runRBT = makeAccentButton("Run Red-Black Tree Demo", IconType.STRUCTURES);
+        runRBT.addActionListener(e -> {
+            rbtArea.setText("");
+            rbtArea.append("═══ RED-BLACK TREE SELF-BALANCING ORDER REGISTRY DEMO ═══\n");
+            ds.RedBlackTree<Integer, ServiceRequest> rbt = new ds.RedBlackTree<>();
+            DynamicArray<ServiceRequest> reqs = DatabaseManager.loadServiceRequests();
+            int count = Math.min(50, reqs.size());
+            for (int i = 0; i < count; i++) {
+                rbt.insert(reqs.get(i).getRequestId(), reqs.get(i));
+            }
+            rbtArea.append(String.format("Inserted %d Active Orders into Red-Black Tree.\n", count));
+            rbtArea.append("Properties Verified:\n");
+            rbtArea.append("  • Root Node Color : " + (rbt.getRoot() != null && rbt.getRoot().color == ds.RedBlackTree.BLACK ? "BLACK (Valid)" : "RED") + "\n");
+            int h = rbt.height();
+            double maxAllowedH = 2 * (Math.log(count + 1) / Math.log(2));
+            rbtArea.append(String.format("  • Tree Height     : %d (Max theoretical bound: %.1f)\n", h, maxAllowedH));
+            rbtArea.append("  • Size            : " + rbt.size() + "\n");
+            rbtArea.append("\nIn-order Traversal (Sorted Keys):\n");
+            DynamicArray<ServiceRequest> inorder = rbt.inorder();
+            for (int i = 0; i < Math.min(10, inorder.size()); i++) {
+                ServiceRequest r = inorder.get(i);
+                rbtArea.append(String.format("  Order #%d [%s] -> %s\n", r.getRequestId(), r.getCategory(), r.getStatus()));
+            }
+            if (inorder.size() > 10) rbtArea.append(String.format("  ... and %d more items.\n", inorder.size() - 10));
+        });
+        tabs.addTab("Red-Black Tree", makeDemoPanel(rbtArea, runRBT));
+
+        // 4. Hash Table
+        JTextArea hashArea = makeOutputArea();
+        JButton runHash = makeAccentButton("Run Hash Table Benchmark", IconType.SEARCH);
+        runHash.addActionListener(e -> {
+            hashArea.setText("");
+            hashArea.append("═══ HASH TABLE RIDER O(1) LOOKUP DEMO ═══\n");
+            ds.HashTable<Integer, Resource> table = new ds.HashTable<>(211);
+            DynamicArray<Resource> ridersList = DatabaseManager.loadResources();
+            for (Resource r : ridersList) table.put(r.getResourceId(), r);
+
+            hashArea.append(String.format("HashTable Capacity: %d buckets | Stored Items: %d\n", table.getCapacity(), table.size()));
+            hashArea.append(String.format("Collision Count   : %d | Load Factor: %.2f%%\n\n", table.getCollisionCount(), (double) table.size() / table.getCapacity() * 100));
+
+            int targetId = 5;
+            long t0 = System.nanoTime();
+            Resource r = table.get(targetId);
+            long t1 = System.nanoTime();
+            if (r != null) {
+                hashArea.append(String.format("Lookup Rider #%d -> Name: '%s' | Vehicle: %s | Home Loc: %d | Time: %,d ns\n",
+                        targetId, r.getName(), r.getType(), r.getHomeLocationId(), (t1 - t0)));
+            }
+            hashArea.append("\nIndexed Rider Directory (Sample):\n");
+            DynamicArray<ds.HashTable.Entry<Integer, Resource>> entries = table.entries();
+            for (int i = 0; i < Math.min(8, entries.size()); i++) {
+                Resource res = entries.get(i).value;
+                hashArea.append(String.format("  Key: %-2d | %-18s | %-10s | Status: %s\n", res.getResourceId(), res.getName(), res.getType(), res.getAvailabilityStatus()));
+            }
+        });
+        tabs.addTab("Hash Table", makeDemoPanel(hashArea, runHash));
+
+        // 5. Disjoint Set
+        JTextArea dsetArea = makeOutputArea();
+        JButton runDSet = makeAccentButton("Run Disjoint Set Demo", IconType.GRAPH);
+        runDSet.addActionListener(e -> {
+            dsetArea.setText("");
+            dsetArea.append("═══ DISJOINT SET (UNION-FIND) CAMPUS ZONE CONNECTIVITY ═══\n");
+            DynamicArray<Location> locs = DatabaseManager.loadLocations();
+            int maxId = 0;
+            for (Location l : locs) maxId = Math.max(maxId, l.getLocationId());
+            ds.DisjointSet dset = new ds.DisjointSet(maxId + 1);
+
+            for (int i = 0; i < locs.size(); i++) {
+                for (int j = i + 1; j < locs.size(); j++) {
+                    if (locs.get(i).getZone().equalsIgnoreCase(locs.get(j).getZone())) {
+                        dset.union(locs.get(i).getLocationId(), locs.get(j).getLocationId());
+                    }
+                }
+            }
+            dsetArea.append(String.format("Grouped %d Campus Locations into Disjoint Zone Sets.\n\n", locs.size()));
+            Location l1 = locs.get(0);
+            Location l2 = locs.get(1);
+            Location l3 = locs.get(locs.size() - 1);
+
+            dsetArea.append(String.format("Connectivity Check: '%s' vs '%s': %s\n",
+                    l1.getName(), l2.getName(), (dset.find(l1.getLocationId()) == dset.find(l2.getLocationId()) ? "CONNECTED (Same Zone)" : "DISCONNECTED")));
+            dsetArea.append(String.format("Connectivity Check: '%s' vs '%s': %s\n",
+                    l1.getName(), l3.getName(), (dset.find(l1.getLocationId()) == dset.find(l3.getLocationId()) ? "CONNECTED (Same Zone)" : "DISCONNECTED")));
+        });
+        tabs.addTab("Disjoint Set", makeDemoPanel(dsetArea, runDSet));
+
+        // 6. Circular Queue
+        JTextArea cqArea = makeOutputArea();
+        JButton runCQ = makeAccentButton("Run Pool Rotation Demo", IconType.REFRESH);
+        runCQ.addActionListener(e -> {
+            cqArea.setText("");
+            cqArea.append("═══ CIRCULAR QUEUE ROUND-ROBIN RIDER POOL DISPATCH DEMO ═══\n");
+            ds.CircularQueue<Resource> pool = new ds.CircularQueue<>(8);
+            DynamicArray<Resource> rList = DatabaseManager.loadResources();
+            int count = Math.min(6, rList.size());
+            for (int i = 0; i < count; i++) pool.enqueue(rList.get(i));
+
+            cqArea.append(String.format("Initial Circular Rider Queue Size: %d | Front Pointer: %d | Rear Pointer: %d\n\n",
+                    pool.size(), pool.getFrontPointer(), pool.getRearPointer()));
+
+            cqArea.append("Simulating 4 Consecutive Round-Robin Rider Assignments:\n");
+            for (int step = 1; step <= 4; step++) {
+                Resource dispatched = pool.dequeue();
+                pool.enqueue(dispatched);
+                cqArea.append(String.format("  Step %d: Dispatched Rider '%s' (%s) -> Rotated to rear | Front Pointer: %d | Rear Pointer: %d\n",
+                        step, dispatched.getName(), dispatched.getType(), pool.getFrontPointer(), pool.getRearPointer()));
+            }
+        });
+        tabs.addTab("Circular Queue", makeDemoPanel(cqArea, runCQ));
+
+        // 7. Deque
+        JTextArea dqArea = makeOutputArea();
+        JButton runDQ = makeAccentButton("Run Deque Priority Buffer Demo", IconType.STRUCTURES);
+        runDQ.addActionListener(e -> {
+            dqArea.setText("");
+            dqArea.append("═══ DEQUE DUAL-ENDED DISPATCH BUFFER DEMO ═══\n");
+            ds.Deque<String> buffer = new ds.Deque<>();
+            dqArea.append("Queueing Standard Order #101 at REAR...\n"); buffer.addRear("Order #101 (Standard)");
+            dqArea.append("Queueing Standard Order #102 at REAR...\n"); buffer.addRear("Order #102 (Standard)");
+            dqArea.append("Queueing EXPRESS Order #999 at FRONT (High Priority)...\n"); buffer.addFront("Order #999 (EXPRESS)");
+
+            dqArea.append(String.format("\nBuffer State | Front: '%s' | Rear: '%s' | Total: %d\n\n",
+                    buffer.peekFront(), buffer.peekRear(), buffer.size()));
+
+            dqArea.append("Dispatching from FRONT: " + buffer.removeFront() + "\n");
+            dqArea.append("Dispatching from FRONT: " + buffer.removeFront() + "\n");
+            dqArea.append("Remaining in Buffer  : " + buffer.peekFront() + "\n");
+        });
+        tabs.addTab("Deque", makeDemoPanel(dqArea, runDQ));
+
+        // 8. Stack
+        JTextArea stackArea = makeOutputArea();
+        JButton runStack = makeAccentButton("Run Stack History Demo", IconType.UNDO);
+        runStack.addActionListener(e -> {
+            stackArea.setText("");
+            stackArea.append("═══ STACK SCHEDULING HISTORY & BACKTRACKING DEMO ═══\n");
+            ds.Stack<String> history = new ds.Stack<>();
+            stackArea.append("Pushing state: Order #101 assigned to Rider Kwame\n"); history.push("State 1: Order #101 -> Kwame");
+            stackArea.append("Pushing state: Order #102 assigned to Rider Ama\n"); history.push("State 2: Order #102 -> Ama");
+            stackArea.append("Pushing state: Order #103 assigned to Rider Yaw\n"); history.push("State 3: Order #103 -> Yaw");
+
+            stackArea.append("\nCurrent History Stack Top (LIFO): " + history.peek() + "\n\n");
+            stackArea.append("Undoing last scheduling decision: " + history.pop() + "\n");
+            stackArea.append("New Current Top State           : " + history.peek() + "\n");
+            stackArea.append("Remaining Stack Depth           : " + history.size() + "\n");
+        });
+        tabs.addTab("Stack", makeDemoPanel(stackArea, runStack));
+
+        // 9. BST
+        JTextArea bstArea = makeOutputArea();
+        JButton runBST = makeAccentButton("Run BST Search & Delete Demo", IconType.SEARCH);
+        runBST.addActionListener(e -> {
+            bstArea.setText("");
+            bstArea.append("═══ BINARY SEARCH TREE SEARCH & DELETION DEMO ═══\n");
+            ds.BST<Integer, String> bst = new ds.BST<>();
+            DynamicArray<Location> locs = DatabaseManager.loadLocations();
+            for (int i = 0; i < Math.min(15, locs.size()); i++) {
+                Location l = locs.get(i);
+                bst.insert(l.getLocationId(), l.getName());
+            }
+            bstArea.append("Inserted 15 Locations into BST.\n");
+            bstArea.append("Initial Tree Size: " + bst.size() + "\n");
+            bstArea.append("Search Key 4: " + bst.search(4) + "\n\n");
+
+            bstArea.append("Executing BST Deletion on Key 4...\n");
+            boolean deleted = bst.delete(4);
+            bstArea.append("delete(4) Success: " + deleted + "\n");
+            bstArea.append("Search Key 4 after delete: " + bst.search(4) + "\n");
+            bstArea.append("New Tree Size: " + bst.size() + "\n\n");
+
+            bstArea.append("In-order Traversal (Sorted Location Names):\n");
+            DynamicArray<String> inorder = bst.inorder();
+            for (int i = 0; i < inorder.size(); i++) {
+                bstArea.append("  [" + i + "] " + inorder.get(i) + "\n");
+            }
+        });
+        tabs.addTab("BST", makeDemoPanel(bstArea, runBST));
+
+        panel.add(tabs, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel makeDemoPanel(JTextArea area, JButton actionBtn) {
+        JPanel p = new JPanel(new BorderLayout(0, 8));
+        p.setBackground(BG_DARK);
+        p.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        p.add(makeScrollPane(area), BorderLayout.CENTER);
+        JPanel bRow = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bRow.setOpaque(false);
+        bRow.add(actionBtn);
+        p.add(bRow, BorderLayout.SOUTH);
+        return p;
+    }
+
+    // --- PANEL 4: ACTIVITY & LOGS ---
+    private JPanel buildActivityLogsPanelUI() {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(BG_DARK);
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        JPanel logCard = makeCard("Live System Activity Terminal");
+        logCard.setLayout(new BorderLayout());
+        logArea.setFont(FONT_MONO);
+        logArea.setBackground(new Color(0x0B1120));
+        logArea.setForeground(TEXT_PRIMARY);
+        logArea.setCaretColor(ACCENT);
+        logArea.setEditable(false);
+        logArea.setLineWrap(true);
+        logArea.setWrapStyleWord(true);
+        logCard.add(makeScrollPane(logArea), BorderLayout.CENTER);
+
+        panel.add(logCard, BorderLayout.CENTER);
+        return panel;
+    }
+
+    // --- Core Backend Functions (100% Unchanged Logic) ---
     private void startCompletionWatcher() {
-        // Check every 10 seconds for completed deliveries
         javax.swing.Timer timer = new javax.swing.Timer(10000, e -> checkForCompletedOrders());
         timer.setRepeats(true);
         timer.start();
@@ -95,13 +1056,10 @@ public class UGSwiftApp extends JFrame {
 
             for (ServiceRequest req : toComplete) {
                 req.setStatus("DELIVERED");
-                // Persist status
                 DatabaseManager.saveServiceRequest(req);
-                // Free up rider
                 int riderId = req.getAssignedRiderId();
                 if (riderId > 0) {
                     DatabaseManager.updateResourceStatus(riderId, "AVAILABLE");
-                    // Update in-memory copy
                     for (Resource r : riders) {
                         if (r.getResourceId() == riderId) {
                             r.setAvailabilityStatus("AVAILABLE");
@@ -110,7 +1068,6 @@ public class UGSwiftApp extends JFrame {
                     }
                 }
 
-                // Move matching order from active -> completed
                 Order moved = null;
                 for (Order o : activeOrders) {
                     if (o.getPickupLocationId() == req.getSourceLocationId() && o.getDeliveryLocationId() == req.getDestLocationId() && o.getFoodItem().equals(req.getCategory())) {
@@ -140,13 +1097,12 @@ public class UGSwiftApp extends JFrame {
                 log("No incoming requests to process.");
                 return;
             }
-            models.ServiceRequest req = incomingManager.next();
+            ServiceRequest req = incomingManager.next();
             if (req == null) {
                 log("No incoming request retrieved.");
                 return;
             }
 
-            // build a lightweight order for assignment
             Order order = new Order(
                     1000 + (int) (Math.random() * 9000),
                     "Queued",
@@ -160,11 +1116,10 @@ public class UGSwiftApp extends JFrame {
                     req.getAssignedRiderId()
             );
 
-            // attempt circular pool assignment
-            models.Resource assigned = driverPool.nextSuitable(order, locations, roads);
+            Resource assigned = driverPool.nextSuitable(order, locations, roads);
             DeliveryEngine.AssignmentResult result = null;
             if (assigned != null) {
-                ds.Graph graph = buildGraph();
+                Graph graph = buildGraph();
                 var path = RouteEngine.dijkstra(graph, assigned.getHomeLocationId(), order.getPickupLocationId());
                 if (path != null) {
                     result = new DeliveryEngine.AssignmentResult(assigned, path.totalDistanceKm, path.totalTimeMin);
@@ -180,13 +1135,11 @@ public class UGSwiftApp extends JFrame {
                 return;
             }
 
-            // assign and persist
             req.setAssignedRiderId(result.rider.getResourceId());
             req.setStatus("ASSIGNED");
-            // compute realistic delivery duration: rider travel to pickup + pickup->delivery travel time
             double deliveryDuration = 0.0;
             try {
-                ds.Graph fullGraph = buildGraph();
+                Graph fullGraph = buildGraph();
                 RouteEngine.PathResult pd = RouteEngine.dijkstra(fullGraph, order.getPickupLocationId(), order.getDeliveryLocationId());
                 if (pd != null) {
                     deliveryDuration = result.estimatedTimeMin + pd.totalTimeMin;
@@ -196,7 +1149,7 @@ public class UGSwiftApp extends JFrame {
             } catch (Exception ex) {
                 deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
             }
-            req = new models.ServiceRequest(req.getRequestId(), req.getSourceLocationId(), req.getDestLocationId(), req.getCategory(), req.getUrgency(), req.getTimeSubmittedMin(), 480.0 + deliveryDuration, req.getStatus(), req.getAssignedRiderId(), req.getDeliveredTimeMin());
+            req = new ServiceRequest(req.getRequestId(), req.getSourceLocationId(), req.getDestLocationId(), req.getCategory(), req.getUrgency(), req.getTimeSubmittedMin(), 480.0 + deliveryDuration, req.getStatus(), req.getAssignedRiderId(), req.getDeliveredTimeMin());
             DatabaseManager.saveServiceRequest(req);
             DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
             result.rider.setAvailabilityStatus("BUSY");
@@ -271,268 +1224,6 @@ public class UGSwiftApp extends JFrame {
         t.start();
     }
 
-    private void buildUI() {
-        JPanel root = new JPanel(new BorderLayout(12, 12));
-        root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-        root.setBackground(new Color(0xF3F7FB));
-
-        JPanel header = new JPanel(new BorderLayout(12, 8));
-        header.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xD5E2EC), 1),
-                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
-        header.setBackground(new Color(0xFFFFFF));
-
-        JPanel titlePanel = new JPanel(new BorderLayout());
-        titlePanel.setOpaque(false);
-        JLabel title = new JLabel("UG Swift Delivery Console", SwingConstants.LEFT);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        title.setForeground(new Color(0x133C5C));
-        JLabel subtitle = new JLabel("Fast campus ordering, smart rider assignment, and live delivery tracking");
-        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        subtitle.setForeground(new Color(0x5B6F7A));
-        titlePanel.add(title, BorderLayout.NORTH);
-        titlePanel.add(subtitle, BorderLayout.SOUTH);
-        header.add(titlePanel, BorderLayout.WEST);
-
-        JPanel meta = new JPanel(new GridLayout(1, 2, 10, 0));
-        meta.setOpaque(false);
-        summaryLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        summaryLabel.setForeground(new Color(0x295A7A));
-        statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        statusLabel.setForeground(new Color(0x1E7A3B));
-        meta.add(summaryLabel);
-        meta.add(statusLabel);
-        header.add(meta, BorderLayout.EAST);
-        root.add(header, BorderLayout.NORTH);
-
-        JPanel content = new JPanel(new BorderLayout(12, 12));
-        content.setOpaque(false);
-        JPanel leftPanel = buildOrderPanel();
-        JPanel rightPanel = buildDashboardPanel();
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
-        // Make right panel 30% larger than left: leftShare = 1 / (1 + 1.3) = ~0.43478
-        double leftShare = 1.0 / 2.3;
-        splitPane.setResizeWeight(leftShare);
-        splitPane.setContinuousLayout(true);
-        splitPane.setOneTouchExpandable(true);
-        splitPane.setDividerSize(8);
-        // Set reasonable minimum sizes so user can drag the divider leftwards
-        leftPanel.setMinimumSize(new java.awt.Dimension(220, 200));
-        rightPanel.setMinimumSize(new java.awt.Dimension(320, 200));
-        // If window width is known, set divider accordingly; fallback to default
-        int w = getWidth();
-        if (w > 0) {
-            splitPane.setDividerLocation((int) (w * leftShare));
-        }
-        splitPane.setBorder(null);
-        content.add(splitPane, BorderLayout.CENTER);
-        root.add(content, BorderLayout.CENTER);
-
-        setContentPane(root);
-    }
-
-    private JPanel buildOrderPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xD6E4EE), 1),
-                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
-        panel.setPreferredSize(new Dimension(430, 0));
-        panel.setBackground(new Color(0xFFFFFF));
-
-        JLabel customerLabel = new JLabel("Customer name");
-        customerLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        customerField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        panel.add(customerLabel);
-        panel.add(customerField);
-        panel.add(Box.createVerticalStrut(8));
-
-        JLabel restaurantLabel = new JLabel("Restaurant");
-        restaurantLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        restaurantCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        panel.add(restaurantLabel);
-        panel.add(restaurantCombo);
-        panel.add(Box.createVerticalStrut(8));
-
-        JLabel foodLabel = new JLabel("Meal");
-        foodLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        foodCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        panel.add(foodLabel);
-        panel.add(foodCombo);
-        panel.add(Box.createVerticalStrut(8));
-
-        JLabel pickupLabel = new JLabel("Pickup location");
-        pickupLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        sourceCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        panel.add(pickupLabel);
-        panel.add(sourceCombo);
-        panel.add(Box.createVerticalStrut(8));
-
-        JLabel deliveryLabel = new JLabel("Delivery location");
-        deliveryLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        destinationCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        panel.add(deliveryLabel);
-        panel.add(destinationCombo);
-        panel.add(Box.createVerticalStrut(8));
-
-        JLabel priorityLabel = new JLabel("Order priority");
-        priorityLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        priorityCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        panel.add(priorityLabel);
-        panel.add(priorityCombo);
-        panel.add(Box.createVerticalStrut(12));
-
-        JButton orderBtn = new JButton("Place Order");
-        JButton routeBtn = new JButton("Preview Route");
-        JButton dispatchBtn = new JButton("Dispatch Queue");
-        JButton refreshBtn = new JButton("Refresh Dashboard");
-        JButton initBtn = new JButton("Initialize Data");
-        JButton generateBtn = new JButton("Generate Roads");
-        JButton seededBtn = new JButton("Show Seeded Requests");
-        JButton dsDemoBtn = new JButton("DS Demo");
-        JButton openMapBtn = new JButton("Open Campus Map");
-
-        orderBtn.setBackground(new Color(0x1F7A1F));
-        orderBtn.setForeground(Color.WHITE);
-        routeBtn.setBackground(new Color(0x2F5D7C));
-        routeBtn.setForeground(Color.WHITE);
-        dispatchBtn.setBackground(new Color(0x8A4B08));
-        dispatchBtn.setForeground(Color.WHITE);
-
-        // use 3 columns and allow rows to wrap automatically
-        JPanel buttonRow = new JPanel(new GridLayout(0, 3, 8, 8));
-        buttonRow.setOpaque(false);
-        buttonRow.add(orderBtn);
-        buttonRow.add(routeBtn);
-        buttonRow.add(dispatchBtn);
-        buttonRow.add(refreshBtn);
-        buttonRow.add(initBtn);
-        buttonRow.add(generateBtn);
-        buttonRow.add(seededBtn);
-        buttonRow.add(dsDemoBtn);
-        buttonRow.add(openMapBtn);
-        panel.add(buttonRow);
-        panel.add(Box.createVerticalStrut(12));
-
-        JLabel guidanceTitle = new JLabel("How it works");
-        guidanceTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        panel.add(guidanceTitle);
-        JTextArea guidance = new JTextArea(
-                "1. Choose a restaurant and meal.\n"
-                        + "2. Select pickup and destination.\n"
-                        + "3. Place the order to auto-assign a rider."
-        );
-        guidance.setEditable(false);
-        guidance.setBackground(panel.getBackground());
-        guidance.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        guidance.setLineWrap(true);
-        guidance.setWrapStyleWord(true);
-        panel.add(guidance);
-        panel.add(Box.createVerticalGlue());
-
-        restaurantCombo.addActionListener(e -> updateFoodOptions());
-        orderBtn.addActionListener(e -> placeOrder());
-        routeBtn.addActionListener(e -> computeRoute());
-        dispatchBtn.addActionListener(e -> runDispatch("Nearest Rider"));
-        refreshBtn.addActionListener(e -> loadData());
-        initBtn.addActionListener(e -> runAction("initializing data", this::initializeData));
-        generateBtn.addActionListener(e -> runAction("generating roads", this::generateRoadNetwork));
-        seededBtn.addActionListener(e -> showSeededRequests());
-        dsDemoBtn.addActionListener(e -> showDSDemo());
-        openMapBtn.addActionListener(e -> {
-            try {
-                Class<?> launcherClass = Class.forName("tools.CampusMapLauncher");
-                launcherClass.getMethod("openMap").invoke(null);
-            } catch (Exception ex) {
-                log("Failed to open campus map: " + ex.getMessage());
-            }
-        });
-
-        return panel;
-    }
-
-    private JPanel buildDashboardPanel() {
-        JPanel panel = new JPanel(new BorderLayout(8, 8));
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xD6E4EE), 1),
-                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
-        panel.setBackground(new Color(0xF9FCFF));
-
-        JPanel top = new JPanel(new GridLayout(1, 3, 8, 8));
-        top.setOpaque(false);
-        JPanel ridersPanel = new JPanel(new BorderLayout());
-        ridersPanel.setBorder(BorderFactory.createTitledBorder("Available riders"));
-        ridersPanel.setBackground(Color.WHITE);
-        riderList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ridersPanel.add(new JScrollPane(riderList), BorderLayout.CENTER);
-        top.add(ridersPanel);
-
-        JPanel stationsPanel = new JPanel(new BorderLayout());
-        stationsPanel.setBorder(BorderFactory.createTitledBorder("Rider stations"));
-        stationsPanel.setBackground(Color.WHITE);
-        stationList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        stationsPanel.add(new JScrollPane(stationList), BorderLayout.CENTER);
-        top.add(stationsPanel);
-
-        JPanel ordersPanel = new JPanel(new BorderLayout());
-        ordersPanel.setBorder(BorderFactory.createTitledBorder("Active deliveries"));
-        ordersPanel.setBackground(Color.WHITE);
-        activeOrdersArea.setEditable(false);
-        activeOrdersArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        activeOrdersArea.setLineWrap(true);
-        activeOrdersArea.setWrapStyleWord(true);
-        ordersPanel.add(new JScrollPane(activeOrdersArea), BorderLayout.CENTER);
-        top.add(ordersPanel);
-
-        panel.add(top, BorderLayout.NORTH);
-
-        JPanel mid = new JPanel(new GridLayout(1, 2, 8, 8));
-        JPanel incomingPanel = new JPanel(new BorderLayout());
-        incomingPanel.setBorder(BorderFactory.createTitledBorder("Incoming queue"));
-        incomingPanel.setBackground(Color.WHITE);
-        incomingList.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        incomingPanel.add(new JScrollPane(incomingList), BorderLayout.CENTER);
-        JPanel incomingControls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton processNextBtn = new JButton("Process next");
-        autoToggleBtn = new JButton("Start Auto");
-        intervalField = new JTextField("10", 4);
-        bulkCountField = new JTextField("5", 4);
-        bulkProcessBtn = new JButton("Process N");
-        incomingControls.add(new JLabel("Interval(s):"));
-        incomingControls.add(intervalField);
-        incomingControls.add(autoToggleBtn);
-        incomingControls.add(processNextBtn);
-        incomingControls.add(new JLabel("Bulk:"));
-        incomingControls.add(bulkCountField);
-        incomingControls.add(bulkProcessBtn);
-        incomingPanel.add(incomingControls, BorderLayout.SOUTH);
-        mid.add(incomingPanel);
-
-        JPanel completedPanel = new JPanel(new BorderLayout());
-        completedPanel.setBorder(BorderFactory.createTitledBorder("Completed deliveries"));
-        completedPanel.setBackground(Color.WHITE);
-        completedList.setFont(new Font("Consolas", Font.PLAIN, 12));
-        completedPanel.add(new JScrollPane(completedList), BorderLayout.CENTER);
-        mid.add(completedPanel);
-
-        panel.add(mid, BorderLayout.CENTER);
-
-        processNextBtn.addActionListener(e -> processNextIncoming());
-        autoToggleBtn.addActionListener(e -> toggleAutoProcessing());
-        bulkProcessBtn.addActionListener(e -> startBulkProcessing());
-
-        logArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        logArea.setWrapStyleWord(true);
-        logArea.setLineWrap(true);
-        logArea.setEditable(false);
-        JScrollPane logScroll = new JScrollPane(logArea);
-        logScroll.setBorder(BorderFactory.createTitledBorder("Live activity"));
-        panel.add(logScroll, BorderLayout.CENTER);
-
-        return panel;
-    }
-
     private void initializeData() {
         setStatus("Initializing database...");
         log("Initializing campus data and rider network...");
@@ -540,8 +1231,13 @@ public class UGSwiftApp extends JFrame {
             String dataDir = resolveDataDir();
             DatabaseManager.initializeDatabase(dataDir + "locations.csv", dataDir + "roads.csv");
             loadData();
+            if (roads.isEmpty()) {
+                log("Road network empty. Generating campus roads from location data...");
+                RoadNetworkGenerator.main(new String[]{dataDir + "locations.csv", dataDir + "roads.csv"});
+                loadData();
+            }
             setStatus("Ready for orders");
-            log("The food delivery platform is ready.");
+            log("The UG Swift Delivery Service platform is ready.");
         } catch (Exception ex) {
             setStatus("Initialization failed");
             log("Initialization failed: " + ex.getMessage());
@@ -555,7 +1251,6 @@ public class UGSwiftApp extends JFrame {
             roads = DatabaseManager.loadRoads();
             requests = DatabaseManager.loadServiceRequests();
             riders = loadResources();
-            // rebuild driver pool for fair circular assignment
             driverPool.rebuild(riders);
             populateLocationSelectors();
             populateRestaurantMenus();
@@ -645,7 +1340,6 @@ public class UGSwiftApp extends JFrame {
                 "PENDING",
                 -1
         );
-        // Build service request and submit to incoming manager (FIFO / priority)
         ServiceRequest request = new ServiceRequest(
                 10000 + activeOrders.size() + requests.size(),
                 pickupId,
@@ -662,11 +1356,9 @@ public class UGSwiftApp extends JFrame {
         incomingManager.submit(request, highPriority);
         requests.add(request);
 
-        // Try to assign a rider fairly using the circular driver pool first
-        models.Resource assigned = driverPool.nextSuitable(order, locations, roads);
+        Resource assigned = driverPool.nextSuitable(order, locations, roads);
         DeliveryEngine.AssignmentResult result = null;
         if (assigned != null) {
-            // compute path/time
             ds.Graph graph = buildGraph();
             var path = RouteEngine.dijkstra(graph, assigned.getHomeLocationId(), pickupId);
             if (path != null) {
@@ -674,7 +1366,6 @@ public class UGSwiftApp extends JFrame {
             }
         }
 
-        // Fallback to earlier assignment algorithm
         if (result == null) {
             result = DeliveryEngine.assignRider(order, riders, locations, roads);
         }
@@ -688,7 +1379,6 @@ public class UGSwiftApp extends JFrame {
         }
 
         result.rider.setAvailabilityStatus("BUSY");
-        // compute realistic delivery duration: rider travel to pickup + pickup->delivery travel time
         double deliveryDuration = 0.0;
         try {
             Graph graph = buildGraph();
@@ -702,7 +1392,6 @@ public class UGSwiftApp extends JFrame {
             deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
         }
 
-        // update request as assigned with deadline
         request.setAssignedRiderId(result.rider.getResourceId());
         request.setStatus("ASSIGNED");
         request = new ServiceRequest(request.getRequestId(), request.getSourceLocationId(), request.getDestLocationId(), request.getCategory(), request.getUrgency(), request.getTimeSubmittedMin(), 480.0 + deliveryDuration, request.getStatus(), request.getAssignedRiderId());
@@ -793,7 +1482,6 @@ public class UGSwiftApp extends JFrame {
                     model.addElement(line);
                 }
             }
-            // If DB returned nothing (or different ids), fall back to in-memory requests loaded on startup
             if (model.getSize() == 0 && requests != null && !requests.isEmpty()) {
                 for (ServiceRequest r : requests) {
                     if (r.getRequestId() <= 300) {
@@ -808,15 +1496,17 @@ public class UGSwiftApp extends JFrame {
                 model.addElement("No seeded requests found. Ensure the database is initialized and contains the seeded rows.");
             }
             JList<String> list = new JList<>(model);
-            list.setFont(new Font("Consolas", Font.PLAIN, 12));
+            styleList(list);
             JDialog dlg = new JDialog(this, "Seeded Requests (1-300)", true);
             dlg.setSize(760, 520);
             dlg.setLocationRelativeTo(this);
+            dlg.getContentPane().setBackground(BG_DARK);
             dlg.setLayout(new BorderLayout());
-            dlg.add(new JScrollPane(list), BorderLayout.CENTER);
-            JButton close = new JButton("Close");
+            dlg.add(makeScrollPane(list), BorderLayout.CENTER);
+            JButton close = makeSecondaryButton("Close", null);
             close.addActionListener(e -> dlg.dispose());
             JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            bottom.setBackground(BG_DARK);
             bottom.add(close);
             dlg.add(bottom, BorderLayout.SOUTH);
             dlg.setVisible(true);
@@ -829,13 +1519,15 @@ public class UGSwiftApp extends JFrame {
         JDialog dlg = new JDialog(this, "UG Swift — System Data Structures & Algorithm Demos", true);
         dlg.setSize(960, 640);
         dlg.setLocationRelativeTo(this);
+        dlg.getContentPane().setBackground(BG_DARK);
         JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(FONT_NAV);
+        tabs.setBackground(BG_SIDEBAR);
+        tabs.setForeground(TEXT_PRIMARY);
 
-        // 1. Graph & MinHeap (Campus Network & Dijkstra)
-        JTextArea graphArea = new JTextArea();
-        graphArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        graphArea.setEditable(false);
-        JButton runGraph = new JButton("Run Campus Graph & Dijkstra Demo");
+        // 1. Graph & MinHeap
+        JTextArea graphArea = makeOutputArea();
+        JButton runGraph = makeAccentButton("Run Campus Graph & Dijkstra Demo", IconType.GRAPH);
         runGraph.addActionListener(e -> {
             graphArea.setText("");
             graphArea.append("═══ CAMPUS ROAD NETWORK & DIJKSTRA (Graph + MinHeap) ═══\n");
@@ -844,7 +1536,7 @@ public class UGSwiftApp extends JFrame {
             graphArea.append(String.format("Loaded %d Campus Locations & %d Road Edges into Graph.\n", locs.size(), rds.size()));
             Graph graph = buildGraph();
             long t0 = System.nanoTime();
-            RouteEngine.PathResult res = RouteEngine.dijkstra(graph, 1, 75); // Balme Library -> Night Market
+            RouteEngine.PathResult res = RouteEngine.dijkstra(graph, 1, 75);
             long t1 = System.nanoTime();
             if (res != null) {
                 graphArea.append(String.format("Shortest Path from Node 1 (%s) to Node 75 (%s):\n", findLocationName(1), findLocationName(75)));
@@ -861,25 +1553,18 @@ public class UGSwiftApp extends JFrame {
                 graphArea.append("No route found between Node 1 and Node 75.\n");
             }
         });
-        JPanel graphPanel = new JPanel(new BorderLayout());
-        graphPanel.add(new JScrollPane(graphArea), BorderLayout.CENTER);
-        JPanel gp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); gp.add(runGraph); graphPanel.add(gp, BorderLayout.SOUTH);
-        tabs.addTab("Graph & Dijkstra", graphPanel);
+        tabs.addTab("Graph & Dijkstra", makeDemoPanel(graphArea, runGraph));
 
-        // 2. B-Tree (Multi-Way Order Indexing)
-        JTextArea btreeArea = new JTextArea();
-        btreeArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        btreeArea.setEditable(false);
-        JButton runBTree = new JButton("Run B-Tree Order Indexing Demo");
+        // 2. B-Tree
+        JTextArea btreeArea = makeOutputArea();
+        JButton runBTree = makeAccentButton("Run B-Tree Order Indexing Demo", IconType.STRUCTURES);
         runBTree.addActionListener(e -> {
             btreeArea.setText("");
             btreeArea.append("═══ B-TREE LARGE-SCALE ORDER INDEXING DEMO (degree t=3) ═══\n");
             ds.BTree<Integer, ServiceRequest> btree = new ds.BTree<>();
             DynamicArray<ServiceRequest> reqs = DatabaseManager.loadServiceRequests();
             btreeArea.append(String.format("Indexing %,d Service Requests into B-Tree...\n", reqs.size()));
-            for (ServiceRequest r : reqs) {
-                btree.insert(r.getRequestId(), r);
-            }
+            for (ServiceRequest r : reqs) btree.insert(r.getRequestId(), r);
             btreeArea.append(String.format("B-Tree Index Built successfully. Total Indexed Elements: %d\n\n", btree.size()));
             int[] testIds = {1, 42, 150, 300, 999};
             for (int id : testIds) {
@@ -894,26 +1579,19 @@ public class UGSwiftApp extends JFrame {
                 }
             }
         });
-        JPanel btreePanel = new JPanel(new BorderLayout());
-        btreePanel.add(new JScrollPane(btreeArea), BorderLayout.CENTER);
-        JPanel bp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bp.add(runBTree); btreePanel.add(bp, BorderLayout.SOUTH);
-        tabs.addTab("B-Tree Indexing", btreePanel);
+        tabs.addTab("B-Tree Indexing", makeDemoPanel(btreeArea, runBTree));
 
-        // 3. Red-Black Tree (Self-Balancing Order Registry)
-        JTextArea rbtArea = new JTextArea();
-        rbtArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        rbtArea.setEditable(false);
-        JButton runRBT = new JButton("Run Red-Black Tree Balance Demo");
+        // 3. Red-Black Tree
+        JTextArea rbtArea = makeOutputArea();
+        JButton runRBT = makeAccentButton("Run Red-Black Tree Balance Demo", IconType.STRUCTURES);
         runRBT.addActionListener(e -> {
             rbtArea.setText("");
             rbtArea.append("═══ RED-BLACK TREE SELF-BALANCING ORDER REGISTRY DEMO ═══\n");
             ds.RedBlackTree<Integer, ServiceRequest> rbt = new ds.RedBlackTree<>();
             DynamicArray<ServiceRequest> reqs = DatabaseManager.loadServiceRequests();
             int count = Math.min(50, reqs.size());
-            for (int i = 0; i < count; i++) {
-                rbt.insert(reqs.get(i).getRequestId(), reqs.get(i));
-            }
-            btreeArea.append(String.format("Inserted %d Active Orders into Red-Black Tree.\n", count));
+            for (int i = 0; i < count; i++) rbt.insert(reqs.get(i).getRequestId(), reqs.get(i));
+            rbtArea.append(String.format("Inserted %d Active Orders into Red-Black Tree.\n", count));
             rbtArea.append("Properties Verified:\n");
             rbtArea.append("  • Root Node Color : " + (rbt.getRoot() != null && rbt.getRoot().color == ds.RedBlackTree.BLACK ? "BLACK (Valid)" : "RED") + "\n");
             int h = rbt.height();
@@ -928,27 +1606,20 @@ public class UGSwiftApp extends JFrame {
             }
             if (inorder.size() > 10) rbtArea.append(String.format("  ... and %d more items.\n", inorder.size() - 10));
         });
-        JPanel rbtPanel = new JPanel(new BorderLayout());
-        rbtPanel.add(new JScrollPane(rbtArea), BorderLayout.CENTER);
-        JPanel rbp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); rbp.add(runRBT); rbtPanel.add(rbp, BorderLayout.SOUTH);
-        tabs.addTab("Red-Black Tree", rbtPanel);
+        tabs.addTab("Red-Black Tree", makeDemoPanel(rbtArea, runRBT));
 
-        // 4. Hash Table (Rider O(1) Lookup)
-        JTextArea hashArea = new JTextArea();
-        hashArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        hashArea.setEditable(false);
-        JButton runHash = new JButton("Run Hash Table Benchmark");
+        // 4. Hash Table
+        JTextArea hashArea = makeOutputArea();
+        JButton runHash = makeAccentButton("Run Hash Table Benchmark", IconType.SEARCH);
         runHash.addActionListener(e -> {
             hashArea.setText("");
             hashArea.append("═══ HASH TABLE RIDER O(1) LOOKUP DEMO ═══\n");
             ds.HashTable<Integer, Resource> table = new ds.HashTable<>(211);
             DynamicArray<Resource> ridersList = DatabaseManager.loadResources();
-            for (Resource r : ridersList) {
-                table.put(r.getResourceId(), r);
-            }
+            for (Resource r : ridersList) table.put(r.getResourceId(), r);
             hashArea.append(String.format("HashTable Capacity: %d buckets | Stored Items: %d\n", table.getCapacity(), table.size()));
             hashArea.append(String.format("Collision Count   : %d | Load Factor: %.2f%%\n\n", table.getCollisionCount(), (double) table.size() / table.getCapacity() * 100));
-            
+
             int targetId = 5;
             long t0 = System.nanoTime();
             Resource r = table.get(targetId);
@@ -964,16 +1635,11 @@ public class UGSwiftApp extends JFrame {
                 hashArea.append(String.format("  Key: %-2d | %-18s | %-10s | Status: %s\n", res.getResourceId(), res.getName(), res.getType(), res.getAvailabilityStatus()));
             }
         });
-        JPanel hashPanel = new JPanel(new BorderLayout());
-        hashPanel.add(new JScrollPane(hashArea), BorderLayout.CENTER);
-        JPanel hp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); hp.add(runHash); hashPanel.add(hp, BorderLayout.SOUTH);
-        tabs.addTab("Hash Table", hashPanel);
+        tabs.addTab("Hash Table", makeDemoPanel(hashArea, runHash));
 
-        // 5. Disjoint Set (Campus Connectivity)
-        JTextArea dsetArea = new JTextArea();
-        dsetArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        dsetArea.setEditable(false);
-        JButton runDSet = new JButton("Run Disjoint Set Connectivity Demo");
+        // 5. Disjoint Set
+        JTextArea dsetArea = makeOutputArea();
+        JButton runDSet = makeAccentButton("Run Disjoint Set Connectivity", IconType.GRAPH);
         runDSet.addActionListener(e -> {
             dsetArea.setText("");
             dsetArea.append("═══ DISJOINT SET (UNION-FIND) CAMPUS ZONE CONNECTIVITY ═══\n");
@@ -982,7 +1648,6 @@ public class UGSwiftApp extends JFrame {
             for (Location l : locs) maxId = Math.max(maxId, l.getLocationId());
             ds.DisjointSet dset = new ds.DisjointSet(maxId + 1);
 
-            // Union locations in the same zone
             for (int i = 0; i < locs.size(); i++) {
                 for (int j = i + 1; j < locs.size(); j++) {
                     if (locs.get(i).getZone().equalsIgnoreCase(locs.get(j).getZone())) {
@@ -991,25 +1656,20 @@ public class UGSwiftApp extends JFrame {
                 }
             }
             dsetArea.append(String.format("Grouped %d Campus Locations into Disjoint Zone Sets.\n\n", locs.size()));
-            Location l1 = locs.get(0); // Balme Library
-            Location l2 = locs.get(1); // Great Hall
+            Location l1 = locs.get(0);
+            Location l2 = locs.get(1);
             Location l3 = locs.get(locs.size() - 1);
-            
+
             dsetArea.append(String.format("Connectivity Check: '%s' vs '%s': %s\n",
                     l1.getName(), l2.getName(), (dset.find(l1.getLocationId()) == dset.find(l2.getLocationId()) ? "CONNECTED (Same Zone)" : "DISCONNECTED")));
             dsetArea.append(String.format("Connectivity Check: '%s' vs '%s': %s\n",
                     l1.getName(), l3.getName(), (dset.find(l1.getLocationId()) == dset.find(l3.getLocationId()) ? "CONNECTED (Same Zone)" : "DISCONNECTED")));
         });
-        JPanel dsetPanel = new JPanel(new BorderLayout());
-        dsetPanel.add(new JScrollPane(dsetArea), BorderLayout.CENTER);
-        JPanel dsp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); dsp.add(runDSet); dsetPanel.add(dsp, BorderLayout.SOUTH);
-        tabs.addTab("Disjoint Set", dsetPanel);
+        tabs.addTab("Disjoint Set", makeDemoPanel(dsetArea, runDSet));
 
-        // 6. CircularQueue (Round-Robin Rider Dispatch)
-        JTextArea cqArea = new JTextArea();
-        cqArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        cqArea.setEditable(false);
-        JButton runCQ = new JButton("Run Round-Robin Pool Rotation Demo");
+        // 6. Circular Queue
+        JTextArea cqArea = makeOutputArea();
+        JButton runCQ = makeAccentButton("Run Pool Rotation Demo", IconType.REFRESH);
         runCQ.addActionListener(e -> {
             cqArea.setText("");
             cqArea.append("═══ CIRCULAR QUEUE ROUND-ROBIN RIDER POOL DISPATCH DEMO ═══\n");
@@ -1024,21 +1684,16 @@ public class UGSwiftApp extends JFrame {
             cqArea.append("Simulating 4 Consecutive Round-Robin Rider Assignments:\n");
             for (int step = 1; step <= 4; step++) {
                 Resource dispatched = pool.dequeue();
-                pool.enqueue(dispatched); // Rotate to back
+                pool.enqueue(dispatched);
                 cqArea.append(String.format("  Step %d: Dispatched Rider '%s' (%s) -> Rotated to rear | Front Pointer: %d | Rear Pointer: %d\n",
                         step, dispatched.getName(), dispatched.getType(), pool.getFrontPointer(), pool.getRearPointer()));
             }
         });
-        JPanel cqPanel = new JPanel(new BorderLayout());
-        cqPanel.add(new JScrollPane(cqArea), BorderLayout.CENTER);
-        JPanel cqp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); cqp.add(runCQ); cqPanel.add(cqp, BorderLayout.SOUTH);
-        tabs.addTab("Circular Queue", cqPanel);
+        tabs.addTab("Circular Queue", makeDemoPanel(cqArea, runCQ));
 
-        // 7. Deque (Express vs Standard Buffer)
-        JTextArea dqArea = new JTextArea();
-        dqArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        dqArea.setEditable(false);
-        JButton runDQ = new JButton("Run Deque Priority Buffer Demo");
+        // 7. Deque
+        JTextArea dqArea = makeOutputArea();
+        JButton runDQ = makeAccentButton("Run Deque Priority Buffer Demo", IconType.STRUCTURES);
         runDQ.addActionListener(e -> {
             dqArea.setText("");
             dqArea.append("═══ DEQUE DUAL-ENDED DISPATCH BUFFER DEMO ═══\n");
@@ -1054,16 +1709,11 @@ public class UGSwiftApp extends JFrame {
             dqArea.append("Dispatching from FRONT: " + buffer.removeFront() + "\n");
             dqArea.append("Remaining in Buffer  : " + buffer.peekFront() + "\n");
         });
-        JPanel dqPanel = new JPanel(new BorderLayout());
-        dqPanel.add(new JScrollPane(dqArea), BorderLayout.CENTER);
-        JPanel dqp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); dqp.add(runDQ); dqPanel.add(dqp, BorderLayout.SOUTH);
-        tabs.addTab("Deque", dqPanel);
+        tabs.addTab("Deque", makeDemoPanel(dqArea, runDQ));
 
-        // 8. Stack (Scheduling Backtracking)
-        JTextArea stackArea = new JTextArea();
-        stackArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        stackArea.setEditable(false);
-        JButton runStack = new JButton("Run Scheduling Stack Demo");
+        // 8. Stack
+        JTextArea stackArea = makeOutputArea();
+        JButton runStack = makeAccentButton("Run Stack History Demo", IconType.UNDO);
         runStack.addActionListener(e -> {
             stackArea.setText("");
             stackArea.append("═══ STACK SCHEDULING HISTORY & BACKTRACKING DEMO ═══\n");
@@ -1077,16 +1727,11 @@ public class UGSwiftApp extends JFrame {
             stackArea.append("New Current Top State           : " + history.peek() + "\n");
             stackArea.append("Remaining Stack Depth           : " + history.size() + "\n");
         });
-        JPanel stackPanel = new JPanel(new BorderLayout());
-        stackPanel.add(new JScrollPane(stackArea), BorderLayout.CENTER);
-        JPanel stp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); stp.add(runStack); stackPanel.add(stp, BorderLayout.SOUTH);
-        tabs.addTab("Stack", stackPanel);
+        tabs.addTab("Stack", makeDemoPanel(stackArea, runStack));
 
-        // 9. BST 
-        JTextArea bstArea = new JTextArea();
-        bstArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        bstArea.setEditable(false);
-        JButton runBST = new JButton("Run BST Search & Deletion Demo");
+        // 9. BST
+        JTextArea bstArea = makeOutputArea();
+        JButton runBST = makeAccentButton("Run BST Search & Deletion Demo", IconType.SEARCH);
         runBST.addActionListener(e -> {
             bstArea.setText("");
             bstArea.append("═══ BINARY SEARCH TREE SEARCH & DELETION DEMO ═══\n");
@@ -1099,27 +1744,26 @@ public class UGSwiftApp extends JFrame {
             bstArea.append("Inserted 15 Locations into BST.\n");
             bstArea.append("Initial Tree Size: " + bst.size() + "\n");
             bstArea.append("Search Key 4: " + bst.search(4) + "\n\n");
-            
+
             bstArea.append("Executing BST Deletion on Key 4...\n");
             boolean deleted = bst.delete(4);
             bstArea.append("delete(4) Success: " + deleted + "\n");
             bstArea.append("Search Key 4 after delete: " + bst.search(4) + "\n");
             bstArea.append("New Tree Size: " + bst.size() + "\n\n");
-            
+
             bstArea.append("In-order Traversal (Sorted Location Names):\n");
             DynamicArray<String> inorder = bst.inorder();
             for (int i = 0; i < inorder.size(); i++) {
                 bstArea.append("  [" + i + "] " + inorder.get(i) + "\n");
             }
         });
-        JPanel bstPanel = new JPanel(new BorderLayout());
-        bstPanel.add(new JScrollPane(bstArea), BorderLayout.CENTER);
-        JPanel bstp = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bstp.add(runBST); bstPanel.add(bstp, BorderLayout.SOUTH);
-        tabs.addTab("BST", bstPanel);
+        tabs.addTab("BST", makeDemoPanel(bstArea, runBST));
 
         dlg.add(tabs, BorderLayout.CENTER);
-        JButton close = new JButton("Close"); close.addActionListener(e -> dlg.dispose());
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT)); bottom.add(close);
+        JButton close = makeSecondaryButton("Close", null); close.addActionListener(e -> dlg.dispose());
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottom.setBackground(BG_DARK);
+        bottom.add(close);
         dlg.add(bottom, BorderLayout.SOUTH);
         dlg.setVisible(true);
     }
@@ -1199,7 +1843,6 @@ public class UGSwiftApp extends JFrame {
         }
 
         incomingListModel.clear();
-        // show a summary of incoming manager queues
         if (incomingManager != null) {
             incomingListModel.addElement("FIFO pending: " + incomingManager.fifoSize());
             incomingListModel.addElement("Priority pending: " + incomingManager.prioritySize());
@@ -1228,7 +1871,7 @@ public class UGSwiftApp extends JFrame {
         }
         builder.append("\nCompleted deliveries: " + completedOrders.size() + "\n");
         activeOrdersArea.setText(builder.toString());
-        // completed list
+
         completedListModel.clear();
         for (Order o : completedOrders) {
             completedListModel.addElement("#" + o.getOrderId() + " | " + o.getFoodItem() + " | " + o.getRestaurant());
@@ -1328,5 +1971,183 @@ public class UGSwiftApp extends JFrame {
 
     private void setStatus(String message) {
         statusLabel.setText("Status: " + message);
+    }
+
+    private void refreshSummary() {
+        summaryLabel.setText("Locations: " + locations.size() + " | Riders: " + riders.size() + " | Active orders: " + activeOrders.size());
+        locStatLabel.setText(String.valueOf(locations.size()));
+        roadStatLabel.setText(String.valueOf(roads.size()));
+        riderStatLabel.setText(String.valueOf(riders.size()));
+        activeStatLabel.setText(String.valueOf(activeOrders.size()));
+    }
+
+    private void showSummary() {
+        refreshSummary();
+        log("Summary: " + locations.size() + " locations, " + roads.size() + " roads, " + requests.size() + " requests, " + activeOrders.size() + " active orders.");
+    }
+
+    // --- UI Helper Component Creators ---
+    private JPanel statCard(String title, IconType iconType, JLabel valLbl, Color color) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(BG_CARD);
+        card.setBorder(new CompoundBorder(
+            new LineBorder(color.darker(), 1, true),
+            BorderFactory.createEmptyBorder(12, 16, 12, 16)
+        ));
+
+        JLabel titleLbl = new JLabel(title);
+        titleLbl.setIcon(new VectorIcon(iconType, 18, color));
+        titleLbl.setIconTextGap(8);
+        titleLbl.setFont(FONT_BODY);
+        titleLbl.setForeground(TEXT_SECONDARY);
+
+        valLbl.setFont(FONT_STAT);
+        valLbl.setForeground(color);
+
+        card.add(titleLbl, BorderLayout.NORTH);
+        card.add(valLbl,   BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel makeCard(String title) {
+        JPanel card = new JPanel();
+        card.setBackground(BG_CARD);
+        card.setBorder(new CompoundBorder(
+            new TitledBorder(new LineBorder(BORDER_COLOR, 1, true), " " + title + " ",
+                TitledBorder.LEFT, TitledBorder.TOP, FONT_SMALL, TEXT_SECONDARY),
+            BorderFactory.createEmptyBorder(10, 12, 10, 12)
+        ));
+        return card;
+    }
+
+    private JLabel makeFieldLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(FONT_HEADER);
+        label.setForeground(TEXT_SECONDARY);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
+    }
+
+    private JTextField styleTextField(JTextField tf) {
+        tf.setBackground(BG_CARD2);
+        tf.setForeground(TEXT_PRIMARY);
+        tf.setCaretColor(ACCENT);
+        tf.setFont(FONT_BODY);
+        tf.setBorder(new CompoundBorder(
+            new LineBorder(BORDER_COLOR, 1, true),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+        tf.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        tf.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return tf;
+    }
+
+    private <T> JComboBox<T> styleComboBox(JComboBox<T> cb) {
+        cb.setBackground(BG_CARD2);
+        cb.setForeground(TEXT_PRIMARY);
+        cb.setFont(FONT_BODY);
+        cb.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        cb.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cb.setRenderer(new DefaultListCellRenderer() {
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setBackground(isSelected ? BG_CARD : BG_CARD2);
+                setForeground(isSelected ? ACCENT : TEXT_PRIMARY);
+                setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+                return this;
+            }
+        });
+        return cb;
+    }
+
+    private void styleList(JList<?> list) {
+        list.setBackground(new Color(0x0B1120));
+        list.setForeground(TEXT_PRIMARY);
+        list.setFont(FONT_BODY);
+        list.setSelectionBackground(BG_CARD);
+        list.setSelectionForeground(ACCENT);
+    }
+
+    private JTextArea makeOutputArea() {
+        JTextArea area = new JTextArea();
+        area.setFont(FONT_MONO);
+        area.setBackground(new Color(0x0B1120));
+        area.setForeground(TEXT_PRIMARY);
+        area.setCaretColor(ACCENT);
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        return area;
+    }
+
+    private JScrollPane makeScrollPane(JComponent component) {
+        JScrollPane sp = new JScrollPane(component);
+        sp.setBackground(BG_DARK);
+        sp.getViewport().setBackground(component.getBackground());
+        sp.setBorder(new LineBorder(BORDER_COLOR, 1));
+        sp.getVerticalScrollBar().setBackground(BG_SIDEBAR);
+        sp.getHorizontalScrollBar().setBackground(BG_SIDEBAR);
+        return sp;
+    }
+
+    private JButton makeAccentButton(String text, IconType iconType) {
+        JButton btn = new JButton(text) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = getModel().isRollover()
+                    ? new GradientPaint(0, 0, ACCENT_HOVER, 0, getHeight(), ACCENT)
+                    : new GradientPaint(0, 0, ACCENT, 0, getHeight(), ACCENT.darker());
+                g2.setPaint(gp);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        if (iconType != null) {
+            btn.setIcon(new VectorIcon(iconType, 14, new Color(0x1A1B2E)));
+            btn.setIconTextGap(4);
+        }
+        btn.setFont(FONT_SMALL);
+        btn.setForeground(new Color(0x1A1B2E));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(3, 4, 3, 4));
+        btn.setHorizontalAlignment(SwingConstants.CENTER);
+        btn.setOpaque(false);
+        return btn;
+    }
+
+    private JButton makeSecondaryButton(String text, IconType iconType) {
+        JButton btn = new JButton(text) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? BG_CARD : BG_CARD2);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(BORDER_COLOR);
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        if (iconType != null) {
+            btn.setIcon(new VectorIcon(iconType, 14, TEXT_PRIMARY));
+            btn.setIconTextGap(4);
+        }
+        btn.setFont(FONT_SMALL);
+        btn.setForeground(TEXT_PRIMARY);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(3, 4, 3, 4));
+        btn.setHorizontalAlignment(SwingConstants.CENTER);
+        btn.setOpaque(false);
+        return btn;
     }
 }
