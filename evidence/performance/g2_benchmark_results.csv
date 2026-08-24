@@ -1,0 +1,366 @@
+algorithm,input_size,trial,execution_time_ns,result_correct
+Linear Search,100,1,3160300,true
+Linear Search,100,2,39400,true
+Linear Search,100,3,32200,true
+Linear Search,100,4,44200,true
+Linear Search,100,5,18100,true
+Binary Search,100,1,745700,true
+Binary Search,100,2,26600,true
+Binary Search,100,3,79800,true
+Binary Search,100,4,759700,true
+Binary Search,100,5,20700,true
+Linear Search,500,1,61300,true
+Linear Search,500,2,79500,true
+Linear Search,500,3,59600,true
+Linear Search,500,4,60300,true
+Linear Search,500,5,68800,true
+Binary Search,500,1,92200,true
+Binary Search,500,2,86100,true
+Binary Search,500,3,82900,true
+Binary Search,500,4,86500,true
+Binary Search,500,5,88100,true
+Linear Search,1000,1,239800,true
+Linear Search,1000,2,292400,true
+Linear Search,1000,3,303600,true
+Linear Search,1000,4,132900,true
+Linear Search,1000,5,122200,true
+Binary Search,1000,1,247200,true
+Binary Search,1000,2,160700,true
+Binary Search,1000,3,224100,true
+Binary Search,1000,4,155800,true
+Binary Search,1000,5,142800,true
+Linear Search,5000,1,1366600,true
+Linear Search,5000,2,1527500,true
+Linear Search,5000,3,1273000,true
+Linear Search,5000,4,929600,true
+Linear Search,5000,5,891700,true
+Binary Search,5000,1,1028000,true
+Binary Search,5000,2,1269000,true
+Binary Search,5000,3,1149900,true
+Binary Search,5000,4,1427500,true
+Binary Search,5000,5,2879000,true
+Linear Search,10000,1,2456700,true
+Linear Search,10000,2,5616100,true
+Linear Search,10000,3,8917300,true
+Linear Search,10000,4,296500,true
+Linear Search,10000,5,264300,true
+Binary Search,10000,1,2781200,true
+Binary Search,10000,2,425900,true
+Binary Search,10000,3,391000,true
+Binary Search,10000,4,362300,true
+Binary Search,10000,5,456000,true
+Selection Sort,100,1,3403500,true
+Selection Sort,100,2,1831700,true
+Selection Sort,100,3,589100,true
+Selection Sort,100,4,1639300,true
+Selection Sort,100,5,898000,true
+Selection Sort,500,1,18171100,true
+Selection Sort,500,2,5869800,true
+Selection Sort,500,3,13670300,true
+Selection Sort,500,4,5908000,true
+Selection Sort,500,5,7362000,true
+Selection Sort,1000,1,12168900,true
+Selection Sort,1000,2,2577800,true
+Selection Sort,1000,3,14580900,true
+Selection Sort,1000,4,2551500,true
+Selection Sort,1000,5,5336700,true
+Selection Sort,5000,1,123430000,true
+Selection Sort,5000,2,105811200,true
+Selection Sort,5000,3,118686500,true
+Selection Sort,5000,4,95663100,true
+Selection Sort,5000,5,125316100,true
+Insertion Sort,100,1,7309800,true
+Insertion Sort,100,2,467200,true
+Insertion Sort,100,3,483800,true
+Insertion Sort,100,4,687000,true
+Insertion Sort,100,5,422900,true
+Insertion Sort,500,1,11936600,true
+Insertion Sort,500,2,2781300,true
+Insertion Sort,500,3,2686100,true
+Insertion Sort,500,4,2644100,true
+Insertion Sort,500,5,6035400,true
+Insertion Sort,1000,1,5479200,true
+Insertion Sort,1000,2,6954200,true
+Insertion Sort,1000,3,10803200,true
+Insertion Sort,1000,4,2591100,true
+Insertion Sort,1000,5,5720100,true
+Insertion Sort,5000,1,115944500,true
+Insertion Sort,5000,2,114840600,true
+Insertion Sort,5000,3,122841600,true
+Insertion Sort,5000,4,107104900,true
+Insertion Sort,5000,5,92045900,true
+Merge Sort,100,1,5225800,true
+Merge Sort,100,2,305000,true
+Merge Sort,100,3,256800,true
+Merge Sort,100,4,228600,true
+Merge Sort,100,5,230000,true
+Merge Sort,500,1,570700,true
+Merge Sort,500,2,409500,true
+Merge Sort,500,3,379500,true
+Merge Sort,500,4,364300,true
+Merge Sort,500,5,332100,true
+Merge Sort,1000,1,686500,true
+Merge Sort,1000,2,687500,true
+Merge Sort,1000,3,760200,true
+Merge Sort,1000,4,653300,true
+Merge Sort,1000,5,695400,true
+Merge Sort,5000,1,6342700,true
+Merge Sort,5000,2,4174300,true
+Merge Sort,5000,3,6442600,true
+Merge Sort,5000,4,6664000,true
+Merge Sort,5000,5,12648900,true
+Merge Sort,10000,1,9393700,true
+Merge Sort,10000,2,12100300,true
+Merge Sort,10000,3,14551300,true
+Merge Sort,10000,4,13497300,true
+Merge Sort,10000,5,10528700,true
+Quick Sort,100,1,1608700,true
+Quick Sort,100,2,111600,true
+Quick Sort,100,3,109000,true
+Quick Sort,100,4,377200,true
+Quick Sort,100,5,110200,true
+Quick Sort,500,1,1976400,true
+Quick Sort,500,2,976700,true
+Quick Sort,500,3,984100,true
+Quick Sort,500,4,997100,true
+Quick Sort,500,5,18390300,true
+Quick Sort,1000,1,56488500,true
+Quick Sort,1000,2,522300,true
+Quick Sort,1000,3,462500,true
+Quick Sort,1000,4,645800,true
+Quick Sort,1000,5,503600,true
+Quick Sort,5000,1,12775800,true
+Quick Sort,5000,2,11042400,true
+Quick Sort,5000,3,12355300,true
+Quick Sort,5000,4,14573100,true
+Quick Sort,5000,5,13538900,true
+Quick Sort,10000,1,81263900,true
+Quick Sort,10000,2,63144300,true
+Quick Sort,10000,3,55366300,true
+Quick Sort,10000,4,53830200,true
+Quick Sort,10000,5,56396700,true
+BST Search,100,1,25200,true
+BST Search,100,2,22500,true
+BST Search,100,3,46600,true
+BST Search,100,4,13300,true
+BST Search,100,5,11600,true
+Red-Black Tree Search,100,1,12300,true
+Red-Black Tree Search,100,2,3200,true
+Red-Black Tree Search,100,3,2200,true
+Red-Black Tree Search,100,4,1700,true
+Red-Black Tree Search,100,5,1600,true
+B-Tree Search,100,1,27900,true
+B-Tree Search,100,2,2900,true
+B-Tree Search,100,3,2200,true
+B-Tree Search,100,4,2200,true
+B-Tree Search,100,5,2200,true
+Hash Table Search,100,1,14900,true
+Hash Table Search,100,2,5100,true
+Hash Table Search,100,3,11100,true
+Hash Table Search,100,4,3500,true
+Hash Table Search,100,5,3100,true
+BST Search,500,1,42600,true
+BST Search,500,2,15400,true
+BST Search,500,3,20700,true
+BST Search,500,4,26100,true
+BST Search,500,5,26300,true
+Red-Black Tree Search,500,1,4300,true
+Red-Black Tree Search,500,2,4600,true
+Red-Black Tree Search,500,3,2200,true
+Red-Black Tree Search,500,4,2000,true
+Red-Black Tree Search,500,5,1800,true
+B-Tree Search,500,1,4500,true
+B-Tree Search,500,2,3500,true
+B-Tree Search,500,3,4200,true
+B-Tree Search,500,4,4900,true
+B-Tree Search,500,5,5300,true
+Hash Table Search,500,1,8300,true
+Hash Table Search,500,2,2300,true
+Hash Table Search,500,3,2700,true
+Hash Table Search,500,4,2200,true
+Hash Table Search,500,5,2100,true
+BST Search,1000,1,8706100,true
+BST Search,1000,2,119900,true
+BST Search,1000,3,44900,true
+BST Search,1000,4,100800,true
+BST Search,1000,5,94500,true
+Red-Black Tree Search,1000,1,5000,true
+Red-Black Tree Search,1000,2,2300,true
+Red-Black Tree Search,1000,3,2000,true
+Red-Black Tree Search,1000,4,2000,true
+Red-Black Tree Search,1000,5,1900,true
+B-Tree Search,1000,1,5000,true
+B-Tree Search,1000,2,2700,true
+B-Tree Search,1000,3,3800,true
+B-Tree Search,1000,4,3000,true
+B-Tree Search,1000,5,2600,true
+Hash Table Search,1000,1,16500,true
+Hash Table Search,1000,2,2000,true
+Hash Table Search,1000,3,2300,true
+Hash Table Search,1000,4,1600,true
+Hash Table Search,1000,5,1300,true
+BST Search,5000,1,96800,true
+BST Search,5000,2,108200,true
+BST Search,5000,3,159400,true
+BST Search,5000,4,137900,true
+BST Search,5000,5,162600,true
+Red-Black Tree Search,5000,1,4100,true
+Red-Black Tree Search,5000,2,2500,true
+Red-Black Tree Search,5000,3,2400,true
+Red-Black Tree Search,5000,4,2100,true
+Red-Black Tree Search,5000,5,2100,true
+B-Tree Search,5000,1,5600,true
+B-Tree Search,5000,2,5800,true
+B-Tree Search,5000,3,7300,true
+B-Tree Search,5000,4,3100,true
+B-Tree Search,5000,5,3732700,true
+Hash Table Search,5000,1,24900,true
+Hash Table Search,5000,2,14000,true
+Hash Table Search,5000,3,2000,true
+Hash Table Search,5000,4,2000,true
+Hash Table Search,5000,5,2000,true
+BST Search,10000,1,1396100,true
+BST Search,10000,2,549500,true
+BST Search,10000,3,423000,true
+BST Search,10000,4,377800,true
+BST Search,10000,5,284300,true
+Red-Black Tree Search,10000,1,4800,true
+Red-Black Tree Search,10000,2,2600,true
+Red-Black Tree Search,10000,3,2500,true
+Red-Black Tree Search,10000,4,2600,true
+Red-Black Tree Search,10000,5,2400,true
+B-Tree Search,10000,1,7900,true
+B-Tree Search,10000,2,2900,true
+B-Tree Search,10000,3,7000,true
+B-Tree Search,10000,4,3500,true
+B-Tree Search,10000,5,2800,true
+Hash Table Search,10000,1,4900,true
+Hash Table Search,10000,2,1800,true
+Hash Table Search,10000,3,1900,true
+Hash Table Search,10000,4,3300,true
+Hash Table Search,10000,5,1200,true
+BFS,20,1,3253400,true
+BFS,20,2,56000,true
+BFS,20,3,78300,true
+BFS,20,4,70900,true
+BFS,20,5,157300,true
+DFS,20,1,2832900,true
+DFS,20,2,2861000,true
+DFS,20,3,199300,true
+DFS,20,4,431600,true
+DFS,20,5,256200,true
+Dijkstra,20,1,11678800,true
+Dijkstra,20,2,896500,true
+Dijkstra,20,3,276300,true
+Dijkstra,20,4,1096300,true
+Dijkstra,20,5,296500,true
+Prim MST,20,1,17204600,true
+Prim MST,20,2,534000,true
+Prim MST,20,3,362900,true
+Prim MST,20,4,320800,true
+Prim MST,20,5,313100,true
+Kruskal MST,20,1,13019600,true
+Kruskal MST,20,2,374300,true
+Kruskal MST,20,3,190200,true
+Kruskal MST,20,4,159900,true
+Kruskal MST,20,5,169500,true
+BFS,50,1,157300,true
+BFS,50,2,330400,true
+BFS,50,3,149600,true
+BFS,50,4,166000,true
+BFS,50,5,166400,true
+DFS,50,1,144700,true
+DFS,50,2,123600,true
+DFS,50,3,111600,true
+DFS,50,4,143100,true
+DFS,50,5,101900,true
+Dijkstra,50,1,1317000,true
+Dijkstra,50,2,243300,true
+Dijkstra,50,3,226200,true
+Dijkstra,50,4,212000,true
+Dijkstra,50,5,219500,true
+Prim MST,50,1,348000,true
+Prim MST,50,2,1626900,true
+Prim MST,50,3,852600,true
+Prim MST,50,4,1117200,true
+Prim MST,50,5,529600,true
+Kruskal MST,50,1,326200,true
+Kruskal MST,50,2,300800,true
+Kruskal MST,50,3,275100,true
+Kruskal MST,50,4,297200,true
+Kruskal MST,50,5,485300,true
+BFS,100,1,337800,true
+BFS,100,2,432900,true
+BFS,100,3,1825300,true
+BFS,100,4,156500,true
+BFS,100,5,282200,true
+DFS,100,1,683000,true
+DFS,100,2,794200,true
+DFS,100,3,265300,true
+DFS,100,4,263700,true
+DFS,100,5,260200,true
+Dijkstra,100,1,450700,true
+Dijkstra,100,2,344700,true
+Dijkstra,100,3,350600,true
+Dijkstra,100,4,346300,true
+Dijkstra,100,5,334100,true
+Prim MST,100,1,2691200,true
+Prim MST,100,2,1811000,true
+Prim MST,100,3,680300,true
+Prim MST,100,4,19483900,true
+Prim MST,100,5,3129200,true
+Kruskal MST,100,1,2585600,true
+Kruskal MST,100,2,733500,true
+Kruskal MST,100,3,7301900,true
+Kruskal MST,100,4,844500,true
+Kruskal MST,100,5,774200,true
+BFS,250,1,348900,true
+BFS,250,2,247100,true
+BFS,250,3,250600,true
+BFS,250,4,267400,true
+BFS,250,5,250800,true
+DFS,250,1,377800,true
+DFS,250,2,330900,true
+DFS,250,3,366800,true
+DFS,250,4,329100,true
+DFS,250,5,343300,true
+Dijkstra,250,1,3251700,true
+Dijkstra,250,2,936500,true
+Dijkstra,250,3,944200,true
+Dijkstra,250,4,8255100,true
+Dijkstra,250,5,929200,true
+Prim MST,250,1,32290400,true
+Prim MST,250,2,1152100,true
+Prim MST,250,3,1076700,true
+Prim MST,250,4,1219700,true
+Prim MST,250,5,900200,true
+Kruskal MST,250,1,1102500,true
+Kruskal MST,250,2,16965000,true
+Kruskal MST,250,3,1270300,true
+Kruskal MST,250,4,15108800,true
+Kruskal MST,250,5,975400,true
+BFS,500,1,4694900,true
+BFS,500,2,6397300,true
+BFS,500,3,531100,true
+BFS,500,4,3449600,true
+BFS,500,5,945900,true
+DFS,500,1,1252600,true
+DFS,500,2,12899200,true
+DFS,500,3,673900,true
+DFS,500,4,573800,true
+DFS,500,5,543600,true
+Dijkstra,500,1,1364300,true
+Dijkstra,500,2,1290600,true
+Dijkstra,500,3,24229500,true
+Dijkstra,500,4,1566800,true
+Dijkstra,500,5,17278700,true
+Prim MST,500,1,2267100,true
+Prim MST,500,2,2967100,true
+Prim MST,500,3,5082000,true
+Prim MST,500,4,19236700,true
+Prim MST,500,5,3959300,true
+Kruskal MST,500,1,4583100,true
+Kruskal MST,500,2,8172700,true
+Kruskal MST,500,3,4048000,true
+Kruskal MST,500,4,3578200,true
+Kruskal MST,500,5,8849800,true

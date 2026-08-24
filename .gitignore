@@ -53,6 +53,8 @@ node_modules/
 # Exported reports and large data
 *.csv
 !evidence/performance/performance_results.csv
+!evidence/performance/g2_benchmark_results.csv
+!g2_benchmark_results.csv
 *.zip
 *.tar.gz
 
