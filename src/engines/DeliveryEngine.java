@@ -7,6 +7,7 @@ import models.Location;
 import models.Order;
 import models.Resource;
 import models.RoadEdge;
+import utils.Config;
 
 public class DeliveryEngine {
 
@@ -67,6 +68,24 @@ public class DeliveryEngine {
 
     Graph graph = buildGraph(locations, roads);
 
+    // The 6km bicycle cutoff must be judged against the actual delivery leg
+    // (pickup -> delivery), not the rider's distance to the pickup point -
+    // a rider stationed right next to the pickup could still face an 8km+
+    // drop-off. Computed once per order since it does not depend on the rider.
+    Location delivery = findLocation(locations, order.getDeliveryLocationId());
+    double deliveryDistanceKm = 0.0;
+    if (delivery != null) {
+        RouteEngine.PathResult deliveryPath = RouteEngine.dijkstraCached(
+                graph,
+                pickup.getLocationId(),
+                delivery.getLocationId()
+        );
+        if (deliveryPath != null && !Double.isNaN(deliveryPath.totalDistanceKm)
+                && !Double.isInfinite(deliveryPath.totalDistanceKm)) {
+            deliveryDistanceKm = deliveryPath.totalDistanceKm;
+        }
+    }
+
     MinHeap<RiderCandidate> candidateHeap = new MinHeap<>(
         Math.max(1, riders.size()),
         (a, b) -> {
@@ -92,7 +111,7 @@ public class DeliveryEngine {
         if (rider == null) {
             continue;
         }
-
+        
         if (!rider.isAvailable()) {
             continue;
         }
@@ -127,6 +146,12 @@ public class DeliveryEngine {
                 || Double.isInfinite(path.totalTimeMin)) {
             continue;
         }
+        if (Resource.BICYCLE.equalsIgnoreCase(rider.getType())
+                && deliveryDistanceKm > Config.MAX_BICYCLE_DISTANCE_KM) {
+            // Bicycle riders are not eligible for deliveries beyond the configured range.
+            continue;
+        }
+
 
         double score = scoreRider(
                 rider,
@@ -162,6 +187,8 @@ public class DeliveryEngine {
     );
 }
 
+    
+
     public static double estimateDeliveryDuration(Order order, double distanceKm, Resource rider) {
         double baseMinutes = Math.max(8.0, distanceKm * 6.0);
         if ("MOTORBIKE".equalsIgnoreCase(rider.getType())
@@ -191,6 +218,7 @@ public class DeliveryEngine {
         }
 
         score += travelTimeMin / 20.0;
+        score += rider.getCompletedDeliveries() * Config.WORKLOAD_WEIGHT;
         return score;
     }
 
@@ -247,4 +275,40 @@ public class DeliveryEngine {
         return null;
     }
 
+
+    public static AssignmentResult cancelAndReassign(
+            Order order,
+            Resource currentRider,
+            DynamicArray<Resource> riders,
+            DynamicArray<Location> locations,
+            DynamicArray<RoadEdge> roads) {
+
+        if (order == null) {
+            return null;
+        }
+
+        if (currentRider != null) {
+            currentRider.setCurrentOrderId(-1);
+            currentRider.setAvailabilityStatus(Resource.STATUS_AVAILABLE);
+        }
+
+        order.setAssignedRiderId(-1);
+        order.setStatus(Order.OrderState.QUEUED);
+
+        AssignmentResult result = assignRider(order, riders, locations, roads);
+
+        if (result != null && result.rider != null) {
+            order.setAssignedRiderId(result.rider.getResourceId());
+            order.setStatus(Order.OrderState.ASSIGNED);
+            result.rider.setCurrentOrderId(order.getOrderId());
+            result.rider.setAvailabilityStatus(Resource.STATUS_BUSY);
+        } else {
+            order.setStatus(Order.OrderState.CANCELLED);
+        }
+
+        return result;
+    }
+
+
 }
+    
