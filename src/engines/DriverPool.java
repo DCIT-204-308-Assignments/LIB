@@ -129,7 +129,7 @@ public class DriverPool {
             Resource r = entry.value;
             if (!r.isAvailable()) continue;
 
-            RouteEngine.PathResult path = RouteEngine.dijkstra(graph, r.getCurrentLocationId(), locationId);
+            RouteEngine.PathResult path = RouteEngine.dijkstraCached(graph, r.getCurrentLocationId(), locationId);
             if (path == null) continue;
 
             if (path.totalDistanceKm < bestDistance) {
@@ -154,7 +154,7 @@ public class DriverPool {
             ds.Graph graph = new ds.Graph(Math.max(1, locations.size()));
             for (Location loc : locations) graph.addLocation(loc);
             for (RoadEdge road : roads) graph.addRoad(road);
-            RouteEngine.PathResult path = RouteEngine.dijkstra(graph, riderLocId, pickupId);
+            RouteEngine.PathResult path = RouteEngine.dijkstraCached(graph, riderLocId, pickupId);
             if (path == null) continue;
             return r;
         }
