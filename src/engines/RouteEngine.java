@@ -32,6 +32,27 @@ public class RouteEngine {
             this.totalTimeMin = totalTimeMin;
         }
     }
+    
+    private static final ds.HashTable<String, PathResult> ROUTE_CACHE = new ds.HashTable<>();
+
+    public static PathResult dijkstraCached(Graph graph, int startId, int endId) {
+        String key = startId + "->" + endId;
+        PathResult cached = ROUTE_CACHE.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        PathResult computed = dijkstra(graph, startId, endId);
+        if (computed != null) {
+            ROUTE_CACHE.put(key, computed);
+        }
+        return computed;
+    }
+
+    /** Call this whenever the road network changes (e.g. after re-seeding). */
+    public static void clearRouteCache() {
+        ROUTE_CACHE.clear();
+    }
+
 
     /**
      * BFS Reachability check:

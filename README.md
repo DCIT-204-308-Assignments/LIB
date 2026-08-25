@@ -137,7 +137,7 @@ cd UG-Swift
 ```powershell
 mkdir bin
 
-javac -d bin @(Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object {$_.FullName})
+javac -encoding UTF-8 -d bin @(Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object {$_.FullName})
 ```
 
 ### Seed Database
@@ -163,7 +163,7 @@ mkdir -p bin
 
 find src -name "*.java" > sources.txt
 
-javac -d bin @sources.txt
+javac -encoding UTF-8 -d bin @sources.txt
 
 rm sources.txt
 ```

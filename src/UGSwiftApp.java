@@ -1465,11 +1465,6 @@ public class UGSwiftApp extends JFrame {
         }
     }
 
-    private void showSummary() {
-        refreshSummary();
-        log("Summary: " + locations.size() + " locations, " + roads.size() + " roads, " + requests.size() + " requests, " + activeOrders.size() + " active orders.");
-    }
-
     private void showSeededRequests() {
         try {
             DynamicArray<ServiceRequest> all = DatabaseManager.loadServiceRequests();
@@ -1876,10 +1871,6 @@ public class UGSwiftApp extends JFrame {
         for (Order o : completedOrders) {
             completedListModel.addElement("#" + o.getOrderId() + " | " + o.getFoodItem() + " | " + o.getRestaurant());
         }
-    }
-
-    private void refreshSummary() {
-        summaryLabel.setText("Locations: " + locations.size() + " | Riders: " + riders.size() + " | Active orders: " + activeOrders.size());
     }
 
     private String resolveDataDir() {
