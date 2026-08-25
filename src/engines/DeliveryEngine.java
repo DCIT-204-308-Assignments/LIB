@@ -68,6 +68,24 @@ public class DeliveryEngine {
 
     Graph graph = buildGraph(locations, roads);
 
+    // The 6km bicycle cutoff must be judged against the actual delivery leg
+    // (pickup -> delivery), not the rider's distance to the pickup point -
+    // a rider stationed right next to the pickup could still face an 8km+
+    // drop-off. Computed once per order since it does not depend on the rider.
+    Location delivery = findLocation(locations, order.getDeliveryLocationId());
+    double deliveryDistanceKm = 0.0;
+    if (delivery != null) {
+        RouteEngine.PathResult deliveryPath = RouteEngine.dijkstraCached(
+                graph,
+                pickup.getLocationId(),
+                delivery.getLocationId()
+        );
+        if (deliveryPath != null && !Double.isNaN(deliveryPath.totalDistanceKm)
+                && !Double.isInfinite(deliveryPath.totalDistanceKm)) {
+            deliveryDistanceKm = deliveryPath.totalDistanceKm;
+        }
+    }
+
     MinHeap<RiderCandidate> candidateHeap = new MinHeap<>(
         Math.max(1, riders.size()),
         (a, b) -> {
@@ -129,8 +147,8 @@ public class DeliveryEngine {
             continue;
         }
         if (Resource.BICYCLE.equalsIgnoreCase(rider.getType())
-                && path.totalDistanceKm > Config.MAX_BICYCLE_DISTANCE_KM) {
-            // Bicycle riders are not eligible beyond the configured range.
+                && deliveryDistanceKm > Config.MAX_BICYCLE_DISTANCE_KM) {
+            // Bicycle riders are not eligible for deliveries beyond the configured range.
             continue;
         }
 
