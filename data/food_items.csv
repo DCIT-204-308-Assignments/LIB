@@ -1,0 +1,31 @@
+foodItemId,restaurantId,name,price,category,available
+1,1,Jollof Rice with Chicken,25.00,Main,1
+2,1,Banku with Tilapia,30.00,Main,1
+3,1,Sobolo Drink,5.00,Drink,1
+4,2,Grilled Chicken Wings,20.00,Main,1
+5,2,Kelewele,10.00,Snack,1
+6,2,Bissap Juice,5.00,Drink,1
+7,3,Waakye Special,22.00,Main,1
+8,3,Fried Rice with Beef,26.00,Main,1
+9,3,Meat Pie,8.00,Snack,1
+10,4,Pasta Alfredo,35.00,Main,1
+11,4,Caesar Salad,18.00,Main,1
+12,4,Bottled Water,3.00,Drink,1
+13,5,Rice and Stew,18.00,Main,1
+14,5,Fried Yam and Egg,15.00,Main,1
+15,5,Malt Drink,6.00,Drink,1
+16,6,Waakye with Egg,20.00,Main,1
+17,6,Gari and Beans,12.00,Main,1
+18,7,Margherita Pizza,40.00,Main,1
+19,7,Pepperoni Pizza,45.00,Main,1
+20,7,Soft Drink,4.00,Drink,1
+21,8,Fried Rice with Chicken,24.00,Main,1
+22,8,Spring Rolls,10.00,Snack,1
+23,9,Mango Smoothie,12.00,Drink,1
+24,9,Avocado Shake,14.00,Drink,1
+25,10,Special Jollof with Turkey,32.00,Main,1
+26,10,Coleslaw,8.00,Snack,1
+27,10,Zobo Drink,5.00,Drink,1
+28,1,Fried Plantain,7.00,Snack,1
+29,3,Fanta,4.00,Drink,1
+30,6,Ice Kenkey,10.00,Drink,1
