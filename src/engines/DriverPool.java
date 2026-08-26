@@ -119,9 +119,7 @@ public class DriverPool {
      * road-network distance) to the given location.
      */
     public Resource findNearestDriver(int locationId, DynamicArray<Location> locations, DynamicArray<RoadEdge> roads) {
-        ds.Graph graph = new ds.Graph(Math.max(1, locations.size()));
-        for (Location loc : locations) graph.addLocation(loc);
-        for (RoadEdge road : roads) graph.addRoad(road);
+        ds.Graph graph = buildGraph(locations, roads);
 
         Resource nearest = null;
         double bestDistance = Double.POSITIVE_INFINITY;
@@ -141,6 +139,11 @@ public class DriverPool {
     }
 
     public Resource nextSuitable(models.Order order, DynamicArray<Location> locations, DynamicArray<RoadEdge> roads) {
+        // Built once, outside the loop. The previous version constructed the
+        // whole 95-node/382-edge graph on every rotation step, so a pool of 30
+        // riders rebuilt it up to 30 times for a single assignment.
+        ds.Graph graph = buildGraph(locations, roads);
+
         int attempts = pool.size();
         for (int i = 0; i < attempts; i++) {
             Resource r = pool.dequeue();
@@ -151,13 +154,33 @@ public class DriverPool {
             // (bug fix: previously used getHomeLocationId(), ignoring moves).
             int riderLocId = r.getCurrentLocationId();
             int pickupId = order.getPickupLocationId();
-            ds.Graph graph = new ds.Graph(Math.max(1, locations.size()));
-            for (Location loc : locations) graph.addLocation(loc);
-            for (RoadEdge road : roads) graph.addRoad(road);
             RouteEngine.PathResult path = RouteEngine.dijkstraCached(graph, riderLocId, pickupId);
             if (path == null) continue;
             return r;
         }
         return null;
+    }
+
+    /**
+     * Builds the campus graph from the given locations and roads.
+     *
+     * <p>The graph is sized by the highest location <b>id</b>, not by the number
+     * of locations. {@code Graph} rejects any node id above its maximum, so
+     * passing the count silently dropped the highest-numbered location whenever
+     * ids were not a gapless 1..n sequence - deleting a single location was
+     * enough to make a real destination unreachable, with no error.</p>
+     */
+    private static ds.Graph buildGraph(DynamicArray<Location> locations, DynamicArray<RoadEdge> roads) {
+        int maxId = 0;
+        for (Location loc : locations) {
+            if (loc != null) {
+                maxId = Math.max(maxId, loc.getLocationId());
+            }
+        }
+
+        ds.Graph graph = new ds.Graph(Math.max(1, maxId));
+        for (Location loc : locations) graph.addLocation(loc);
+        for (RoadEdge road : roads) graph.addRoad(road);
+        return graph;
     }
 }

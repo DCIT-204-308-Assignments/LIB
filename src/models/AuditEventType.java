@@ -10,10 +10,8 @@ package models;
  * silently unsearchable row.</p>
  *
  * <p>The eight constants below are the event types named in {@code Progress.md}
- * section 31. Five of them are emitted by the running application today. The
- * other three are declared here so the vocabulary is complete, but are
- * deliberately <b>not</b> emitted, because the application currently has no
- * moment that honestly corresponds to them. Each one documents why.</p>
+ * section 31. All eight are emitted by the running application, and each one
+ * documents where from.</p>
  */
 public enum AuditEventType {
 
@@ -32,37 +30,12 @@ public enum AuditEventType {
     /** A shortest path was computed for the user. Emitted by {@code UGSwiftApp.computeRoute}. */
     ROUTE_CALCULATED,
 
-    /**
-     * NOT CURRENTLY EMITTED.
-     *
-     * <p>The application has no pickup stage. An order moves straight from
-     * ASSIGNED to DELIVERED when the completion watcher fires, so there is no
-     * point in time at which a pickup actually happens. Emitting this event
-     * would mean inventing a moment that does not exist.</p>
-     *
-     * <p>Wire this up when the order lifecycle is implemented.</p>
-     */
+    /** A rider collected the parcel. Emitted by {@code UGSwiftApp.advanceInFlightOrders}. */
     ORDER_PICKED_UP,
 
-    /**
-     * NOT CURRENTLY EMITTED.
-     *
-     * <p>The only place an order is cancelled is
-     * {@code DeliveryEngine.cancelAndReassign}, which has no callers anywhere
-     * in the project. Emitting from there would add code to a path nothing
-     * reaches.</p>
-     *
-     * <p>Wire this up when cancellation/reassignment is connected to the UI.</p>
-     */
+    /** An order was cancelled or could not be reassigned. Emitted by {@code UGSwiftApp.cancelActiveOrder}. */
     ORDER_CANCELLED,
 
-    /**
-     * NOT CURRENTLY EMITTED.
-     *
-     * <p>Algorithm executions are already recorded in a richer form: the
-     * benchmark runners persist {@code AlgorithmRun} rows carrying input size,
-     * timing, and comparison counts. A duplicate free-text audit row would add
-     * noise without adding information.</p>
-     */
+    /** A benchmark suite finished. Emitted by {@code UGSwiftApp.runBenchmarkSuite}. */
     ALGORITHM_EXECUTED
 }

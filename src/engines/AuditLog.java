@@ -131,6 +131,38 @@ public final class AuditLog {
                         + SEPARATOR + "etaMin=" + round(etaMin));
     }
 
+    /** A rider collected the parcel and set off for the destination. */
+    public static void orderPickedUp(Order order, Resource rider) {
+        if (order == null) {
+            return;
+        }
+
+        record(AuditEventType.ORDER_PICKED_UP,
+                "orderId=" + order.getOrderId()
+                        + SEPARATOR + riderLabel(rider)
+                        + SEPARATOR + "pickup=" + order.getPickupLocationId()
+                        + SEPARATOR + "delivery=" + order.getDeliveryLocationId());
+    }
+
+    /** An order was cancelled, either by the user or by a failed reassignment. */
+    public static void orderCancelled(Order order, String reason) {
+        if (order == null) {
+            return;
+        }
+
+        record(AuditEventType.ORDER_CANCELLED,
+                "orderId=" + order.getOrderId()
+                        + SEPARATOR + "reason=" + safe(reason));
+    }
+
+    /** A benchmark or algorithm suite finished. */
+    public static void algorithmExecuted(String algorithmName, int inputSize, long timeNs) {
+        record(AuditEventType.ALGORITHM_EXECUTED,
+                "algorithm=" + safe(algorithmName)
+                        + SEPARATOR + "inputSize=" + inputSize
+                        + SEPARATOR + "timeNs=" + timeNs);
+    }
+
     /** A rider became BUSY, AVAILABLE or OFFLINE. */
     public static void riderStatusChanged(Resource rider, String newStatus) {
         record(AuditEventType.RIDER_STATUS_CHANGED,

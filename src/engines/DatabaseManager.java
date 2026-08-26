@@ -194,6 +194,31 @@ public class DatabaseManager {
                     "timestamp TEXT NOT NULL" +
                     ");");
 
+            // Orders were previously memory-only: every delivery the application
+            // performed was lost the moment it closed. requestId links an order
+            // back to the ServiceRequest that produced it, which replaces the old
+            // guesswork of matching on pickup + destination + meal name.
+            stmt.execute("CREATE TABLE IF NOT EXISTS orders (" +
+                    "orderId INTEGER PRIMARY KEY," +
+                    "requestId INTEGER," +
+                    "customerName TEXT NOT NULL," +
+                    "restaurant TEXT NOT NULL," +
+                    "foodItem TEXT NOT NULL," +
+                    "foodWeightKg REAL NOT NULL," +
+                    "pickupLocationId INTEGER NOT NULL," +
+                    "deliveryLocationId INTEGER NOT NULL," +
+                    "orderTimeMin REAL NOT NULL," +
+                    "requestedDeliveryTimeMin REAL NOT NULL," +
+                    "priority REAL NOT NULL," +
+                    "status TEXT NOT NULL," +
+                    "assignedRiderId INTEGER," +
+                    "distanceKm REAL NOT NULL DEFAULT 0," +
+                    "estimatedDeliveryTimeMin REAL NOT NULL DEFAULT 0," +
+                    "vehicleType TEXT NOT NULL DEFAULT 'ANY'," +
+                    "FOREIGN KEY(pickupLocationId) REFERENCES locations(locationId)," +
+                    "FOREIGN KEY(deliveryLocationId) REFERENCES locations(locationId)" +
+                    ");");
+
             // 2. Seed Locations if empty
             if (isTableEmpty(conn, "locations")) {
                 seedLocations(conn, locationsCsv);
@@ -214,8 +239,41 @@ public class DatabaseManager {
                 seedServiceRequests(conn);
             }
 
+            // 6. Release riders stranded by a previous session.
+            releaseStrandedRiders(conn);
+
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Frees riders left BUSY by a session that ended before their delivery did.
+     *
+     * <p>A rider is marked BUSY the moment an order is assigned and is only
+     * released when the completion watcher fires. If the application is closed
+     * in between - or the watcher never matches the request - the row stays BUSY
+     * forever. {@code DriverPool.rebuild()} only enqueues AVAILABLE riders, so
+     * every stranded rider silently shrinks the usable fleet, and the loss is
+     * cumulative across sessions.</p>
+     *
+     * <p>The signature of a stranded rider is <b>BUSY with no order</b>
+     * ({@code currentOrderId = -1}): a genuinely working rider always has the id
+     * of the order they are carrying. Riders that really are mid-delivery keep
+     * their id and are left alone, so this cannot cancel live work.</p>
+     */
+    private static void releaseStrandedRiders(Connection conn) {
+        String sql = "UPDATE resources SET availabilityStatus = 'AVAILABLE' "
+                + "WHERE availabilityStatus <> 'AVAILABLE' AND currentOrderId = -1";
+        try (Statement stmt = conn.createStatement()) {
+            int released = stmt.executeUpdate(sql);
+            if (released > 0) {
+                System.out.println("Released " + released
+                        + " rider(s) left BUSY with no order by a previous session.");
+            }
+        } catch (SQLException e) {
+            // Never fatal: the app still runs, just with a smaller usable fleet.
+            System.err.println("Could not release stranded riders: " + e.getMessage());
         }
     }
 
@@ -533,6 +591,172 @@ public class DatabaseManager {
                         rs.getInt("currentOrderId"),
                         rs.getInt("completedDeliveries")
                 ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Returns the next free order id.
+     *
+     * <p>Order ids used to be {@code 1000 + Math.random()*9000}, drawn from only
+     * 9,000 values. By the birthday bound a collision becomes more likely than
+     * not after about 110 orders, and a collision against a primary key means a
+     * failed insert - an order silently lost. Deriving the id from
+     * {@code MAX(orderId)+1} makes it unique by construction.</p>
+     */
+    public static int nextOrderId() {
+        String sql = "SELECT COALESCE(MAX(orderId), 1000) + 1 FROM orders";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // Falling back to a time-derived id keeps ordering roughly monotonic if
+        // the table is unreachable, rather than colliding on a fixed constant.
+        return (int) (System.currentTimeMillis() % 100000) + 1001;
+    }
+
+    /**
+     * Returns the next free service-request id.
+     *
+     * <p>Request ids were previously {@code 10000 + activeOrders.size() +
+     * requests.size()}, which repeats as soon as an order moves out of the
+     * active list - two different requests could be handed the same id in one
+     * session. Deriving from {@code MAX(requestId)+1} avoids that, and starts
+     * above the 300 seeded rows so generated and seeded ids never overlap.</p>
+     */
+    public static int nextRequestId() {
+        String sql = "SELECT COALESCE(MAX(requestId), 10000) + 1 FROM service_requests";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return Math.max(rs.getInt(1), 10001);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return (int) (System.currentTimeMillis() % 100000) + 10001;
+    }
+
+    /** Inserts a new order, or overwrites it if the id already exists. */
+    public static void saveOrder(Order order) {
+        if (order == null) {
+            return;
+        }
+
+        String sql = "INSERT OR REPLACE INTO orders (orderId, requestId, customerName, restaurant, "
+                + "foodItem, foodWeightKg, pickupLocationId, deliveryLocationId, orderTimeMin, "
+                + "requestedDeliveryTimeMin, priority, status, assignedRiderId, distanceKm, "
+                + "estimatedDeliveryTimeMin, vehicleType) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, order.getOrderId());
+            if (order.getRequestId() > 0) {
+                pstmt.setInt(2, order.getRequestId());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+            pstmt.setString(3, order.getCustomerName());
+            pstmt.setString(4, order.getRestaurant());
+            pstmt.setString(5, order.getFoodItem());
+            pstmt.setDouble(6, order.getFoodWeightKg());
+            pstmt.setInt(7, order.getPickupLocationId());
+            pstmt.setInt(8, order.getDeliveryLocationId());
+            pstmt.setDouble(9, order.getOrderTimeMin());
+            pstmt.setDouble(10, order.getRequestedDeliveryTimeMin());
+            pstmt.setDouble(11, order.getPriority());
+            pstmt.setString(12, order.getStatus());
+            if (order.getAssignedRiderId() > 0) {
+                pstmt.setInt(13, order.getAssignedRiderId());
+            } else {
+                pstmt.setNull(13, Types.INTEGER);
+            }
+            pstmt.setDouble(14, order.getDistanceKm());
+            pstmt.setDouble(15, order.getEstimatedDeliveryTimeMin());
+            pstmt.setString(16, order.getVehicleType() != null ? order.getVehicleType() : "ANY");
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Finds the order created from a given service request, or null. */
+    public static Order findOrderByRequestId(int requestId) {
+        if (requestId <= 0) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM orders WHERE requestId = ? LIMIT 1";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, requestId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Order order = new Order(
+                            rs.getInt("orderId"),
+                            rs.getString("customerName"),
+                            rs.getString("restaurant"),
+                            rs.getString("foodItem"),
+                            rs.getDouble("foodWeightKg"),
+                            rs.getInt("pickupLocationId"),
+                            rs.getInt("deliveryLocationId"),
+                            rs.getDouble("orderTimeMin"),
+                            rs.getDouble("requestedDeliveryTimeMin"),
+                            rs.getDouble("priority"),
+                            rs.getString("status"),
+                            rs.getInt("assignedRiderId"),
+                            rs.getDouble("distanceKm"),
+                            rs.getDouble("estimatedDeliveryTimeMin"),
+                            rs.getString("vehicleType")
+                    );
+                    order.setRequestId(requestId);
+                    return order;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /** Loads every stored order, newest id last. */
+    public static DynamicArray<Order> loadOrders() {
+        DynamicArray<Order> list = new DynamicArray<>();
+        String sql = "SELECT * FROM orders ORDER BY orderId";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Order order = new Order(
+                        rs.getInt("orderId"),
+                        rs.getString("customerName"),
+                        rs.getString("restaurant"),
+                        rs.getString("foodItem"),
+                        rs.getDouble("foodWeightKg"),
+                        rs.getInt("pickupLocationId"),
+                        rs.getInt("deliveryLocationId"),
+                        rs.getDouble("orderTimeMin"),
+                        rs.getDouble("requestedDeliveryTimeMin"),
+                        rs.getDouble("priority"),
+                        rs.getString("status"),
+                        rs.getInt("assignedRiderId"),
+                        rs.getDouble("distanceKm"),
+                        rs.getDouble("estimatedDeliveryTimeMin"),
+                        rs.getString("vehicleType")
+                );
+                int requestId = rs.getInt("requestId");
+                order.setRequestId(rs.wasNull() ? -1 : requestId);
+                list.add(order);
             }
         } catch (SQLException e) {
             e.printStackTrace();

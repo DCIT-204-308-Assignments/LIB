@@ -178,7 +178,32 @@ function showRoute() {
   const to = LOCATIONS.find(l => l.locationId === toId);
   if (!from || !to) return alert('Locations not found');
   if (currentRoute) { map.removeLayer(currentRoute); currentRoute = null; }
-  currentRoute = L.polyline([[from.lat, from.lon], [to.lat, to.lon]], {color:'blue'}).addTo(map);
+
+  // Prefer the real road-network path computed by RouteEngine.dijkstra and
+  // exported by tools.ExportRoute. Previously this function always drew a
+  // straight line between the two markers, which ignored the road network
+  // entirely and did not correspond to anything the engine had calculated.
+  const exported = (typeof ROUTE !== 'undefined') ? ROUTE : null;
+  const matchesSelection = exported && exported.length > 1
+    && Math.abs(exported[0].lat - from.lat) < 1e-6
+    && Math.abs(exported[0].lon - from.lon) < 1e-6
+    && Math.abs(exported[exported.length - 1].lat - to.lat) < 1e-6
+    && Math.abs(exported[exported.length - 1].lon - to.lon) < 1e-6;
+
+  if (matchesSelection) {
+    currentRoute = L.polyline(exported.map(p => [p.lat, p.lon]),
+                              {color: '#0056b3', weight: 4}).addTo(map);
+    const summary = (typeof ROUTE_SUMMARY !== 'undefined') ? ROUTE_SUMMARY : '';
+    currentRoute.bindPopup('<b>Shortest path</b><br/>' + summary
+      + '<br/>' + exported.map(p => p.name).join(' &rarr; ')).openPopup();
+  } else {
+    // No exported path for this pair. Draw the straight line, but say so, so a
+    // direct line is never mistaken for a computed route.
+    currentRoute = L.polyline([[from.lat, from.lon], [to.lat, to.lon]],
+                              {color: 'grey', weight: 2, dashArray: '6 6'}).addTo(map);
+    currentRoute.bindPopup('Straight line only - no computed route exported for '
+      + 'this pair yet. Use "Show Route on Map" in the app.').openPopup();
+  }
   map.fitBounds(currentRoute.getBounds(), {padding:[40,40]});
 }
 

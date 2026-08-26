@@ -7,6 +7,7 @@ import models.Location;
 import models.Order;
 import models.Resource;
 import models.RoadEdge;
+import models.VehicleType;
 import utils.Config;
 
 public class DeliveryEngine {
@@ -146,7 +147,7 @@ public class DeliveryEngine {
                 || Double.isInfinite(path.totalTimeMin)) {
             continue;
         }
-        if (Resource.BICYCLE.equalsIgnoreCase(rider.getType())
+        if (VehicleType.fromString(rider.getType()) == VehicleType.BICYCLE
                 && deliveryDistanceKm > Config.MAX_BICYCLE_DISTANCE_KM) {
             // Bicycle riders are not eligible for deliveries beyond the configured range.
             continue;
@@ -191,8 +192,10 @@ public class DeliveryEngine {
 
     public static double estimateDeliveryDuration(Order order, double distanceKm, Resource rider) {
         double baseMinutes = Math.max(8.0, distanceKm * 6.0);
-        if ("MOTORBIKE".equalsIgnoreCase(rider.getType())
-            || "MOTORCYCLE".equalsIgnoreCase(rider.getType())) {
+        // fromString normalises the three spellings the data uses - the database
+        // stores "MOTORBIKE" while Resource normalises to "MOTORCYCLE" - so the
+        // comparison cannot silently miss a variant the way string equality did.
+        if (VehicleType.fromString(rider.getType()) == VehicleType.MOTORCYCLE) {
             return Math.round((baseMinutes * 0.7) * 10.0) / 10.0;
         }
         return Math.round((baseMinutes * 1.05) * 10.0) / 10.0;
@@ -201,15 +204,15 @@ public class DeliveryEngine {
     private static double scoreRider(Resource rider, Order order, double distanceKm, double travelTimeMin) {
         double score = distanceKm;
         boolean longTrip = distanceKm >= 2.0;
+        VehicleType vehicle = VehicleType.fromString(rider.getType());
 
-        if ("MOTORBIKE".equalsIgnoreCase(rider.getType())
-            || "MOTORCYCLE".equalsIgnoreCase(rider.getType())) {
+        if (vehicle == VehicleType.MOTORCYCLE) {
             score -= longTrip ? 0.35 : 0.1;
-        } else if ("BICYCLE".equalsIgnoreCase(rider.getType())) {
+        } else {
             score += longTrip ? 1.4 : 0.25;
         }
 
-        if (order.getFoodWeightKg() > 1.4 && "BICYCLE".equalsIgnoreCase(rider.getType())) {
+        if (order.getFoodWeightKg() > 1.4 && vehicle == VehicleType.BICYCLE) {
             score += 1.2;
         }
 
@@ -219,6 +222,14 @@ public class DeliveryEngine {
 
         score += travelTimeMin / 20.0;
         score += rider.getCompletedDeliveries() * Config.WORKLOAD_WEIGHT;
+
+        // Priority benefit (Suggestions.md section 19: "... - Priority Benefit").
+        // Subtracting priority lowers the score of every candidate for an urgent
+        // order, which makes the engine willing to accept a slightly worse rider
+        // rather than leave that order waiting. The weight is deliberately small
+        // so distance remains the dominant term.
+        score -= order.getPriority() * Config.PRIORITY_WEIGHT;
+
         return score;
     }
 

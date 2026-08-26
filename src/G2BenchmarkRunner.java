@@ -28,7 +28,11 @@ import models.RoadEdge;
 public class G2BenchmarkRunner {
 
     private static final int TRIALS = 5;
-    private static final String CSV_FILENAME = "g2_benchmark_results.csv";
+    // Written straight to the evidence folder that G2_PERFORMANCE_ANALYSIS.md
+    // and tools/performance_stats.py both read. Previously this landed in the
+    // working directory, so every re-run needed a manual copy and the
+    // published figures could silently describe an older run.
+    private static final String CSV_FILENAME = "evidence/performance/g2_benchmark_results.csv";
 
     public static void main(String[] args) {
         System.out.println("=================================================================");

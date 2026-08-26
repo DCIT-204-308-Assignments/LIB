@@ -22,6 +22,16 @@ public class Order {
     private double estimatedDeliveryTimeMin;
     private String vehicleType;
 
+    /**
+     * The ServiceRequest this order was created from, or -1 if it has none.
+     *
+     * <p>Without this link the two models could only be correlated by comparing
+     * pickup id, delivery id and the food-item string, which silently picks the
+     * wrong order whenever two customers order the same meal along the same
+     * route. Kept out of the constructors so existing callers are unaffected.</p>
+     */
+    private int requestId = -1;
+
     public Order(int orderId, String customerName, String restaurant, String foodItem, double foodWeightKg,
                  int pickupLocationId, int deliveryLocationId, double orderTimeMin, String status, int assignedRiderId) {
         this.orderId = orderId;
@@ -85,6 +95,8 @@ public class Order {
     public void setEstimatedDeliveryTimeMin(double time) { this.estimatedDeliveryTimeMin = time; }
     public String getVehicleType() { return vehicleType; }
     public void setVehicleType(String vehicleType) { this.vehicleType = vehicleType; }
+    public int getRequestId() { return requestId; }
+    public void setRequestId(int requestId) { this.requestId = requestId; }
 
     @Override
     public String toString() {

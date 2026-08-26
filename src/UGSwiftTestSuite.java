@@ -60,6 +60,7 @@ public class UGSwiftTestSuite {
         testIndexingEngine();
         testDeliveryEngine();
         testAuditLog();
+        testRequiredScenarios();
 
         System.out.println("\n======================================================");
         System.out.printf("  RESULTS: %d passed, %d failed  (out of %d total)%n", passed, failed, passed + failed);
@@ -1111,6 +1112,127 @@ public class UGSwiftTestSuite {
             wrappersSafe = false;
         }
         invalid("convenience wrappers ignore null models instead of throwing", wrappersSafe);
+    }
+
+    // ── Required scenarios (Progress.md sections 36-40) ────────────────────
+    //
+    // The project brief names five scenarios that "must exist" as tests. They
+    // are collected here so each one can be pointed at directly.
+    private static void testRequiredScenarios() {
+        section("Required Scenarios (Progress.md sections 36-40)");
+
+        // A three-stop line: pickup at 1, a near rider at 2, a far stop at 3.
+        // Distances are set so the pickup-to-delivery leg can be pushed either
+        // side of the 6km bicycle threshold.
+        DynamicArray<Location> locs = new DynamicArray<>();
+        locs.add(new Location(1, "Pickup", "Central", "MARKET", 5.650, -0.187));
+        locs.add(new Location(2, "Near Stop", "Central", "STOP", 5.651, -0.186));
+        locs.add(new Location(3, "Far Stop", "Central", "STOP", 5.700, -0.150));
+
+        DynamicArray<RoadEdge> roads = new DynamicArray<>();
+        roads.add(new RoadEdge(1, 2, 1, "Near Stop", "Pickup", 1.0, 5, "LOW", "GOOD", 1.0, false, 1.0));
+        roads.add(new RoadEdge(2, 1, 3, "Pickup", "Far Stop", 8.0, 40, "LOW", "GOOD", 1.0, false, 8.0));
+
+        // ---- Section 36: the 8km delivery must exclude bicycles -------------
+        DynamicArray<Resource> bikeAndMoto = new DynamicArray<>();
+        bikeAndMoto.add(new Resource(1, "Bike Yaw", "BICYCLE", 2, 2, 20.0, "AVAILABLE", -1, 0));
+        bikeAndMoto.add(new Resource(2, "Moto Ama", "MOTORCYCLE", 2, 2, 20.0, "AVAILABLE", -1, 0));
+
+        Order longTrip = new Order(1, "Kofi", "Vendor", "Groceries", 1.0, 1, 3, 100, "CREATED", -1);
+        DeliveryEngine.AssignmentResult longResult =
+                DeliveryEngine.assignRider(longTrip, bikeAndMoto, locs, roads);
+        ok("8km delivery: a motorcycle is selected (section 36)",
+                longResult != null && longResult.rider.getResourceId() == 2);
+
+        DynamicArray<Resource> bikeOnly = new DynamicArray<>();
+        bikeOnly.add(new Resource(1, "Bike Yaw", "BICYCLE", 2, 2, 20.0, "AVAILABLE", -1, 0));
+        invalid("8km delivery: a bicycle-only fleet yields NO assignment - the 6km rule excludes them (section 36)",
+                DeliveryEngine.assignRider(longTrip, bikeOnly, locs, roads) == null);
+
+        // ---- Section 37: a short delivery keeps both vehicles eligible ------
+        Order shortTrip = new Order(2, "Esi", "Vendor", "Documents", 0.5, 1, 2, 100, "CREATED", -1);
+        DeliveryEngine.AssignmentResult shortBike =
+                DeliveryEngine.assignRider(shortTrip, bikeOnly, locs, roads);
+        ok("1km delivery: a bicycle IS eligible, so the rule is a range limit not a ban (section 37)",
+                shortBike != null && shortBike.rider.getResourceId() == 1);
+
+        // ---- Section 38: the nearest eligible rider wins --------------------
+        // Riders A (3.4km away), B (1.0km away) and C (unreachable) - identical
+        // apart from where they are standing.
+        DynamicArray<Location> nearLocs = new DynamicArray<>();
+        nearLocs.add(new Location(1, "Pickup", "Central", "MARKET", 5.650, -0.187));
+        nearLocs.add(new Location(2, "Close", "Central", "STOP", 5.651, -0.186));
+        nearLocs.add(new Location(3, "Distant", "Central", "STOP", 5.660, -0.180));
+
+        DynamicArray<RoadEdge> nearRoads = new DynamicArray<>();
+        nearRoads.add(new RoadEdge(1, 2, 1, "Close", "Pickup", 1.0, 5, "LOW", "GOOD", 1.0, false, 1.0));
+        nearRoads.add(new RoadEdge(2, 3, 1, "Distant", "Pickup", 3.4, 17, "LOW", "GOOD", 1.0, false, 3.4));
+
+        DynamicArray<Resource> spread = new DynamicArray<>();
+        spread.add(new Resource(1, "Far Rider", "MOTORCYCLE", 3, 3, 20.0, "AVAILABLE", -1, 0));
+        spread.add(new Resource(2, "Near Rider", "MOTORCYCLE", 2, 2, 20.0, "AVAILABLE", -1, 0));
+
+        Order pickupHere = new Order(3, "Ama", "Vendor", "Documents", 0.5, 1, 2, 100, "CREATED", -1);
+        DeliveryEngine.AssignmentResult nearest =
+                DeliveryEngine.assignRider(pickupHere, spread, nearLocs, nearRoads);
+        ok("nearest-rider: the rider 1.0km away is chosen over the one 3.4km away (section 38)",
+                nearest != null && nearest.rider.getResourceId() == 2);
+
+        // ---- Section 39: no rider available -> queued, never crash ----------
+        DynamicArray<Resource> allBusy = new DynamicArray<>();
+        allBusy.add(new Resource(1, "Busy One", "MOTORCYCLE", 2, 2, 20.0, "BUSY", 99, 0));
+        allBusy.add(new Resource(2, "Busy Two", "MOTORCYCLE", 2, 2, 20.0, "BUSY", 98, 0));
+        invalid("no-rider: every rider busy returns null rather than assigning a busy rider (section 39)",
+                DeliveryEngine.assignRider(shortTrip, allBusy, locs, roads) == null);
+
+        boolean survived = true;
+        try {
+            DeliveryEngine.assignRider(shortTrip, new DynamicArray<>(), locs, roads);
+            DeliveryEngine.assignRider(shortTrip, allBusy, new DynamicArray<>(), roads);
+        } catch (Exception ex) {
+            survived = false;
+        }
+        invalid("no-rider: an empty fleet or empty map does not throw (section 39)", survived);
+
+        // ---- Section 40: multiple orders must not double-assign a rider -----
+        // Three orders, two riders. Each assignment marks its rider BUSY, which
+        // is what stops the next order being handed the same person.
+        DynamicArray<Resource> twoRiders = new DynamicArray<>();
+        twoRiders.add(new Resource(1, "Rider One", "MOTORCYCLE", 2, 2, 20.0, "AVAILABLE", -1, 0));
+        twoRiders.add(new Resource(2, "Rider Two", "MOTORCYCLE", 2, 2, 20.0, "AVAILABLE", -1, 0));
+
+        DynamicArray<Integer> assignedIds = new DynamicArray<>();
+        int unassigned = 0;
+        for (int i = 0; i < 3; i++) {
+            Order o = new Order(100 + i, "Cust" + i, "Vendor", "Documents", 0.5, 1, 2, 100, "CREATED", -1);
+            DeliveryEngine.AssignmentResult r =
+                    DeliveryEngine.assignRider(o, twoRiders, locs, roads);
+            if (r == null || r.rider == null) {
+                unassigned++;
+            } else {
+                assignedIds.add(r.rider.getResourceId());
+                r.rider.assignOrder(o.getOrderId());   // mark BUSY, as the app does
+            }
+        }
+
+        boolean noDuplicates = true;
+        for (int i = 0; i < assignedIds.size(); i++) {
+            for (int j = i + 1; j < assignedIds.size(); j++) {
+                if (assignedIds.get(i).equals(assignedIds.get(j))) {
+                    noDuplicates = false;
+                }
+            }
+        }
+        ok("multi-order: 3 orders across 2 riders assigns each rider at most once (section 40)",
+                noDuplicates && assignedIds.size() == 2);
+        boundary("multi-order: the third order is left unassigned rather than double-booked (section 40)",
+                unassigned == 1);
+
+        // Releasing a rider must put them back in circulation.
+        twoRiders.get(0).completeOrder(2);
+        Order fourth = new Order(200, "Later", "Vendor", "Documents", 0.5, 1, 2, 100, "CREATED", -1);
+        ok("multi-order: a rider freed by completeOrder can take the next order (section 40)",
+                DeliveryEngine.assignRider(fourth, twoRiders, locs, roads) != null);
     }
 
     // ── Trace tables (Section 10: "at least six trace tables") ─────────────

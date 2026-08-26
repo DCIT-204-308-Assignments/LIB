@@ -15,6 +15,12 @@ import engines.DatabaseManager;
 import engines.DeliveryEngine;
 import engines.DriverPool;
 import engines.IncomingOrderManager;
+import engines.BenchmarkEngine;
+import engines.IndexingEngine;
+import engines.MetricsEngine;
+import engines.OptimisationEngine;
+import engines.ReportEngine;
+import engines.SimulationEngine;
 import engines.RouteEngine;
 import engines.SchedulingEngine;
 import models.Location;
@@ -22,6 +28,7 @@ import models.Order;
 import models.Resource;
 import models.RoadEdge;
 import models.ServiceRequest;
+import utils.Config;
 
 public class UGSwiftApp extends JFrame {
 
@@ -318,7 +325,8 @@ public class UGSwiftApp extends JFrame {
         {IconType.HOME, "Order Console"},
         {IconType.DATA, "Operations Dashboard"},
         {IconType.STRUCTURES, "DSA & Algorithms"},
-        {IconType.AUDIT, "Activity & Logs"}
+        {IconType.AUDIT, "Activity & Logs"},
+        {IconType.PERFORMANCE, "Reports & Analytics"}
     };
 
     public static void main(String[] args) {
@@ -524,6 +532,7 @@ public class UGSwiftApp extends JFrame {
         contentPanel.add(buildDashboardPanelUI(),     (String) NAV_ITEMS[1][1]);
         contentPanel.add(buildDSDemoPanelUI(),        (String) NAV_ITEMS[2][1]);
         contentPanel.add(buildActivityLogsPanelUI(),  (String) NAV_ITEMS[3][1]);
+        contentPanel.add(buildReportsPanelUI(),       (String) NAV_ITEMS[4][1]);
 
         return contentPanel;
     }
@@ -604,11 +613,12 @@ public class UGSwiftApp extends JFrame {
         JButton seededBtn = makeSecondaryButton("Seeded Reqs", IconType.AUDIT);
         JButton dsDemoBtn = makeSecondaryButton("DS Demos", IconType.STRUCTURES);
         JButton openMapBtn = makeSecondaryButton("Campus Map", IconType.LOCATION);
+        JButton cancelBtn = makeSecondaryButton("Cancel Order", IconType.UNDO);
 
-        JPanel buttonGrid = new JPanel(new GridLayout(3, 3, 6, 6));
+        JPanel buttonGrid = new JPanel(new GridLayout(4, 3, 6, 6));
         buttonGrid.setOpaque(false);
-        buttonGrid.setPreferredSize(new Dimension(0, 135));
-        buttonGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 135));
+        buttonGrid.setPreferredSize(new Dimension(0, 180));
+        buttonGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
         buttonGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
         buttonGrid.add(orderBtn);
         buttonGrid.add(routeBtn);
@@ -619,6 +629,7 @@ public class UGSwiftApp extends JFrame {
         buttonGrid.add(seededBtn);
         buttonGrid.add(dsDemoBtn);
         buttonGrid.add(openMapBtn);
+        buttonGrid.add(cancelBtn);
         formCard.add(buttonGrid);
 
         restaurantCombo.addActionListener(e -> updateFoodOptions());
@@ -628,12 +639,22 @@ public class UGSwiftApp extends JFrame {
         refreshBtn.addActionListener(e -> loadData());
         initBtn.addActionListener(e -> runAction("initializing data", this::initializeData));
         generateBtn.addActionListener(e -> runAction("generating roads", this::generateRoadNetwork));
+        cancelBtn.addActionListener(e -> cancelActiveOrder());
         seededBtn.addActionListener(e -> showSeededRequests());
         dsDemoBtn.addActionListener(e -> showDSDemo());
         openMapBtn.addActionListener(e -> {
             try {
-                Class<?> launcherClass = Class.forName("tools.CampusMapLauncher");
-                launcherClass.getMethod("openMap").invoke(null);
+                // Export the currently selected route first, so the map draws the
+                // actual Dijkstra path rather than a straight line. ExportRoute
+                // was previously dead code with no callers at all.
+                int srcId = getSelectedLocationId(sourceCombo);
+                int dstId = getSelectedLocationId(destinationCombo);
+                if (srcId != -1 && dstId != -1 && srcId != dstId) {
+                    tools.ExportRoute.exportRoute(srcId, dstId);
+                    log("Exported route " + findLocationName(srcId) + " -> " + findLocationName(dstId)
+                            + " for the campus map.");
+                }
+                tools.CampusMapLauncher.openMap();
             } catch (Exception ex) {
                 log("Failed to open campus map: " + ex.getMessage());
             }
@@ -1023,6 +1044,296 @@ public class UGSwiftApp extends JFrame {
     }
 
     // --- PANEL 4: ACTIVITY & LOGS ---
+    /**
+     * Rebuilds the active and completed order lists from the database.
+     *
+     * <p>Orders used to live only in memory, so closing the app erased every
+     * delivery it had ever performed and the Reports page always started from
+     * zero. Restoring them means a report covers the project's whole history,
+     * not just the current session.</p>
+     */
+    private void restoreStoredOrders() {
+        activeOrders = new DynamicArray<>();
+        completedOrders = new DynamicArray<>();
+
+        for (Order order : DatabaseManager.loadOrders()) {
+            String status = order.getStatus();
+            if (Order.OrderState.COMPLETED.name().equalsIgnoreCase(status)
+                    || Order.OrderState.CANCELLED.name().equalsIgnoreCase(status)) {
+                completedOrders.add(order);
+            } else {
+                // Anything not finished is still in flight. It has no schedule
+                // entry (those are per-session), so isDeliveryDue() treats it as
+                // due and the watcher will finish it on the next tick.
+                activeOrders.add(order);
+            }
+        }
+    }
+
+    /** Output area for the Reports page. */
+    private final JTextArea reportArea = new JTextArea();
+
+    /**
+     * Reports &amp; Analytics.
+     *
+     * <p>This page exists to make already-written work reachable. Before it,
+     * {@code MetricsEngine}, {@code ReportEngine}, {@code SimulationEngine},
+     * {@code BenchmarkEngine}, {@code IndexingEngine} and {@code SchedulingEngine}
+     * all compiled and passed their tests but had no caller anywhere in the
+     * application, so none of them ran when the app ran.</p>
+     */
+    private JPanel buildReportsPanelUI() {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(BG_DARK);
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        JPanel card = makeCard("Reports & Analytics");
+        card.setLayout(new BorderLayout(0, 10));
+
+        reportArea.setFont(FONT_MONO);
+        reportArea.setBackground(new Color(0x0B1120));
+        reportArea.setForeground(TEXT_PRIMARY);
+        reportArea.setEditable(false);
+        reportArea.setText("Choose a report below.\n\n"
+                + "  Operations Report  - live metrics from the orders in this session\n"
+                + "  Run Simulation     - drives N orders through the real assignment engine\n"
+                + "  Benchmark Indexes  - times HashTable / BST / Red-Black / B-Tree lookups\n"
+                + "  Index Lookup       - compares the four search structures on one id\n"
+                + "  Scheduling Compare - runs all four dispatch strategies side by side\n"
+                + "  Batch Optimiser    - greedy vs dynamic-programming request batching\n");
+        card.add(makeScrollPane(reportArea), BorderLayout.CENTER);
+
+        JPanel controls = new JPanel(new GridLayout(0, 3, 8, 8));
+        controls.setOpaque(false);
+
+        JButton metricsBtn   = makeAccentButton("Operations Report", IconType.PERFORMANCE);
+        JButton simBtn       = makeSecondaryButton("Run Simulation", IconType.RUN);
+        JButton benchBtn     = makeSecondaryButton("Benchmark Indexes", IconType.PERFORMANCE);
+        JButton indexBtn     = makeSecondaryButton("Index Lookup", IconType.SEARCH);
+        JButton scheduleBtn  = makeSecondaryButton("Scheduling Compare", IconType.SORT);
+        JButton optimiseBtn  = makeSecondaryButton("Batch Optimiser", IconType.OPTIMISATION);
+
+        metricsBtn.addActionListener(e -> showOperationsReport());
+        simBtn.addActionListener(e -> runSimulationReport());
+        benchBtn.addActionListener(e -> runBenchmarkSuite());
+        indexBtn.addActionListener(e -> runIndexLookupReport());
+        scheduleBtn.addActionListener(e -> runSchedulingComparison());
+        optimiseBtn.addActionListener(e -> runBatchOptimiser());
+
+        controls.add(metricsBtn);
+        controls.add(simBtn);
+        controls.add(benchBtn);
+        controls.add(indexBtn);
+        controls.add(scheduleBtn);
+        controls.add(optimiseBtn);
+        card.add(controls, BorderLayout.SOUTH);
+
+        panel.add(card, BorderLayout.CENTER);
+        return panel;
+    }
+
+    /** Live operational metrics for this session's orders. */
+    private void showOperationsReport() {
+        DynamicArray<Order> all = new DynamicArray<>();
+        for (Order o : completedOrders) all.add(o);
+        for (Order o : activeOrders) all.add(o);
+
+        MetricsEngine.Stats stats = MetricsEngine.compute(all, riders);
+        reportArea.setText(ReportEngine.generate(stats));
+        log("Generated operations report over " + all.size() + " order(s).");
+    }
+
+    /** Runs a batch of synthetic orders through the real assignment engine. */
+    private void runSimulationReport() {
+        if (locations.isEmpty() || riders.isEmpty()) {
+            reportArea.setText("Initialize data first.");
+            return;
+        }
+
+        int count = 25;
+        long start = System.nanoTime();
+        SimulationEngine.SimulationResult sim =
+                SimulationEngine.run(count, riders, locations, roads, 22237205L);
+        long elapsedNs = System.nanoTime() - start;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== SIMULATION: ").append(count).append(" ORDERS ===\n\n");
+        sb.append("Generated : ").append(sim.ordersGenerated).append('\n');
+        sb.append("Completed : ").append(sim.ordersCompleted).append('\n');
+        sb.append("Unassigned: ").append(sim.ordersUnassigned).append('\n');
+        sb.append("Elapsed   : ").append(String.format("%.1f ms", elapsedNs / 1e6)).append("\n\n");
+        sb.append(ReportEngine.generate(MetricsEngine.compute(sim.completedOrders, riders)));
+        reportArea.setText(sb.toString());
+
+        // The simulation mutates the in-memory riders it was given; reload so the
+        // dashboard is not left showing simulated state as if it were real.
+        loadData();
+        log("Simulation complete: " + sim.ordersCompleted + "/" + sim.ordersGenerated + " delivered.");
+    }
+
+    /** Times the four index structures against increasing input sizes. */
+    private void runBenchmarkSuite() {
+        reportArea.setText("Running benchmark, please wait...\n");
+        long start = System.nanoTime();
+        DynamicArray<BenchmarkEngine.BenchmarkRow> rows =
+                BenchmarkEngine.runAll(new int[]{100, 1000, 10000});
+        long elapsedNs = System.nanoTime() - start;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== INDEX STRUCTURE BENCHMARK ===\n");
+        sb.append("(insert + search, persisted to the algorithm_runs table)\n\n");
+        for (BenchmarkEngine.BenchmarkRow row : rows) {
+            sb.append("  ").append(row).append('\n');
+        }
+        sb.append("\nTotal elapsed: ").append(String.format("%.1f ms", elapsedNs / 1e6)).append('\n');
+        reportArea.setText(sb.toString());
+
+        AuditLog.algorithmExecuted("IndexStructureBenchmark", rows.size(), elapsedNs);
+        refreshAuditTrail();
+        log("Benchmark complete: " + rows.size() + " rows written to algorithm_runs.");
+    }
+
+    /** Compares the four search structures looking up the same request id. */
+    private void runIndexLookupReport() {
+        if (requests.isEmpty()) {
+            reportArea.setText("No requests loaded. Initialize data first.");
+            return;
+        }
+
+        IndexingEngine index = new IndexingEngine();
+        long buildStart = System.nanoTime();
+        index.indexRequests(requests);
+        long buildNs = System.nanoTime() - buildStart;
+
+        int targetId = requests.get(requests.size() / 2).getRequestId();
+
+        long t0 = System.nanoTime(); index.searchHashTable(targetId); long hashNs = System.nanoTime() - t0;
+        t0 = System.nanoTime();      index.searchBST(targetId);       long bstNs  = System.nanoTime() - t0;
+        t0 = System.nanoTime();      index.searchRBT(targetId);       long rbtNs  = System.nanoTime() - t0;
+        t0 = System.nanoTime();      index.searchBTree(targetId);     long btNs   = System.nanoTime() - t0;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== INDEX LOOKUP COMPARISON ===\n\n");
+        sb.append(String.format("Indexed %,d requests in %.2f ms%n%n", requests.size(), buildNs / 1e6));
+        sb.append("Looking up request #").append(targetId).append(":\n\n");
+        sb.append(String.format("  HashTable      %,8d ns   (expected O(1) average)%n", hashNs));
+        sb.append(String.format("  BST            %,8d ns   (O(log n) average, O(n) worst)%n", bstNs));
+        sb.append(String.format("  Red-Black Tree %,8d ns   (O(log n) guaranteed)%n", rbtNs));
+        sb.append(String.format("  B-Tree (t=3)   %,8d ns   (O(log_t n))%n%n", btNs));
+        sb.append("Structure sizes and shape:\n");
+        sb.append(String.format("  BST height          : %d%n", index.getBSTHeight()));
+        sb.append(String.format("  Red-Black height    : %d  (bound: 2*log2(n+1) = %.1f)%n",
+                index.getRBTHeight(), 2 * (Math.log(requests.size() + 1) / Math.log(2))));
+        sb.append(String.format("  B-Tree entries      : %d%n", index.getBTreeSize()));
+        sb.append(String.format("  HashTable entries   : %d%n", index.getHashTableSize()));
+        sb.append(String.format("  HashTable collisions: %d%n", index.getHashTableCollisionCount()));
+        sb.append("\nNote: request ids arrive in ascending order, which is the worst\n");
+        sb.append("case for an unbalanced BST - compare its height to the Red-Black bound.\n");
+        reportArea.setText(sb.toString());
+        log("Index lookup comparison generated.");
+    }
+
+    /** Runs all four dispatch strategies over the same pending requests. */
+    private void runSchedulingComparison() {
+        DynamicArray<ServiceRequest> pending = new DynamicArray<>();
+        for (ServiceRequest r : requests) {
+            if ("PENDING".equalsIgnoreCase(r.getStatus())) {
+                pending.add(r);
+            }
+        }
+
+        if (pending.isEmpty()) {
+            reportArea.setText("No PENDING requests to schedule.");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== SCHEDULING STRATEGY COMPARISON ===\n\n");
+        sb.append("Pending requests: ").append(pending.size()).append("\n\n");
+
+        ds.Queue<ServiceRequest> fifo = SchedulingEngine.dispatchFIFO(pending);
+        sb.append("FIFO (oldest submission first) - first 5:\n");
+        for (int i = 0; i < 5 && !fifo.isEmpty(); i++) {
+            sb.append("   ").append(fifo.dequeue()).append('\n');
+        }
+
+        ds.MinHeap<ServiceRequest> heap = SchedulingEngine.dispatchPriority(pending);
+        sb.append("\nPRIORITY (highest priority first) - first 5:\n");
+        for (int i = 0; i < 5 && !heap.isEmpty(); i++) {
+            sb.append("   ").append(heap.extractMin()).append('\n');
+        }
+
+        ds.Stack<ServiceRequest> urgent = SchedulingEngine.dispatchUrgentOverride(pending);
+        sb.append("\nURGENT OVERRIDE (urgency >= 4 preempts, LIFO) - first 5:\n");
+        for (int i = 0; i < 5 && !urgent.isEmpty(); i++) {
+            sb.append("   ").append(urgent.pop()).append('\n');
+        }
+
+        DynamicArray<ServiceRequest> rr =
+                SchedulingEngine.dispatchRoundRobin(pending, buildLocationMap());
+        sb.append("\nROUND ROBIN (rotating by campus zone) - first 5:\n");
+        for (int i = 0; i < 5 && i < rr.size(); i++) {
+            sb.append("   ").append(rr.get(i)).append('\n');
+        }
+
+        sb.append("\nSame input, four different service orders - which is 'fair'\n");
+        sb.append("depends on whether you optimise for waiting time, urgency, or zone balance.\n");
+        reportArea.setText(sb.toString());
+        log("Scheduling comparison generated over " + pending.size() + " pending requests.");
+    }
+
+    /** Greedy vs dynamic-programming batching for one rider's capacity. */
+    private void runBatchOptimiser() {
+        DynamicArray<ServiceRequest> pending = new DynamicArray<>();
+        for (ServiceRequest r : requests) {
+            if ("PENDING".equalsIgnoreCase(r.getStatus()) && pending.size() < 20) {
+                pending.add(r);
+            }
+        }
+
+        if (pending.isEmpty()) {
+            reportArea.setText("No PENDING requests to batch.");
+            return;
+        }
+
+        double capacityKg = 10.0;
+        long t0 = System.nanoTime();
+        DynamicArray<ServiceRequest> dp = OptimisationEngine.dpKnapsackBatching(pending, capacityKg);
+        long dpNs = System.nanoTime() - t0;
+
+        t0 = System.nanoTime();
+        DynamicArray<ServiceRequest> brute = OptimisationEngine.bruteForceBatching(pending, capacityKg);
+        long bruteNs = System.nanoTime() - t0;
+
+        double dpValue = 0.0;
+        for (ServiceRequest r : dp) dpValue += r.getPriority();
+        double bruteValue = 0.0;
+        for (ServiceRequest r : brute) bruteValue += r.getPriority();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== REQUEST BATCHING: DP vs BRUTE FORCE ===\n\n");
+        sb.append(String.format("Candidate requests : %d%n", pending.size()));
+        sb.append(String.format("Rider capacity     : %.1f kg%n%n", capacityKg));
+        sb.append(String.format("Dynamic programming: %d selected, total priority %.2f, %,d ns%n",
+                dp.size(), dpValue, dpNs));
+        sb.append(String.format("Brute force (2^n)  : %d selected, total priority %.2f, %,d ns%n%n",
+                brute.size(), bruteValue, bruteNs));
+        sb.append(Math.abs(dpValue - bruteValue) < 0.001
+                ? "Both found the SAME optimum - the DP solution is exact.\n"
+                : "WARNING: the two disagree, which would indicate a bug in one of them.\n");
+        sb.append(String.format("%nDP was %.1fx %s than brute force here.%n",
+                bruteNs > dpNs ? (double) bruteNs / Math.max(dpNs, 1) : (double) dpNs / Math.max(bruteNs, 1),
+                bruteNs > dpNs ? "faster" : "slower"));
+        sb.append("Brute force is O(2^n) and is only usable as an exact baseline\n");
+        sb.append("on small inputs; DP is O(n*W) and scales.\n");
+        reportArea.setText(sb.toString());
+
+        AuditLog.algorithmExecuted("DPKnapsackBatching", pending.size(), dpNs);
+        refreshAuditTrail();
+        log("Batch optimiser: DP and brute force " +
+                (Math.abs(dpValue - bruteValue) < 0.001 ? "agree." : "DISAGREE - investigate."));
+    }
+
     private JPanel buildActivityLogsPanelUI() {
         JPanel panel = new JPanel(new BorderLayout(12, 12));
         panel.setBackground(BG_DARK);
@@ -1102,19 +1413,189 @@ public class UGSwiftApp extends JFrame {
     }
 
     // --- Core Backend Functions (100% Unchanged Logic) ---
+    /**
+     * When each in-flight delivery reaches pickup and drop-off, in real
+     * milliseconds. Keyed by requestId, which is the id shared by the
+     * ServiceRequest and the Order it produced.
+     *
+     * <p>Memory-only on purpose: a delivery in progress when the app closes has
+     * no meaningful "resume". Its request stays ASSIGNED and its rider keeps the
+     * order id, so {@code releaseStrandedRiders} leaves them alone.</p>
+     */
+    private final ds.HashTable<Integer, long[]> deliverySchedule = new ds.HashTable<>();
+
+    /**
+     * Records when an accepted delivery should reach each stage.
+     *
+     * @param pickupMin travel time from the rider to the pickup point
+     * @param totalMin  pickup travel plus the pickup-to-destination leg
+     */
+    private void scheduleDelivery(int requestId, double pickupMin, double totalMin) {
+        long now = System.currentTimeMillis();
+        long pickupAt = now + (long) (pickupMin * Config.SIMULATED_MINUTE_MILLIS);
+        long deliverAt = now + (long) (Math.max(totalMin, pickupMin) * Config.SIMULATED_MINUTE_MILLIS);
+        deliverySchedule.put(requestId, new long[]{pickupAt, deliverAt});
+    }
+
+    /** True once a delivery's scheduled drop-off time has passed. */
+    private boolean isDeliveryDue(int requestId) {
+        long[] schedule = deliverySchedule.get(requestId);
+        if (schedule == null) {
+            // No schedule: either it was assigned by a previous session, or the
+            // route could not be timed. Complete it rather than strand it.
+            return true;
+        }
+        return System.currentTimeMillis() >= schedule[1];
+    }
+
+    /**
+     * Promotes active orders from ASSIGNED to PICKED_UP to IN_TRANSIT as their
+     * scheduled times pass. Completion is handled separately.
+     */
+    private void advanceInFlightOrders() {
+        long now = System.currentTimeMillis();
+
+        for (Order order : activeOrders) {
+            long[] schedule = deliverySchedule.get(order.getRequestId());
+            if (schedule == null) {
+                continue;
+            }
+
+            String status = order.getStatus();
+
+            if (Order.OrderState.ASSIGNED.name().equals(status) && now >= schedule[0]) {
+                order.setStatus(Order.OrderState.PICKED_UP);
+                DatabaseManager.saveOrder(order);
+                AuditLog.orderPickedUp(order, findRider(order.getAssignedRiderId()));
+            } else if (Order.OrderState.PICKED_UP.name().equals(status)) {
+                // The parcel is collected and the rider is on the road.
+                order.setStatus(Order.OrderState.IN_TRANSIT);
+                DatabaseManager.saveOrder(order);
+            }
+        }
+    }
+
+    /**
+     * Persists one Dijkstra execution as an {@link models.AlgorithmRun}.
+     *
+     * <p>Called only from {@code computeRoute} - the user-facing route preview -
+     * for the same reason ROUTE_CALCULATED is: a full assignment runs Dijkstra
+     * once per candidate rider, so recording inside the engine would write
+     * roughly thirty rows per order.</p>
+     */
+    private void recordDijkstraRun(long elapsedNs, RouteEngine.PathResult result) {
+        try {
+            boolean found = result != null;
+            DatabaseManager.addAlgorithmRun(new models.AlgorithmRun(
+                    0,
+                    "Dijkstra (route preview)",
+                    locations.size(),
+                    elapsedNs,
+                    0L,
+                    java.time.LocalDateTime.now().toString(),
+                    found ? result.path.size() : 0L,
+                    0L,
+                    found ? "SUCCESS" : "NO_PATH",
+                    found
+                            ? String.format("%d hops, %.3f km, %.2f min",
+                                    result.path.size(), result.totalDistanceKm, result.totalTimeMin)
+                            : "No route between the selected locations"
+            ));
+        } catch (Exception ex) {
+            // Measurement must never break the feature being measured.
+            log("Could not record the algorithm run: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Cancels the most recent active order and tries to hand it to another rider.
+     *
+     * <p>This is the only caller of {@code DeliveryEngine.cancelAndReassign},
+     * which was written but unreachable, and it is what makes the
+     * ORDER_CANCELLED audit event a real event rather than a declared one.</p>
+     */
+    private void cancelActiveOrder() {
+        if (activeOrders.isEmpty()) {
+            log("No active order to cancel.");
+            return;
+        }
+
+        Order order = activeOrders.get(activeOrders.size() - 1);
+        Resource currentRider = findRider(order.getAssignedRiderId());
+
+        DeliveryEngine.AssignmentResult reassigned =
+                DeliveryEngine.cancelAndReassign(order, currentRider, riders, locations, roads);
+
+        if (currentRider != null) {
+            DatabaseManager.updateResourceState(currentRider);
+            AuditLog.riderStatusChanged(currentRider, currentRider.getAvailabilityStatus());
+        }
+
+        if (reassigned != null && reassigned.rider != null) {
+            DatabaseManager.updateResourceState(reassigned.rider);
+            DatabaseManager.saveOrder(order);
+            AuditLog.orderAssigned(order, reassigned.rider,
+                    reassigned.distanceKm, reassigned.estimatedTimeMin);
+            AuditLog.riderStatusChanged(reassigned.rider, "BUSY");
+            log("Order #" + order.getOrderId() + " reassigned to " + reassigned.rider.getName() + ".");
+            setStatus("Order reassigned");
+        } else {
+            // cancelAndReassign already set the order to CANCELLED.
+            DatabaseManager.saveOrder(order);
+            AuditLog.orderCancelled(order, "no alternative rider available");
+            activeOrders.removeElement(order);
+            deliverySchedule.remove(order.getRequestId());
+            log("Order #" + order.getOrderId() + " cancelled - no alternative rider available.");
+            setStatus("Order cancelled");
+        }
+
+        refreshDashboard();
+        refreshAuditTrail();
+        refreshSummary();
+    }
+
+    /** Finds a loaded rider by id, or null if there is no such rider. */
+    private Resource findRider(int riderId) {
+        if (riderId <= 0) {
+            return null;
+        }
+        for (Resource r : riders) {
+            if (r.getResourceId() == riderId) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     private void startCompletionWatcher() {
         javax.swing.Timer timer = new javax.swing.Timer(10000, e -> checkForCompletedOrders());
         timer.setRepeats(true);
         timer.start();
     }
 
+    /**
+     * Advances every in-flight delivery, and completes the ones that are done.
+     *
+     * <p>Deliveries used to complete by comparing the wall clock against a
+     * deadline of {@code 480 + duration} - i.e. shortly after 08:00. Run the app
+     * at any time after that and every order completed on the very next tick;
+     * run it before 08:00 and nothing ever completed. Progress is now measured
+     * from when each order was actually assigned, using the simulated clock in
+     * {@link utils.Config#SIMULATED_MINUTE_MILLIS}, so a delivery takes a
+     * proportional and observable amount of real time whatever hour it is.</p>
+     */
     private void checkForCompletedOrders() {
         try {
             double currentMinutes = LocalTime.now().getHour() * 60 + LocalTime.now().getMinute() + LocalTime.now().getSecond() / 60.0;
+
+            // Move orders through PICKED_UP and IN_TRANSIT before anything is
+            // completed, so the lifecycle is visible rather than instantaneous.
+            advanceInFlightOrders();
+
             List<ServiceRequest> toComplete = new ArrayList<>();
             for (ServiceRequest req : requests) {
                 if (req.getStatus() != null && req.getStatus().equalsIgnoreCase("ASSIGNED")) {
-                    if (currentMinutes >= req.getDeadlineMin()) {
+                    if (isDeliveryDue(req.getRequestId())) {
                         toComplete.add(req);
                     }
                 }
@@ -1122,6 +1603,9 @@ public class UGSwiftApp extends JFrame {
 
             for (ServiceRequest req : toComplete) {
                 req.setStatus("DELIVERED");
+                // Record WHEN it was delivered, not just that it was. Without
+                // this the column stayed NULL on every row ever written.
+                req.setDeliveredTimeMin(currentMinutes);
                 DatabaseManager.saveServiceRequest(req);
                 int riderId = req.getAssignedRiderId();
                 // Held so the audit row can name the rider, not just their id.
@@ -1148,17 +1632,28 @@ public class UGSwiftApp extends JFrame {
                 }
                 AuditLog.orderDelivered(req, releasedRider);
 
+                // Exact lookup by the stored link. The previous version matched on
+                // pickup id + delivery id + meal name, which picked the wrong
+                // order whenever two customers ordered the same meal along the
+                // same route.
                 Order moved = null;
                 for (Order o : activeOrders) {
-                    if (o.getPickupLocationId() == req.getSourceLocationId() && o.getDeliveryLocationId() == req.getDestLocationId() && o.getFoodItem().equals(req.getCategory())) {
+                    if (o.getRequestId() == req.getRequestId()) {
                         moved = o;
                         break;
                     }
                 }
                 if (moved != null) {
+                    // PICKED_UP and IN_TRANSIT were already reached by
+                    // advanceInFlightOrders() at their scheduled times; this is
+                    // the final transition.
+                    moved.setStatus(Order.OrderState.COMPLETED);
+                    DatabaseManager.saveOrder(moved);
+
                     activeOrders.removeElement(moved);
                     completedOrders.add(moved);
                 }
+                deliverySchedule.remove(req.getRequestId());
             }
 
             if (!toComplete.isEmpty()) {
@@ -1184,18 +1679,31 @@ public class UGSwiftApp extends JFrame {
                 return;
             }
 
-            Order order = new Order(
-                    1000 + (int) (Math.random() * 9000),
-                    "Queued",
-                    "QueuedVendor",
-                    req.getCategory(),
-                    1.0,
-                    req.getSourceLocationId(),
-                    req.getDestLocationId(),
-                    req.getTimeSubmittedMin(),
-                    req.getStatus(),
-                    req.getAssignedRiderId()
-            );
+            // Recover the order that was stored when this request was placed,
+            // so the customer name, restaurant, meal and real parcel weight
+            // survive the trip through the queue. The previous version built a
+            // placeholder here ("Queued"/"QueuedVendor", a hardcoded 1.0kg),
+            // which meant a queued order was assigned using the wrong weight.
+            Order order = DatabaseManager.findOrderByRequestId(req.getRequestId());
+            if (order == null) {
+                // Seeded requests predate order persistence and have no stored
+                // order; fall back to a minimal one built from the request.
+                order = new Order(
+                        DatabaseManager.nextOrderId(),
+                        "Queued",
+                        "QueuedVendor",
+                        req.getCategory(),
+                        1.0,
+                        req.getSourceLocationId(),
+                        req.getDestLocationId(),
+                        req.getTimeSubmittedMin(),
+                        Order.OrderState.QUEUED.name(),
+                        req.getAssignedRiderId()
+                );
+                order.setRequestId(req.getRequestId());
+                order.setPriority(req.getPriority());
+                DatabaseManager.saveOrder(order);
+            }
 
             Resource assigned = driverPool.nextSuitable(order, locations, roads);
             DeliveryEngine.AssignmentResult result = null;
@@ -1236,6 +1744,13 @@ public class UGSwiftApp extends JFrame {
             // them BUSY in one step.
             result.rider.assignOrder(order.getOrderId());
             DatabaseManager.updateResourceState(result.rider);
+            order.setAssignedRiderId(result.rider.getResourceId());
+            order.setDistanceKm(result.distanceKm);
+            order.setEstimatedDeliveryTimeMin(deliveryDuration);
+            order.setVehicleType(result.rider.getType());
+            order.setStatus(Order.OrderState.ASSIGNED);
+            DatabaseManager.saveOrder(order);
+            scheduleDelivery(req.getRequestId(), result.estimatedTimeMin, deliveryDuration);
             // No ORDER_CREATED here: this request was already created when it was
             // placed. Draining the queue only assigns it.
             AuditLog.orderAssigned(order, result.rider, result.distanceKm, deliveryDuration);
@@ -1340,6 +1855,7 @@ public class UGSwiftApp extends JFrame {
             requests = DatabaseManager.loadServiceRequests();
             riders = loadResources();
             driverPool.rebuild(riders);
+            restoreStoredOrders();
             populateLocationSelectors();
             populateRestaurantMenus();
             refreshDashboard();
@@ -1356,8 +1872,13 @@ public class UGSwiftApp extends JFrame {
         try {
             String dataDir = resolveDataDir();
             RoadNetworkGenerator.main(new String[]{dataDir + "locations.csv", dataDir + "roads.csv"});
+            // The cache keys on (start, end) only, not on the graph, so every
+            // entry now describes roads that no longer exist. Without this the
+            // app would keep serving pre-regeneration routes for the rest of
+            // the session.
+            RouteEngine.clearRouteCache();
             loadData();
-            log("Road network generation completed.");
+            log("Road network generation completed. Route cache cleared.");
             setStatus("Roads generated");
         } catch (Exception ex) {
             log("Road generation failed: " + ex.getMessage());
@@ -1380,7 +1901,13 @@ public class UGSwiftApp extends JFrame {
 
         setStatus("Planning route...");
         Graph graph = buildGraph();
+        // Timed so the run can be recorded: Progress.md section 22 asks for
+        // Dijkstra executions to be captured in AlgorithmRun, not only in the
+        // standalone benchmark runners.
+        long routeStartNs = System.nanoTime();
         RouteEngine.PathResult result = RouteEngine.dijkstra(graph, srcId, dstId);
+        long routeElapsedNs = System.nanoTime() - routeStartNs;
+        recordDijkstraRun(routeElapsedNs, result);
         if (result == null) {
             log("No route found between the selected locations.");
             setStatus("No route found");
@@ -1423,7 +1950,7 @@ public class UGSwiftApp extends JFrame {
         }
 
         Order order = new Order(
-                1000 + (int) (Math.random() * 9000),
+                DatabaseManager.nextOrderId(),
                 customerName,
                 restaurant,
                 meal,
@@ -1431,11 +1958,11 @@ public class UGSwiftApp extends JFrame {
                 pickupId,
                 deliveryId,
                 480.0,
-                "PENDING",
+                Order.OrderState.CREATED.name(),
                 -1
         );
         ServiceRequest request = new ServiceRequest(
-                10000 + activeOrders.size() + requests.size(),
+                DatabaseManager.nextRequestId(),
                 pickupId,
                 deliveryId,
                 meal,
@@ -1445,81 +1972,30 @@ public class UGSwiftApp extends JFrame {
                 "PENDING",
                 -1
         );
+        // Link the two so completion can find this exact order later instead of
+        // guessing from pickup + destination + meal name.
+        order.setRequestId(request.getRequestId());
+        order.setPriority(request.getPriority());
 
         boolean highPriority = "Express".equalsIgnoreCase(priority);
         incomingManager.submit(request, highPriority);
         requests.add(request);
+        // The order is now waiting in the intake queue.
+        order.setStatus(Order.OrderState.QUEUED);
+        DatabaseManager.saveOrder(order);
         AuditLog.orderCreated(order);
 
-        Resource assigned = driverPool.nextSuitable(order, locations, roads);
-        DeliveryEngine.AssignmentResult result = null;
-        if (assigned != null) {
-            ds.Graph graph = buildGraph();
-            var path = RouteEngine.dijkstra(graph, assigned.getCurrentLocationId(), pickupId);
-            if (path != null) {
-                result = new DeliveryEngine.AssignmentResult(assigned, path.totalDistanceKm, path.totalTimeMin);
-            }
-        }
+        log("New order received for " + customerName + " from " + restaurant + " - " + meal);
+        log("Queued as request #" + request.getRequestId()
+                + (highPriority ? " (EXPRESS - jumps the queue)" : " (standard)"));
 
-        if (result == null) {
-            result = DeliveryEngine.assignRider(order, riders, locations, roads);
-        }
-
-        if (result == null || result.rider == null) {
-            log("No rider could be assigned for this order right now. Order queued.");
-            setStatus("Order queued");
-            refreshDashboard();
-            refreshAuditTrail();
-            refreshSummary();
-            return;
-        }
-
-        // Claim the rider in memory before any of the work below, so a failure
-        // while computing the route or persisting cannot leave them looking
-        // AVAILABLE and get them handed a second order. assignOrder both records
-        // the order they are carrying and marks them BUSY.
-        result.rider.assignOrder(order.getOrderId());
-        double deliveryDuration = 0.0;
-        try {
-            Graph graph = buildGraph();
-            var pd = RouteEngine.dijkstra(graph, order.getPickupLocationId(), order.getDeliveryLocationId());
-            if (pd != null) {
-                deliveryDuration = result.estimatedTimeMin + pd.totalTimeMin;
-            } else {
-                deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
-            }
-        } catch (Exception ex) {
-            deliveryDuration = DeliveryEngine.estimateDeliveryDuration(order, result.distanceKm, result.rider);
-        }
-
-        request.setAssignedRiderId(result.rider.getResourceId());
-        request.setStatus("ASSIGNED");
-        request = new ServiceRequest(request.getRequestId(), request.getSourceLocationId(), request.getDestLocationId(), request.getCategory(), request.getUrgency(), request.getTimeSubmittedMin(), 480.0 + deliveryDuration, request.getStatus(), request.getAssignedRiderId());
-        try {
-            DatabaseManager.saveServiceRequest(request);
-            DatabaseManager.updateResourceState(result.rider);
-        } catch (Exception ex) {
-            log("Warning: could not persist request or update rider status: " + ex.getMessage());
-        }
-
-        // Recorded outside the try/catch above because the assignment happened in
-        // the running system either way - the audit trail describes what the app
-        // did, not only what the database accepted.
-        AuditLog.orderAssigned(order, result.rider, result.distanceKm, deliveryDuration);
-        AuditLog.riderStatusChanged(result.rider, "BUSY");
-
-        activeOrders.add(order);
-
-        log("New order received for " + customerName + " from " + restaurant + " — " + meal);
-        log("Assigned rider: " + result.rider.getName() + " (" + result.rider.getType() + ")");
-        log("Estimated distance: " + String.format("%.2f km", result.distanceKm));
-        log("Estimated time: " + String.format("%.1f min", result.estimatedTimeMin));
-        log("Delivery window: " + String.format("%.1f min", deliveryDuration));
-        log("Pickup: " + findLocationName(pickupId) + " → Delivery: " + findLocationName(deliveryId));
-        setStatus("Order placed and rider assigned");
-        refreshDashboard();
-        refreshAuditTrail();
-        refreshSummary();
+        // ONE assignment path. This method used to submit the request to the
+        // intake queue and then ALSO assign it inline, so the same request was
+        // assigned twice - once here, and again when the queue was later drained
+        // by "Process Next" - consuming two riders for one order. Draining the
+        // queue here instead means the queue is the real pipeline, and the
+        // Express lane genuinely decides what gets served first.
+        processNextIncoming();
     }
 
     private void runDispatch(String strategy) {

@@ -38,15 +38,16 @@ public class Location {
         return haversineDistance(this.latitude, this.longitude, targetLat, targetLon);
     }
 
+    /**
+     * Great-circle distance in kilometres, rounded to three decimal places.
+     *
+     * <p>Delegates to {@link utils.GeoUtils#haversineKm}. The formula used to be
+     * duplicated here in an atan2 form while GeoUtils used an asin form -
+     * mathematically equivalent, but two copies of one formula is two places to
+     * fix if it is ever wrong.</p>
+     */
     public static double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        final double R = 6371.0; // Earth's mean radius in km
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                 * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return Math.round((R * c) * 1000.0) / 1000.0; // rounded to 3 decimal places
+        return Math.round(utils.GeoUtils.haversineKm(lat1, lon1, lat2, lon2) * 1000.0) / 1000.0;
     }
 
     @Override
