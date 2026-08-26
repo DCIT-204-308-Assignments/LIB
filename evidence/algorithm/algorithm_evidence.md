@@ -255,7 +255,7 @@ when the request fits, otherwise:
 
 Backtracking selects requests 301 and 302.
 
-The independent brute-force implementation checks every feasible subset and obtains the same optimum. Permanent unit test T71 verifies that both methods produce equal optimal priority.
+The independent brute-force implementation checks every feasible subset and obtains the same optimum. This agreement was observed via `AlgorithmBenchmark`; it is **not** currently locked in by a unit test, so it is not protected against regression.
 
 **Complexity:** `O(nW)` time and `O(nW)` space, where `W` is the discretised capacity.
 
@@ -316,7 +316,7 @@ The zero-request base case has value zero. Assuming row `i-1` is optimal, the re
 
 Backtracking reconstructs the requests responsible for that optimum.
 
-For small instances, the brute-force implementation enumerates all subsets. Permanent test T71 confirms that the brute-force and DP implementations obtain equal optimal priority.
+For small instances, the brute-force implementation enumerates all subsets. The brute-force and DP implementations were confirmed to obtain equal optimal priority during benchmarking, but no unit test currently asserts this, so the property is unverified on each run.
 
 ---
 
@@ -350,7 +350,7 @@ The binary-search phase remains logarithmic, but the complete public method is d
 
 If two valid locations exist but no sequence of roads connects them, no shortest path exists.
 
-UG Swift returns `null` when the destination remains unreachable. Permanent test T77 verifies this behaviour.
+UG Swift returns `null` when the destination remains unreachable. This is verified by the test `Dijkstra between disconnected components returns null (no path exists)` `[INVALID]`.
 
 ### Dijkstra Requires Non-Negative Weights
 
@@ -377,7 +377,7 @@ Brute-force batching examines `2^n` subsets.
 |       16 |           65,536 |
 |       20 |        1,048,576 |
 
-The application therefore restricts brute-force batching to at most 20 requests. Permanent unit test T73 verifies the guard.
+The application therefore restricts brute-force batching to at most 20 requests (`MAX_BRUTE_FORCE_ITEMS` in `src/engines/OptimisationEngine.java`). The guard exists in the implementation but is **not** covered by a unit test.
 
 ---
 
@@ -424,10 +424,10 @@ Latest measurements:
 
 | Algorithm      |      n=100 |      n=500 |     n=1000 |
 | -------------- | ---------: | ---------: | ---------: |
-| Selection Sort | 375,292 ns | 991,834 ns | 888,750 ns |
-| Insertion Sort | 179,875 ns | 677,750 ns | 865,500 ns |
-| Merge Sort     |  81,166 ns |  73,792 ns | 144,417 ns |
-| Quick Sort     |  37,042 ns |  81,458 ns | 309,125 ns |
+| Selection Sort | 404,500 ns | 1,011,583 ns | 950,875 ns |
+| Insertion Sort | 174,375 ns | 697,167 ns | 897,916 ns |
+| Merge Sort     |  80,167 ns |  77,042 ns | 144,333 ns |
+| Quick Sort     |  37,125 ns | 109,166 ns | 308,542 ns |
 
 Selection Sort comparison counts were:
 
@@ -457,8 +457,8 @@ Latest runtime measurements:
 
 | Algorithm                   |   n=1,000 |    n=5,000 |   n=10,000 |
 | --------------------------- | --------: | ---------: | ---------: |
-| Linear Search               | 76,708 ns | 238,167 ns | 480,875 ns |
-| Binary Search public method | 64,000 ns | 316,084 ns | 159,458 ns |
+| Linear Search               | 134,375 ns | 239,250 ns | 482,875 ns |
+| Binary Search public method | 67,250 ns | 317,250 ns | 170,708 ns |
 
 The Linear Search target is deliberately placed near the end of the input, producing exactly:
 
@@ -484,11 +484,11 @@ Latest measurements:
 
 | Algorithm |      n=20 |      n=50 |       n=90 |
 | --------- | --------: | --------: | ---------: |
-| BFS       | 23,666 ns | 28,042 ns |  36,542 ns |
-| DFS       | 21,416 ns | 31,125 ns |  45,791 ns |
-| Dijkstra  | 50,625 ns | 89,959 ns | 105,666 ns |
-| Prim      | 84,209 ns | 87,250 ns | 195,334 ns |
-| Kruskal   | 23,791 ns | 78,083 ns | 174,417 ns |
+| BFS       | 23,083 ns | 27,083 ns |  36,750 ns |
+| DFS       | 20,667 ns | 38,542 ns |  48,583 ns |
+| Dijkstra  | 59,125 ns | 89,458 ns |  97,708 ns |
+| Prim      | 130,875 ns | 85,667 ns | 278,542 ns |
+| Kruskal   | 23,833 ns | 77,959 ns | 177,583 ns |
 
 BFS and DFS grow relatively gently because each reachable vertex and edge is processed only a bounded number of times.
 
@@ -496,7 +496,7 @@ Dijkstra requires priority-queue operations in addition to edge relaxation.
 
 Prim also repeatedly uses a priority queue to select inexpensive connecting edges.
 
-Kruskal must sort its road edges before performing Disjoint Set operations, explaining its stronger growth as the number of graph edges increases.
+Kruskal must sort its road edges before performing Disjoint Set operations. That sorting step is why its growth ratio is the steepest of the five (23,833 ns to 177,583 ns, a 7.5x increase from n=20 to n=90). Note, however, that Kruskal remains the faster of the two MST algorithms in absolute terms at every size measured here, because Prim's repeated priority-queue operations carry a larger constant factor on these small graphs. Prim's own timings are not monotonic (130,875 ns, 85,667 ns, 278,542 ns), so neither algorithm's growth curve is cleanly resolved at n <= 90.
 
 Graph:
 
@@ -510,9 +510,9 @@ Graph:
 
 | Requests | Median runtime |
 | -------: | -------------: |
-|        5 |     152,167 ns |
-|       10 |     461,625 ns |
-|       20 |   3,980,583 ns |
+|        5 |     150,208 ns |
+|       10 |     446,959 ns |
+|       20 |   4,043,333 ns |
 
 The greedy strategy repeatedly considers remaining requests and evaluates routes through Dijkstra. Therefore its cost grows with both the number of candidate requests and the graph size.
 
@@ -520,9 +520,9 @@ The greedy strategy repeatedly considers remaining requests and evaluates routes
 
 | Requests | Median runtime |
 | -------: | -------------: |
-|       20 |      59,625 ns |
-|       50 |     256,250 ns |
-|      100 |     609,709 ns |
+|       20 |      59,833 ns |
+|       50 |     292,000 ns |
+|      100 |     619,000 ns |
 
 The measured growth is consistent with the `O(nW)` dynamic-programming formulation, where `n` is the number of requests and `W` is scaled carrying capacity.
 
@@ -538,9 +538,9 @@ Latest Brute Force Batching measurements:
 
 | Requests | Subsets | Median runtime |
 | -------: | ------: | -------------: |
-|        8 |     256 |     378,500 ns |
-|       12 |   4,096 |   6,356,416 ns |
-|       16 |  65,536 |  22,774,875 ns |
+|        8 |     256 |     370,000 ns |
+|       12 |   4,096 |   6,444,334 ns |
+|       16 |  65,536 |  28,385,000 ns |
 
 The number of candidate subsets follows:
 
@@ -548,7 +548,7 @@ The number of candidate subsets follows:
 
 The substantial runtime increase as `n` grows demonstrates why brute force is suitable only for small exact comparisons.
 
-The DP benchmark handled 100 requests in `609,709 ns`, while brute force required `22,774,875 ns` for only 16 requests in the latest experiment.
+The DP benchmark handled 100 requests in `619,000 ns`, while brute force required `28,385,000 ns` for only 16 requests in the latest experiment.
 
 This supports the use of brute force as an exact baseline and dynamic programming as the practical optimisation strategy for larger instances.
 
@@ -560,26 +560,41 @@ Graph:
 
 ## 19. Unit-Test Evidence
 
-The complete current test suite contains **80 tests**.
+The complete current test suite contains **198 assertions**.
 
 Latest result:
 
-`80 passed, 0 failed`
+`198 passed, 0 failed`
 
-The additional routing and optimisation coverage includes T69 through T80:
+Tests are identified by descriptive name and tagged `[NORMAL]`, `[BOUNDARY]`
+or `[INVALID]`; the older T-numbering was removed when the suite was expanded.
+
+Routing and optimisation behaviours that **are** covered:
+
+- `BFS from node 1 reaches exactly {1,2,3}`
+- `DFS from node 1 visits the same connected component {1,2,3}`
+- `Dijkstra prefers the cheaper 1->2->3 path (weight 2.0) over the direct 1->3 road (weight 5.0)`
+- `Dijkstra between disconnected components returns null (no path exists)` `[INVALID]`
+- `Kruskal MST picks the 2 cheapest edges out of 3 (skips the 3.0-weight edge)`
+- `Prim MST total cost matches Kruskal MST total cost on the same graph`
+- `undirected road is traversable in both directions` `[BOUNDARY]`
+- `one-way road (4->5) creates an outgoing edge from 4` `[BOUNDARY]`
+- `one-way road does NOT create a return edge from 5 to 4` `[BOUNDARY]`
+- `greedyNearestNeighbor visits the closer destination (Hall A, dist 1.0) before the farther one (Hall B, dist 3.0)`
+- `greedyFastestAvailableRider picks the closer/faster rider (Kofi at Hall A) over the farther one`
+- `dpKnapsackBatching selects the request that maximizes total priority under the weight cap`
+- `dpKnapsackBatching with capacityKg <= 0 returns an empty result` `[INVALID]`
+
+Behaviours **not yet covered by any test** (previously listed here in error):
 
 - brute-force optimal batch selection
-- overweight-request exclusion
 - DP/brute-force optimum agreement
-- invalid-capacity handling
-- exponential-input guard
-- BFS reachability
-- DFS traversal
-- Dijkstra shortest path
-- unreachable Dijkstra destination
-- Prim MST
-- Kruskal MST
-- Prim/Kruskal MST-weight agreement
+- the exponential-input guard (`MAX_BRUTE_FORCE_ITEMS = 20`)
+- overweight-request exclusion from a batch
+
+`OptimisationEngine.bruteForceBatching` currently has **no unit-test coverage**;
+it is exercised only by `AlgorithmBenchmark`. Adding these four tests is tracked
+as outstanding work.
 
 ---
 

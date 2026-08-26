@@ -1292,18 +1292,30 @@ The actual complexity should match the implementation.
 
 The project should not be considered complete simply because it compiles.
 
-The following must be completed:
+**Status legend**
+
+| Mark | Meaning |
+| --- | --- |
+| `[x]` | Done, and reachable from the running application |
+| `[~]` | Implemented and often unit-tested, but **not wired into the running app**, or only partly done |
+| `[ ]` | Not implemented |
+
+> Verified against commit `8e0718a` on a clean seeded database
+> (95 locations, 382 roads, 30 riders, 300 requests) with `UGSwiftTestSuite`
+> reporting 198 assertions passed, 0 failed.
+> The `[~]` marks matter: a class that compiles and passes tests but that no
+> code path ever calls does not demonstrate the requirement it was written for.
 
 ## Data Structures
 
-* [x] All DSA implementations compile and behave correctly.
-* [x] Stack is integrated into scheduling.
-* [x] BTree is integrated into a meaningful operation.
-* [x] RedBlackTree is integrated into a meaningful operation.
+* [x] All DSA implementations compile and behave correctly. *(198 assertions pass)*
+* [~] Stack is integrated into scheduling. *(`SchedulingEngine.dispatchUrgentOverride` uses `Stack`, but that method has no call sites)*
+* [~] BTree is integrated into a meaningful operation. *(used by `IndexingEngine`, which the app never calls)*
+* [~] RedBlackTree is integrated into a meaningful operation. *(same: `IndexingEngine` only)*
 * [x] Graph is used by the Route Engine.
-* [x] MinHeap is used where priority processing is required.
-* [x] HashTable is used for efficient lookup.
-* [x] Queue/Priority Queue is used for incoming/scheduled orders.
+* [x] MinHeap is used where priority processing is required. *(Dijkstra frontier, `IncomingOrderManager`, `DeliveryEngine` candidate ranking)*
+* [x] HashTable is used for efficient lookup. *(`Graph` adjacency, `DriverPool.allRiders`)*
+* [x] Queue/Priority Queue is used for incoming/scheduled orders. *(`IncomingOrderManager`)*
 
 ## Models
 
@@ -1311,46 +1323,59 @@ The following must be completed:
 * [x] `Resource` properly represents riders.
 * [x] Bicycle and motorcycle riders are distinguished.
 * [x] Rider availability is tracked.
-* [x] Rider location is tracked.
-* [x] Order lifecycle is tracked.
-* [x] `AlgorithmRun` records algorithm execution.
-* [x] `AuditEvent` records important system events.
+* [ ] Rider location is tracked. *(`setCurrentLocationId` is only reached from `SimulationEngine` and the tests; the live app never moves a rider, and `resources` has no `currentLocationId` column)*
+* [ ] Order lifecycle is tracked. *(`UGSwiftApp` creates orders with the string `"PENDING"`, which is not an `OrderState`; PICKED_UP / IN_TRANSIT / COMPLETED never occur in the app)*
+* [~] `AlgorithmRun` records algorithm execution. *(`AlgorithmBenchmark` and `BenchmarkEngine` persist runs; the live app records nothing)*
+* [ ] `AuditEvent` records important system events. *(`DatabaseManager.addAuditEvent` has zero call sites; `audit_events` is empty)*
 
 ## Engines
 
-* [x] `DriverPool` properly manages riders.
-* [x] `IncomingOrderManager` properly handles requests.
-* [x] `SchedulingEngine` performs actual scheduling.
-* [x] `OptimisationEngine` performs actual optimization.
-* [x] `DeliveryEngine` handles the complete delivery lifecycle.
-* [x] `RouteEngine` calculates routes.
+* [x] `DriverPool` properly manages riders. *(all nine operations from section 10 exist)*
+* [ ] `IncomingOrderManager` properly handles requests. *(stores only; does not validate, create an Order, compute distance, or determine priority as section 15 requires)*
+* [~] `SchedulingEngine` performs actual scheduling. *(four strategies implemented and unit-tested, but `runDispatch` is hardcoded to `"Nearest Rider"`, so none are reachable)*
+* [~] `OptimisationEngine` performs actual optimization. *(greedy + DP + brute force implemented and tested; zero call sites from the app)*
+* [ ] `DeliveryEngine` handles the complete delivery lifecycle. *(performs rider selection only; no pickup, transit, or completion stage)*
+* [x] `RouteEngine` calculates routes. *(Dijkstra, used on every order)*
 * [x] `SortingEngine` performs meaningful sorting.
-* [x] `IndexingEngine` provides efficient lookup.
-* [x] `DatabaseManager` persists important information.
+* [~] `IndexingEngine` provides efficient lookup. *(implemented and unit-tested; zero call sites from the app)*
+* [~] `DatabaseManager` persists important information. *(locations, roads, riders, requests and algorithm runs persist; **orders and audit events do not** - there is no `orders` table)*
 
 ## Optimization
 
 * [x] Rider-to-pickup distance is calculated.
-* [x] Delivery distance is calculated.
+* [x] Delivery distance is calculated. *(computed once per order for the bicycle range check)*
 * [x] Vehicle type is considered.
-* [x] Bicycle riders are excluded beyond the configured 6 km threshold.
+* [x] Bicycle riders are excluded beyond the configured 6 km threshold. *(`Config.MAX_BICYCLE_DISTANCE_KM`, enforced in `DeliveryEngine.assignRider`)*
 * [x] Motorcycle riders are considered for long-distance deliveries.
 * [x] Rider availability is considered.
-* [x] Current rider location is considered.
-* [x] A clear assignment algorithm exists.
-* [x] The algorithm can select the optimal eligible rider.
+* [~] Current rider location is considered. *(`DeliveryEngine` reads `getCurrentLocationId()`, but `UGSwiftApp.placeOrder` routes from `getHomeLocationId()`, and the value never changes anyway - see "Rider location is tracked")*
+* [x] A clear assignment algorithm exists. *(`DeliveryEngine.scoreRider`)*
+* [~] The algorithm can select the optimal eligible rider. *(it can, but `DriverPool.nextSuitable` is tried first and usually returns a merely acceptable rider before the scored path runs)*
+* [ ] Order priority influences the assignment score. *(section 14 requires a priority term; `scoreRider` never reads `order.getPriority()`)*
 
 ## Testing
 
 * [x] All major data structures have dedicated tests.
-* [x] All major engines have dedicated tests.
-* [x] Edge cases are tested.
-* [x] Multiple orders are tested.
+* [~] All major engines have dedicated tests. *(DriverPool, Scheduling, Optimisation, Indexing, Delivery, IncomingOrder and Graph are covered; `SimulationEngine`, `MetricsEngine`, `BenchmarkEngine`, `ReportEngine` and `DatabaseManager` are not)*
+* [x] Edge cases are tested. *(23 `[BOUNDARY]` and 22 `[INVALID]` assertions)*
+* [ ] Multiple orders are tested. *(no test places several orders and checks that riders are not double-assigned)*
 * [x] Multiple riders are tested.
-* [x] Vehicle restrictions are tested.
-* [x] No-rider scenarios are tested.
-* [x] End-to-end delivery is tested.
-* [x] Algorithm performance is measured.
+* [~] Vehicle restrictions are tested. *(the soft scoring preference is tested; the hard 6 km cutoff required by section 36 is not)*
+* [x] No-rider scenarios are tested. *(`assignRider returns null when every candidate rider is unavailable`)*
+* [ ] End-to-end delivery is tested. *(section 35 requires request through to completion, rider release and persistence; no such test exists)*
+* [x] Algorithm performance is measured. *(`AlgorithmBenchmark` and `G2BenchmarkRunner`; see `docs/G2_PERFORMANCE_ANALYSIS.md`)*
+
+## Summary
+
+| Status | Count |
+| --- | ---: |
+| `[x]` done | 24 |
+| `[~]` implemented but not wired / partial | 12 |
+| `[ ]` not implemented | 8 |
+| **Total** | **44** |
+
+The dominant theme is `[~]`: most of the remaining work is **connecting existing,
+already-tested code to the running application**, not writing new algorithms.
 
 ---
 
