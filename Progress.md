@@ -1326,7 +1326,7 @@ The project should not be considered complete simply because it compiles.
 * [ ] Rider location is tracked. *(`setCurrentLocationId` is only reached from `SimulationEngine` and the tests; the live app never moves a rider, and `resources` has no `currentLocationId` column)*
 * [ ] Order lifecycle is tracked. *(`UGSwiftApp` creates orders with the string `"PENDING"`, which is not an `OrderState`; PICKED_UP / IN_TRANSIT / COMPLETED never occur in the app)*
 * [~] `AlgorithmRun` records algorithm execution. *(`AlgorithmBenchmark` and `BenchmarkEngine` persist runs; the live app records nothing)*
-* [ ] `AuditEvent` records important system events. *(`DatabaseManager.addAuditEvent` has zero call sites; `audit_events` is empty)*
+* [x] `AuditEvent` records important system events. *(`engines/AuditLog` emits ORDER_CREATED, ORDER_ASSIGNED, RIDER_STATUS_CHANGED, ORDER_DELIVERED and ROUTE_CALCULATED from `UGSwiftApp`; viewable in Activity & Logs and durable across restarts)*
 
 ## Engines
 
@@ -1338,7 +1338,7 @@ The project should not be considered complete simply because it compiles.
 * [x] `RouteEngine` calculates routes. *(Dijkstra, used on every order)*
 * [x] `SortingEngine` performs meaningful sorting.
 * [~] `IndexingEngine` provides efficient lookup. *(implemented and unit-tested; zero call sites from the app)*
-* [~] `DatabaseManager` persists important information. *(locations, roads, riders, requests and algorithm runs persist; **orders and audit events do not** - there is no `orders` table)*
+* [~] `DatabaseManager` persists important information. *(locations, roads, riders, requests, algorithm runs and audit events all persist; **orders still do not** - there is no `orders` table)*
 
 ## Optimization
 
@@ -1369,9 +1369,9 @@ The project should not be considered complete simply because it compiles.
 
 | Status | Count |
 | --- | ---: |
-| `[x]` done | 24 |
+| `[x]` done | 25 |
 | `[~]` implemented but not wired / partial | 12 |
-| `[ ]` not implemented | 8 |
+| `[ ]` not implemented | 7 |
 | **Total** | **44** |
 
 The dominant theme is `[~]`: most of the remaining work is **connecting existing,

@@ -59,6 +59,7 @@ public class UGSwiftTestSuite {
         testIncomingOrderManager();
         testIndexingEngine();
         testDeliveryEngine();
+        testAuditLog();
 
         System.out.println("\n======================================================");
         System.out.printf("  RESULTS: %d passed, %d failed  (out of %d total)%n", passed, failed, passed + failed);
@@ -997,6 +998,73 @@ public class UGSwiftTestSuite {
         invalid("assignRider returns null for a non-positive order weight",
                 DeliveryEngine.assignRider(zeroWeight, riders, locs, roads) == null);
         invalid("assignRider returns null when given a null order", DeliveryEngine.assignRider(null, riders, locs, roads) == null);
+    }
+
+    // ── AuditLog (Progress.md Section 31 — audit event trail) ──────────────
+    //
+    // These tests deliberately exercise AuditLog.format() only, never record().
+    // format() is a pure function, so the row layout can be verified without
+    // opening a database connection. That keeps the suite runnable offline and
+    // stops test runs from writing junk rows into ug_swift.db.
+    private static void testAuditLog() {
+        section("AuditLog (audit event row formatting)");
+
+        // A row must begin with its event type, so the trail can be filtered by
+        // type with a simple prefix match.
+        ok("format() starts the row with the event type name",
+                AuditLog.format(AuditEventType.ORDER_CREATED, "orderId=1").startsWith("ORDER_CREATED"));
+
+        // Every emitted type should round-trip its own name.
+        boolean allTypesNamed = true;
+        for (AuditEventType type : AuditEventType.values()) {
+            if (!AuditLog.format(type, "x").startsWith(type.name())) {
+                allTypesNamed = false;
+                break;
+            }
+        }
+        ok("format() preserves the name of every declared event type", allTypesNamed);
+
+        // Details are appended after the pipe separator.
+        ok("format() joins details after a ' | ' separator",
+                AuditLog.format(AuditEventType.ORDER_ASSIGNED, "orderId=7")
+                        .equals("ORDER_ASSIGNED | orderId=7"));
+
+        // A row is one line. A newline in a value would render as two separate
+        // events in the UI list, so it must be flattened at format time.
+        String multiline = AuditLog.format(AuditEventType.ROUTE_CALCULATED, "from=A\nto=B\r\nvia=C");
+        boundary("format() flattens newlines so one event is always one row",
+                multiline.indexOf('\n') < 0 && multiline.indexOf('\r') < 0);
+
+        // Missing or blank details produce the bare type, with no dangling separator.
+        boundary("format() with null details returns the bare type name",
+                AuditLog.format(AuditEventType.ORDER_DELIVERED, null).equals("ORDER_DELIVERED"));
+        boundary("format() with blank details leaves no trailing separator",
+                AuditLog.format(AuditEventType.ORDER_DELIVERED, "   ").equals("ORDER_DELIVERED"));
+
+        // Auditing must never be the thing that breaks a delivery, so a bad call
+        // degrades to a placeholder row instead of throwing.
+        boolean threw = false;
+        String nullTypeRow = null;
+        try {
+            nullTypeRow = AuditLog.format(null, "orderId=9");
+        } catch (Exception ex) {
+            threw = true;
+        }
+        invalid("format() with a null event type does not throw", !threw);
+        invalid("format() with a null event type still yields a usable row",
+                nullTypeRow != null && nullTypeRow.startsWith("UNKNOWN_EVENT"));
+
+        // Convenience wrappers guard their own nulls, since they are called from
+        // UI code paths where a rider or order may legitimately be absent.
+        boolean wrappersSafe = true;
+        try {
+            AuditLog.orderCreated(null);
+            AuditLog.orderAssigned(null, null, 0.0, 0.0);
+            AuditLog.orderDelivered(null, null);
+        } catch (Exception ex) {
+            wrappersSafe = false;
+        }
+        invalid("convenience wrappers ignore null models instead of throwing", wrappersSafe);
     }
 
     // ── Trace tables (Section 10: "at least six trace tables") ─────────────

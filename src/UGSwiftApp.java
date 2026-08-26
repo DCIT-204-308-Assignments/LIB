@@ -10,6 +10,7 @@ import java.util.List;
 
 import ds.DynamicArray;
 import ds.Graph;
+import engines.AuditLog;
 import engines.DatabaseManager;
 import engines.DeliveryEngine;
 import engines.DriverPool;
@@ -46,6 +47,9 @@ public class UGSwiftApp extends JFrame {
     static final Font FONT_MONO   = new Font("Consolas", Font.PLAIN, 12);
     static final Font FONT_NAV    = new Font("Segoe UI", Font.BOLD,  13);
     static final Font FONT_SMALL  = new Font("Segoe UI", Font.PLAIN, 11);
+
+    /** How many audit rows the trail panel renders. Older rows stay in the database. */
+    static final int AUDIT_ROWS_SHOWN = 200;
     static final Font FONT_STAT   = new Font("Segoe UI", Font.BOLD,  18);
 
     // --- Custom Vector Icon Engine (from red.md) ---
@@ -267,6 +271,10 @@ public class UGSwiftApp extends JFrame {
     private final JList<String> incomingList = new JList<>(incomingListModel);
     private final DefaultListModel<String> completedListModel = new DefaultListModel<>();
     private final JList<String> completedList = new JList<>(completedListModel);
+    // Persisted audit trail, loaded from the audit_events table. Unlike logArea
+    // above (which is session-only and lost on exit) these rows survive restarts.
+    private final DefaultListModel<String> auditListModel = new DefaultListModel<>();
+    private final JList<String> auditList = new JList<>(auditListModel);
     private final JComboBox<String> sourceCombo = new JComboBox<>();
     private final JComboBox<String> destinationCombo = new JComboBox<>();
     private final JComboBox<String> restaurantCombo = new JComboBox<>();
@@ -1020,6 +1028,7 @@ public class UGSwiftApp extends JFrame {
         panel.setBackground(BG_DARK);
         panel.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
 
+        // --- Top half: the in-memory session log (cleared when the app exits) ---
         JPanel logCard = makeCard("Live System Activity Terminal");
         logCard.setLayout(new BorderLayout());
         logArea.setFont(FONT_MONO);
@@ -1031,8 +1040,65 @@ public class UGSwiftApp extends JFrame {
         logArea.setWrapStyleWord(true);
         logCard.add(makeScrollPane(logArea), BorderLayout.CENTER);
 
-        panel.add(logCard, BorderLayout.CENTER);
+        // --- Bottom half: the durable audit trail read back from the database ---
+        JPanel auditCard = makeCard("Persisted Audit Trail (survives restart)");
+        auditCard.setLayout(new BorderLayout(0, 8));
+        auditList.setFont(FONT_MONO);
+        auditList.setBackground(new Color(0x0B1120));
+        auditList.setForeground(TEXT_PRIMARY);
+        auditList.setSelectionBackground(BG_CARD2);
+        auditList.setSelectionForeground(ACCENT);
+        auditCard.add(makeScrollPane(auditList), BorderLayout.CENTER);
+
+        JPanel auditControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        auditControls.setOpaque(false);
+        JButton refreshAuditBtn = makeSecondaryButton("Refresh Audit Trail", IconType.REFRESH);
+        refreshAuditBtn.addActionListener(e -> refreshAuditTrail());
+        auditControls.add(refreshAuditBtn);
+        auditCard.add(auditControls, BorderLayout.SOUTH);
+
+        // A split pane rather than a fixed layout so the user can decide how much
+        // room each half gets - the audit trail grows without bound over time.
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, logCard, auditCard);
+        split.setResizeWeight(0.5);
+        split.setContinuousLayout(true);
+        split.setDividerSize(8);
+        split.setBorder(null);
+        split.setBackground(BG_DARK);
+
+        panel.add(split, BorderLayout.CENTER);
         return panel;
+    }
+
+    /**
+     * Reloads the audit trail from the database into the list.
+     *
+     * <p>loadAuditEvents() already returns newest-first (its SQL ends with
+     * ORDER BY eventId DESC), so no sorting is needed here. Only the most recent
+     * rows are rendered: the table grows with every order placed, and a Swing
+     * JList holding tens of thousands of rows becomes sluggish to scroll.</p>
+     */
+    private void refreshAuditTrail() {
+        try {
+            DynamicArray<models.AuditEvent> events = DatabaseManager.loadAuditEvents();
+            auditListModel.clear();
+
+            int shown = Math.min(events.size(), AUDIT_ROWS_SHOWN);
+            for (int i = 0; i < shown; i++) {
+                models.AuditEvent event = events.get(i);
+                auditListModel.addElement(event.getTimestamp() + "  " + event.getDescription());
+            }
+
+            if (events.size() > shown) {
+                auditListModel.addElement("... " + (events.size() - shown)
+                        + " older events not shown (" + events.size() + " total)");
+            }
+            if (events.isEmpty()) {
+                auditListModel.addElement("No audit events recorded yet - place an order to generate some.");
+            }
+        } catch (Exception ex) {
+            log("Could not load the audit trail: " + ex.getMessage());
+        }
     }
 
     // --- Core Backend Functions (100% Unchanged Logic) ---
@@ -1058,15 +1124,22 @@ public class UGSwiftApp extends JFrame {
                 req.setStatus("DELIVERED");
                 DatabaseManager.saveServiceRequest(req);
                 int riderId = req.getAssignedRiderId();
+                // Held so the audit row can name the rider, not just their id.
+                Resource releasedRider = null;
                 if (riderId > 0) {
                     DatabaseManager.updateResourceStatus(riderId, "AVAILABLE");
                     for (Resource r : riders) {
                         if (r.getResourceId() == riderId) {
                             r.setAvailabilityStatus("AVAILABLE");
+                            releasedRider = r;
                             break;
                         }
                     }
+                    // Each audit call sits beside the database write it describes,
+                    // so the row and the state change cannot drift apart.
+                    AuditLog.riderStatusChanged(releasedRider, "AVAILABLE");
                 }
+                AuditLog.orderDelivered(req, releasedRider);
 
                 Order moved = null;
                 for (Order o : activeOrders) {
@@ -1083,6 +1156,7 @@ public class UGSwiftApp extends JFrame {
 
             if (!toComplete.isEmpty()) {
                 refreshDashboard();
+                refreshAuditTrail();
                 refreshSummary();
                 log("Moved " + toComplete.size() + " deliveries to completed queue.");
             }
@@ -1153,9 +1227,14 @@ public class UGSwiftApp extends JFrame {
             DatabaseManager.saveServiceRequest(req);
             DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
             result.rider.setAvailabilityStatus("BUSY");
+            // No ORDER_CREATED here: this request was already created when it was
+            // placed. Draining the queue only assigns it.
+            AuditLog.orderAssigned(order, result.rider, result.distanceKm, deliveryDuration);
+            AuditLog.riderStatusChanged(result.rider, "BUSY");
             activeOrders.add(order);
             log("Processed incoming request " + req.getRequestId() + " and assigned rider " + result.rider.getName());
             refreshDashboard();
+            refreshAuditTrail();
             refreshSummary();
         } catch (Exception ex) {
             log("Processing incoming request failed: " + ex.getMessage());
@@ -1255,6 +1334,7 @@ public class UGSwiftApp extends JFrame {
             populateLocationSelectors();
             populateRestaurantMenus();
             refreshDashboard();
+            refreshAuditTrail();
             showSummary();
         } catch (Exception ex) {
             log("Failed to reload data: " + ex.getMessage());
@@ -1301,6 +1381,11 @@ public class UGSwiftApp extends JFrame {
         log("Route preview: " + findLocationName(srcId) + " → " + findLocationName(dstId));
         log("  Distance: " + String.format("%.2f km", result.totalDistanceKm));
         log("  Travel time: " + String.format("%.1f min", result.totalTimeMin));
+        // Audited here, at the user-facing action, and deliberately NOT inside
+        // RouteEngine.dijkstra: that method runs once per candidate rider during
+        // assignment, so auditing there would mean ~30 database writes per order.
+        AuditLog.routeCalculated(findLocationName(srcId), findLocationName(dstId),
+                result.totalDistanceKm, result.totalTimeMin);
         setStatus("Route preview ready");
     }
 
@@ -1355,6 +1440,7 @@ public class UGSwiftApp extends JFrame {
         boolean highPriority = "Express".equalsIgnoreCase(priority);
         incomingManager.submit(request, highPriority);
         requests.add(request);
+        AuditLog.orderCreated(order);
 
         Resource assigned = driverPool.nextSuitable(order, locations, roads);
         DeliveryEngine.AssignmentResult result = null;
@@ -1374,6 +1460,7 @@ public class UGSwiftApp extends JFrame {
             log("No rider could be assigned for this order right now. Order queued.");
             setStatus("Order queued");
             refreshDashboard();
+            refreshAuditTrail();
             refreshSummary();
             return;
         }
@@ -1402,6 +1489,12 @@ public class UGSwiftApp extends JFrame {
             log("Warning: could not persist request or update rider status: " + ex.getMessage());
         }
 
+        // Recorded outside the try/catch above because the assignment happened in
+        // the running system either way - the audit trail describes what the app
+        // did, not only what the database accepted.
+        AuditLog.orderAssigned(order, result.rider, result.distanceKm, deliveryDuration);
+        AuditLog.riderStatusChanged(result.rider, "BUSY");
+
         activeOrders.add(order);
 
         log("New order received for " + customerName + " from " + restaurant + " — " + meal);
@@ -1412,6 +1505,7 @@ public class UGSwiftApp extends JFrame {
         log("Pickup: " + findLocationName(pickupId) + " → Delivery: " + findLocationName(deliveryId));
         setStatus("Order placed and rider assigned");
         refreshDashboard();
+        refreshAuditTrail();
         refreshSummary();
     }
 
