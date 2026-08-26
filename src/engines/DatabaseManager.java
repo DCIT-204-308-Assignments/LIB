@@ -63,6 +63,12 @@ public class DatabaseManager {
                     "homeLocationId INTEGER NOT NULL," +
                     "capacityKg REAL NOT NULL," +
                     "availabilityStatus TEXT NOT NULL," +
+                    // Operational state. Without these three columns a rider can
+                    // never move, never hold an order, and never accumulate a
+                    // workload - the model has the fields, the table did not.
+                    "currentLocationId INTEGER NOT NULL DEFAULT -1," +
+                    "currentOrderId INTEGER NOT NULL DEFAULT -1," +
+                    "completedDeliveries INTEGER NOT NULL DEFAULT 0," +
                     "FOREIGN KEY(homeLocationId) REFERENCES locations(locationId)" +
                     ");");
 
@@ -136,6 +142,50 @@ public class DatabaseManager {
                 );
             } catch (SQLException ignored) {
                 // Column already exists.
+            }
+
+            // Migration checks for rider operational state (location, current
+            // order, workload). Databases created before these columns existed
+            // still hold only the six original resource columns.
+            try {
+                stmt.execute(
+                        "ALTER TABLE resources " +
+                        "ADD COLUMN currentLocationId INTEGER NOT NULL DEFAULT -1;"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
+
+            try {
+                stmt.execute(
+                        "ALTER TABLE resources " +
+                        "ADD COLUMN currentOrderId INTEGER NOT NULL DEFAULT -1;"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
+
+            try {
+                stmt.execute(
+                        "ALTER TABLE resources " +
+                        "ADD COLUMN completedDeliveries INTEGER NOT NULL DEFAULT 0;"
+                );
+            } catch (SQLException ignored) {
+                // Column already exists.
+            }
+
+            // A rider starts at their home location, but SQLite cannot express
+            // "DEFAULT homeLocationId" in ALTER TABLE - a default must be a
+            // constant. So the column is added as -1 above and backfilled here.
+            // Safe to run every startup: after the first pass no rider sits at
+            // -1, and -1 is not a valid location id in any case.
+            try {
+                stmt.execute(
+                        "UPDATE resources SET currentLocationId = homeLocationId " +
+                        "WHERE currentLocationId = -1 OR currentLocationId IS NULL;"
+                );
+            } catch (SQLException ignored) {
+                // Table not present yet on a brand new database.
             }
 
             stmt.execute("CREATE TABLE IF NOT EXISTS audit_events (" +
@@ -256,7 +306,7 @@ public class DatabaseManager {
                 "Gifty Agyei", "Grace Kusi", "Theresa Ansah", "Charles Boakye", "Daniel Mensah",
                 "Josephine Addae", "Priscilla Okyere", "Ransford Osei", "Stephen Baidoo", "Vida Boateng"
         };
-        String insertSql = "INSERT INTO resources (resourceId, name, type, homeLocationId, capacityKg, availabilityStatus) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertSql = "INSERT INTO resources (resourceId, name, type, homeLocationId, capacityKg, availabilityStatus, currentLocationId, currentOrderId, completedDeliveries) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Random rnd = new Random(SEED);
         conn.setAutoCommit(false);
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
@@ -271,6 +321,11 @@ public class DatabaseManager {
                 double capacity = (type.equals("BICYCLE")) ? 10.0 + rnd.nextDouble() * 5.0 : 25.0 + rnd.nextDouble() * 15.0;
                 pstmt.setDouble(5, Math.round(capacity * 10.0) / 10.0);
                 pstmt.setString(6, "AVAILABLE");
+                // A fresh rider starts parked at home, carrying nothing, with no
+                // deliveries behind them.
+                pstmt.setInt(7, homeLoc);
+                pstmt.setInt(8, -1);
+                pstmt.setInt(9, 0);
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
@@ -457,13 +512,26 @@ public class DatabaseManager {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
+                // A rider that has never worked has currentLocationId equal to
+                // their home; one that has delivered is wherever they dropped
+                // off last. Reading the stored value (rather than defaulting to
+                // home, as the six-argument constructor does) is what lets a
+                // rider's position survive a restart.
+                int currentLocationId = rs.getInt("currentLocationId");
+                if (rs.wasNull() || currentLocationId < 0) {
+                    currentLocationId = rs.getInt("homeLocationId");
+                }
+
                 list.add(new Resource(
                         rs.getInt("resourceId"),
                         rs.getString("name"),
                         rs.getString("type"),
                         rs.getInt("homeLocationId"),
+                        currentLocationId,
                         rs.getDouble("capacityKg"),
-                        rs.getString("availabilityStatus")
+                        rs.getString("availabilityStatus"),
+                        rs.getInt("currentOrderId"),
+                        rs.getInt("completedDeliveries")
                 ));
             }
         } catch (SQLException e) {
@@ -472,12 +540,29 @@ public class DatabaseManager {
         return list;
     }
 
-    public static void updateResourceStatus(int id, String status) {
-        String sql = "UPDATE resources SET availabilityStatus = ? WHERE resourceId = ?";
+    /**
+     * Persists every mutable field of a rider in one statement.
+     *
+     * <p>This replaces the older {@code updateResourceStatus(int, String)}, which
+     * wrote only {@code availabilityStatus}. Having two save methods where one
+     * silently discarded the rider's location, current order and workload was a
+     * standing invitation to "the state did not persist" bugs, so there is now a
+     * single way to write a rider back.</p>
+     */
+    public static void updateResourceState(Resource rider) {
+        if (rider == null) {
+            return;
+        }
+
+        String sql = "UPDATE resources SET availabilityStatus = ?, currentLocationId = ?, "
+                + "currentOrderId = ?, completedDeliveries = ? WHERE resourceId = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, status);
-            pstmt.setInt(2, id);
+            pstmt.setString(1, rider.getAvailabilityStatus());
+            pstmt.setInt(2, rider.getCurrentLocationId());
+            pstmt.setInt(3, rider.getCurrentOrderId());
+            pstmt.setInt(4, rider.getCompletedDeliveries());
+            pstmt.setInt(5, rider.getResourceId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

@@ -23,7 +23,7 @@ public enum AuditEventType {
     /** An order was matched to a rider. Emitted by {@code placeOrder} and {@code processNextIncoming}. */
     ORDER_ASSIGNED,
 
-    /** A rider became BUSY or AVAILABLE. Emitted wherever {@code updateResourceStatus} is called. */
+    /** A rider became BUSY or AVAILABLE. Emitted wherever {@code updateResourceState} is called. */
     RIDER_STATUS_CHANGED,
 
     /** A delivery completed. Emitted by {@code UGSwiftApp.checkForCompletedOrders}. */

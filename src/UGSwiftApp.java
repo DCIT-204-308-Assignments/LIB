@@ -1127,13 +1127,20 @@ public class UGSwiftApp extends JFrame {
                 // Held so the audit row can name the rider, not just their id.
                 Resource releasedRider = null;
                 if (riderId > 0) {
-                    DatabaseManager.updateResourceStatus(riderId, "AVAILABLE");
                     for (Resource r : riders) {
                         if (r.getResourceId() == riderId) {
-                            r.setAvailabilityStatus("AVAILABLE");
                             releasedRider = r;
                             break;
                         }
+                    }
+                    if (releasedRider != null) {
+                        // completeOrder does four things at once: clears the current
+                        // order, MOVES the rider to the delivery destination, sets
+                        // them AVAILABLE, and increments their completed count.
+                        // Moving the rider is what makes the next "nearest rider"
+                        // calculation measure from where they actually are.
+                        releasedRider.completeOrder(req.getDestLocationId());
+                        DatabaseManager.updateResourceState(releasedRider);
                     }
                     // Each audit call sits beside the database write it describes,
                     // so the row and the state change cannot drift apart.
@@ -1194,7 +1201,7 @@ public class UGSwiftApp extends JFrame {
             DeliveryEngine.AssignmentResult result = null;
             if (assigned != null) {
                 Graph graph = buildGraph();
-                var path = RouteEngine.dijkstra(graph, assigned.getHomeLocationId(), order.getPickupLocationId());
+                var path = RouteEngine.dijkstra(graph, assigned.getCurrentLocationId(), order.getPickupLocationId());
                 if (path != null) {
                     result = new DeliveryEngine.AssignmentResult(assigned, path.totalDistanceKm, path.totalTimeMin);
                 }
@@ -1225,8 +1232,10 @@ public class UGSwiftApp extends JFrame {
             }
             req = new ServiceRequest(req.getRequestId(), req.getSourceLocationId(), req.getDestLocationId(), req.getCategory(), req.getUrgency(), req.getTimeSubmittedMin(), 480.0 + deliveryDuration, req.getStatus(), req.getAssignedRiderId(), req.getDeliveredTimeMin());
             DatabaseManager.saveServiceRequest(req);
-            DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
-            result.rider.setAvailabilityStatus("BUSY");
+            // assignOrder records which order the rider is carrying and marks
+            // them BUSY in one step.
+            result.rider.assignOrder(order.getOrderId());
+            DatabaseManager.updateResourceState(result.rider);
             // No ORDER_CREATED here: this request was already created when it was
             // placed. Draining the queue only assigns it.
             AuditLog.orderAssigned(order, result.rider, result.distanceKm, deliveryDuration);
@@ -1446,7 +1455,7 @@ public class UGSwiftApp extends JFrame {
         DeliveryEngine.AssignmentResult result = null;
         if (assigned != null) {
             ds.Graph graph = buildGraph();
-            var path = RouteEngine.dijkstra(graph, assigned.getHomeLocationId(), pickupId);
+            var path = RouteEngine.dijkstra(graph, assigned.getCurrentLocationId(), pickupId);
             if (path != null) {
                 result = new DeliveryEngine.AssignmentResult(assigned, path.totalDistanceKm, path.totalTimeMin);
             }
@@ -1465,7 +1474,11 @@ public class UGSwiftApp extends JFrame {
             return;
         }
 
-        result.rider.setAvailabilityStatus("BUSY");
+        // Claim the rider in memory before any of the work below, so a failure
+        // while computing the route or persisting cannot leave them looking
+        // AVAILABLE and get them handed a second order. assignOrder both records
+        // the order they are carrying and marks them BUSY.
+        result.rider.assignOrder(order.getOrderId());
         double deliveryDuration = 0.0;
         try {
             Graph graph = buildGraph();
@@ -1484,7 +1497,7 @@ public class UGSwiftApp extends JFrame {
         request = new ServiceRequest(request.getRequestId(), request.getSourceLocationId(), request.getDestLocationId(), request.getCategory(), request.getUrgency(), request.getTimeSubmittedMin(), 480.0 + deliveryDuration, request.getStatus(), request.getAssignedRiderId());
         try {
             DatabaseManager.saveServiceRequest(request);
-            DatabaseManager.updateResourceStatus(result.rider.getResourceId(), "BUSY");
+            DatabaseManager.updateResourceState(result.rider);
         } catch (Exception ex) {
             log("Warning: could not persist request or update rider status: " + ex.getMessage());
         }

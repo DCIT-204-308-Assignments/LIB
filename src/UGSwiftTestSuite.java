@@ -998,6 +998,52 @@ public class UGSwiftTestSuite {
         invalid("assignRider returns null for a non-positive order weight",
                 DeliveryEngine.assignRider(zeroWeight, riders, locs, roads) == null);
         invalid("assignRider returns null when given a null order", DeliveryEngine.assignRider(null, riders, locs, roads) == null);
+
+        // ── Rider workload (Config.WORKLOAD_WEIGHT) ────────────────────────
+        //
+        // scoreRider ends with:  score += completedDeliveries * WORKLOAD_WEIGHT
+        // Before rider workload was persisted, getCompletedDeliveries() was
+        // always 0, so that line could never change an outcome and these
+        // assertions were impossible to write. The nine-argument Resource
+        // constructor lets a test set the count directly.
+        Order fairOrder = new Order(3, "Esi", "Vendor", "Documents", 1.0, 1, 2, 100, "CREATED", -1);
+
+        DynamicArray<Resource> sameSpot = new DynamicArray<>();
+        // Identical in every respect - same type, same capacity, same location -
+        // so distance, vehicle and weight terms all cancel and workload is the
+        // only thing left that can decide between them.
+        sameSpot.add(new Resource(10, "Busy Kwame", "MOTORCYCLE", 2, 2, 10.0, "AVAILABLE", -1, 9));
+        sameSpot.add(new Resource(11, "Fresh Adjoa", "MOTORCYCLE", 2, 2, 10.0, "AVAILABLE", -1, 0));
+
+        DeliveryEngine.AssignmentResult lighterLoad = DeliveryEngine.assignRider(fairOrder, sameSpot, locs, roads);
+        ok("assignRider prefers the less-loaded of two otherwise identical riders (workload term is live)",
+                lighterLoad != null && lighterLoad.rider.getResourceId() == 11);
+
+        // [BOUNDARY] Workload is a tie-breaker, not an override. A heavily loaded
+        // rider standing at the pickup should still beat a fresh rider 3km away,
+        // otherwise the penalty would be dominating the distance term.
+        DynamicArray<Resource> nearVsFar = new DynamicArray<>();
+        nearVsFar.add(new Resource(12, "Loaded but here", "MOTORCYCLE", 1, 1, 10.0, "AVAILABLE", -1, 9));
+        nearVsFar.add(new Resource(13, "Fresh but far", "MOTORCYCLE", 2, 2, 10.0, "AVAILABLE", -1, 0));
+        DeliveryEngine.AssignmentResult proximityWins = DeliveryEngine.assignRider(fairOrder, nearVsFar, locs, roads);
+        boundary("a loaded rider at the pickup still beats a fresh rider 3km away (workload does not dominate distance)",
+                proximityWins != null && proximityWins.rider.getResourceId() == 12);
+
+        // ── Rider location tracking (Progress.md section 25) ───────────────
+        Resource mover = new Resource(20, "Kojo", "MOTORCYCLE", 1, 1, 10.0, "AVAILABLE", -1, 0);
+        mover.assignOrder(555);
+        ok("assignOrder marks the rider BUSY and records the order they carry",
+                "BUSY".equals(mover.getAvailabilityStatus()) && mover.getCurrentOrderId() == 555);
+
+        mover.completeOrder(2);
+        ok("completeOrder moves the rider to the destination, frees them, and counts the delivery",
+                mover.getCurrentLocationId() == 2
+                        && mover.isAvailable()
+                        && mover.getCurrentOrderId() == -1
+                        && mover.getCompletedDeliveries() == 1);
+
+        boundary("a completed delivery leaves the rider away from home, not back at it",
+                mover.getCurrentLocationId() != mover.getHomeLocationId());
     }
 
     // ── AuditLog (Progress.md Section 31 — audit event trail) ──────────────

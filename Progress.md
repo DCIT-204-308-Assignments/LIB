@@ -1323,7 +1323,7 @@ The project should not be considered complete simply because it compiles.
 * [x] `Resource` properly represents riders.
 * [x] Bicycle and motorcycle riders are distinguished.
 * [x] Rider availability is tracked.
-* [ ] Rider location is tracked. *(`setCurrentLocationId` is only reached from `SimulationEngine` and the tests; the live app never moves a rider, and `resources` has no `currentLocationId` column)*
+* [x] Rider location is tracked. *(`resources` now stores `currentLocationId`; `checkForCompletedOrders` calls `Resource.completeOrder(destination)` so a rider ends each delivery at the drop-off point, and both routing call sites read `getCurrentLocationId()`)*
 * [ ] Order lifecycle is tracked. *(`UGSwiftApp` creates orders with the string `"PENDING"`, which is not an `OrderState`; PICKED_UP / IN_TRANSIT / COMPLETED never occur in the app)*
 * [~] `AlgorithmRun` records algorithm execution. *(`AlgorithmBenchmark` and `BenchmarkEngine` persist runs; the live app records nothing)*
 * [x] `AuditEvent` records important system events. *(`engines/AuditLog` emits ORDER_CREATED, ORDER_ASSIGNED, RIDER_STATUS_CHANGED, ORDER_DELIVERED and ROUTE_CALCULATED from `UGSwiftApp`; viewable in Activity & Logs and durable across restarts)*
@@ -1338,7 +1338,7 @@ The project should not be considered complete simply because it compiles.
 * [x] `RouteEngine` calculates routes. *(Dijkstra, used on every order)*
 * [x] `SortingEngine` performs meaningful sorting.
 * [~] `IndexingEngine` provides efficient lookup. *(implemented and unit-tested; zero call sites from the app)*
-* [~] `DatabaseManager` persists important information. *(locations, roads, riders, requests, algorithm runs and audit events all persist; **orders still do not** - there is no `orders` table)*
+* [~] `DatabaseManager` persists important information. *(locations, roads, riders including their live location and workload, requests, algorithm runs and audit events all persist; **orders still do not** - there is no `orders` table)*
 
 ## Optimization
 
@@ -1348,9 +1348,10 @@ The project should not be considered complete simply because it compiles.
 * [x] Bicycle riders are excluded beyond the configured 6 km threshold. *(`Config.MAX_BICYCLE_DISTANCE_KM`, enforced in `DeliveryEngine.assignRider`)*
 * [x] Motorcycle riders are considered for long-distance deliveries.
 * [x] Rider availability is considered.
-* [~] Current rider location is considered. *(`DeliveryEngine` reads `getCurrentLocationId()`, but `UGSwiftApp.placeOrder` routes from `getHomeLocationId()`, and the value never changes anyway - see "Rider location is tracked")*
+* [x] Current rider location is considered. *(`DeliveryEngine`, `DriverPool` and both `UGSwiftApp` routing sites all read `getCurrentLocationId()`, and the value now actually changes as riders deliver)*
 * [x] A clear assignment algorithm exists. *(`DeliveryEngine.scoreRider`)*
 * [~] The algorithm can select the optimal eligible rider. *(it can, but `DriverPool.nextSuitable` is tried first and usually returns a merely acceptable rider before the scored path runs)*
+* [x] Rider workload influences the assignment score. *(`resources.completedDeliveries` is now persisted and incremented, so the `Config.WORKLOAD_WEIGHT` term in `scoreRider` is no longer multiplied by zero; covered by a test that gives two otherwise identical riders different workloads)*
 * [ ] Order priority influences the assignment score. *(section 14 requires a priority term; `scoreRider` never reads `order.getPriority()`)*
 
 ## Testing
@@ -1369,10 +1370,15 @@ The project should not be considered complete simply because it compiles.
 
 | Status | Count |
 | --- | ---: |
-| `[x]` done | 25 |
-| `[~]` implemented but not wired / partial | 12 |
-| `[ ]` not implemented | 7 |
-| **Total** | **44** |
+| `[x]` done | 28 |
+| `[~]` implemented but not wired / partial | 11 |
+| `[ ]` not implemented | 6 |
+| **Total** | **45** |
+
+**Known limitation introduced by rider state persistence:** if the application is
+killed mid-delivery, riders stay `BUSY` in the database. `DriverPool.rebuild()` only
+enqueues `AVAILABLE` riders, so those riders become invisible to future assignments
+until the row is corrected by hand. A startup reconciliation pass would fix this.
 
 The dominant theme is `[~]`: most of the remaining work is **connecting existing,
 already-tested code to the running application**, not writing new algorithms.
