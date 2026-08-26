@@ -1,0 +1,15 @@
+# Build artifacts
+bin/
+*.class
+ug_swift.db
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

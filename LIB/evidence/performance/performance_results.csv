@@ -1,0 +1,43 @@
+algorithmName,inputSize,timeNs,memoryKb,operationsCount,comparisonsCount,status,resultSummary,dateRun
+Selection Sort,100,404500,0,0,4950,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Selection Sort,500,1011583,0,0,124750,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Selection Sort,1000,950875,0,0,499500,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Insertion Sort,100,174375,0,0,2583,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Insertion Sort,500,697167,0,0,56925,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Insertion Sort,1000,897916,0,0,235319,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Merge Sort,100,80167,0,0,513,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Merge Sort,500,77042,68,0,3234,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Merge Sort,1000,144333,0,0,6970,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Quick Sort,100,37125,0,0,605,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Quick Sort,500,109166,0,0,5994,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Quick Sort,1000,308542,0,0,21099,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
+Linear Search,1000,134375,0,0,1000,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Binary Search,1000,67250,0,0,1009,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Linear Search,5000,239250,0,0,5000,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Binary Search,5000,317250,0,0,5012,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Linear Search,10000,482875,0,0,10000,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Binary Search,10000,170708,0,0,10013,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+BFS,20,23083,0,0,0,SUCCESS,Visited locations=20; median of 3 timed executions,2026-08-22 01:33:59
+DFS,20,20667,0,0,0,SUCCESS,Visited locations=20; median of 3 timed executions,2026-08-22 01:33:59
+Dijkstra,20,59125,0,0,0,SUCCESS,Path nodes=16 totalWeight=22.400000000000002; median of 3 timed executions,2026-08-22 01:33:59
+Prim,20,130875,0,0,0,SUCCESS,MST edges=19; median of 3 timed executions,2026-08-22 01:33:59
+Kruskal,20,23833,0,0,0,SUCCESS,MST edges=19; median of 3 timed executions,2026-08-22 01:33:59
+BFS,50,27083,0,0,0,SUCCESS,Visited locations=50; median of 3 timed executions,2026-08-22 01:33:59
+DFS,50,38542,0,0,0,SUCCESS,Visited locations=50; median of 3 timed executions,2026-08-22 01:33:59
+Dijkstra,50,89458,0,0,0,SUCCESS,Path nodes=40 totalWeight=57.500000000000014; median of 3 timed executions,2026-08-22 01:33:59
+Prim,50,85667,0,0,0,SUCCESS,MST edges=49; median of 3 timed executions,2026-08-22 01:33:59
+Kruskal,50,77959,0,0,0,SUCCESS,MST edges=49; median of 3 timed executions,2026-08-22 01:33:59
+BFS,90,36750,0,0,0,SUCCESS,Visited locations=90; median of 3 timed executions,2026-08-22 01:33:59
+DFS,90,48583,0,0,0,SUCCESS,Visited locations=90; median of 3 timed executions,2026-08-22 01:33:59
+Dijkstra,90,97708,0,0,0,SUCCESS,Path nodes=72 totalWeight=104.3; median of 3 timed executions,2026-08-22 01:33:59
+Prim,90,278542,0,0,0,SUCCESS,MST edges=89; median of 3 timed executions,2026-08-22 01:33:59
+Kruskal,90,177583,0,0,0,SUCCESS,MST edges=89; median of 3 timed executions,2026-08-22 01:33:59
+Greedy Nearest Neighbor,5,150208,0,0,0,SUCCESS,Requests routed=5; graphLocations=20; median of 3 executions,2026-08-22 01:33:59
+Greedy Nearest Neighbor,10,446959,471,0,0,SUCCESS,Requests routed=10; graphLocations=40; median of 3 executions,2026-08-22 01:33:59
+Greedy Nearest Neighbor,20,4043333,2049,0,0,SUCCESS,Requests routed=20; graphLocations=80; median of 3 executions,2026-08-22 01:33:59
+Dynamic Programming Knapsack,20,59833,0,0,0,SUCCESS,Selected requests=12; capacityKg=5.0; median of 3 executions,2026-08-22 01:33:59
+Dynamic Programming Knapsack,50,292000,0,0,0,SUCCESS,Selected requests=28; capacityKg=10.0; median of 3 executions,2026-08-22 01:33:59
+Dynamic Programming Knapsack,100,619000,0,0,0,SUCCESS,Selected requests=56; capacityKg=20.0; median of 3 executions,2026-08-22 01:33:59
+Brute Force Batching,8,370000,0,0,0,SUCCESS,Enumerated subsets=256; selected=8; median of 3 executions,2026-08-22 01:33:59
+Brute Force Batching,12,6444334,1536,0,0,SUCCESS,Enumerated subsets=4096; selected=12; median of 3 executions,2026-08-22 01:33:59
+Brute Force Batching,16,28385000,28672,0,0,SUCCESS,Enumerated subsets=65536; selected=16; median of 3 executions,2026-08-22 01:33:59
