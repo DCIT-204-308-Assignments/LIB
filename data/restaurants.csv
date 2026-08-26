@@ -1,0 +1,11 @@
+restaurantId,name,locationId,category,avgPrepTimeMin,popularityScore,isOpen
+1,Auntie Muni's Kitchen,96,Local,20,4.6,1
+2,Night Market Grill House,96,Fast Food,15,4.3,1
+3,Bush Canteen Chop Bar,97,Local,18,4.5,1
+4,Continental Bites,97,Continental,25,4.0,1
+5,Central Cafeteria Diner,90,Local,12,4.1,1
+6,Legon Waakye Spot,96,Local,10,4.7,1
+7,Campus Pizza Corner,97,Fast Food,22,3.9,1
+8,Sarbah Fried Rice Joint,90,Local,14,4.2,1
+9,Banking Square Smoothies,93,Snack,8,3.8,1
+10,Jollof Junction,96,Local,17,4.8,1
