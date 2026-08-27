@@ -1513,88 +1513,88 @@ should remain the source of truth.
 
 ## Data Structures
 
-* [ ] All custom data structures compile.
-* [ ] All custom data structures pass dedicated tests.
-* [ ] Stack is integrated into scheduling.
-* [ ] BTree is integrated into a real operation.
-* [ ] RedBlackTree is integrated into a real operation.
-* [ ] Graph is used by RouteEngine.
-* [ ] MinHeap is used for priority/shortest-path operations.
-* [ ] HashTable is used for efficient lookup.
-* [ ] Queue/Priority Queue is used for incoming/scheduled orders.
+* [x] All custom data structures compile.
+* [x] All custom data structures pass dedicated tests.
+* [x] Stack is integrated into scheduling.
+* [x] BTree is integrated into a real operation.
+* [x] RedBlackTree is integrated into a real operation.
+* [x] Graph is used by RouteEngine.
+* [x] MinHeap is used for priority/shortest-path operations.
+* [x] HashTable is used for efficient lookup.
+* [x] Queue/Priority Queue is used for incoming/scheduled orders.
 
 ## Models
 
-* [ ] Order model is sufficiently detailed.
-* [ ] Resource model represents riders.
-* [ ] Bicycle and motorcycle riders are supported.
-* [ ] Rider availability is tracked.
-* [ ] Rider location is tracked.
-* [ ] Order lifecycle is tracked.
-* [ ] AlgorithmRun records algorithm performance.
-* [ ] AuditEvent records important system events.
+* [x] Order model is sufficiently detailed.
+* [x] Resource model represents riders.
+* [x] Bicycle and motorcycle riders are supported.
+* [x] Rider availability is tracked.
+* [x] Rider location is tracked.
+* [x] Order lifecycle is tracked.
+* [x] AlgorithmRun records algorithm performance.
+* [x] AuditEvent records important system events.
 
 ## Engines
 
-* [ ] DriverPool works correctly.
-* [ ] IncomingOrderManager processes requests.
-* [ ] SchedulingEngine performs real scheduling.
-* [ ] OptimisationEngine performs real optimization.
-* [ ] DeliveryEngine manages complete deliveries.
-* [ ] RouteEngine calculates routes.
-* [ ] SortingEngine performs meaningful sorting.
-* [ ] IndexingEngine performs efficient lookup.
-* [ ] DatabaseManager persists required data.
+* [x] DriverPool works correctly.
+* [x] IncomingOrderManager processes requests.
+* [x] SchedulingEngine performs real scheduling.
+* [x] OptimisationEngine performs real optimization.
+* [x] DeliveryEngine manages complete deliveries.
+* [x] RouteEngine calculates routes.
+* [x] SortingEngine performs meaningful sorting.
+* [x] IndexingEngine performs efficient lookup.
+* [x] DatabaseManager persists required data.
 
 ## Optimization
 
-* [ ] Pickup distance is calculated.
-* [ ] Delivery distance is calculated.
-* [ ] Rider availability is considered.
-* [ ] Rider location is considered.
-* [ ] Vehicle type is considered.
-* [ ] Bicycle riders are excluded beyond 6 km.
-* [ ] Motorcycle riders are considered for long-distance deliveries.
-* [ ] Rider workload can influence assignment.
-* [ ] Assignment score is calculated.
-* [ ] Best eligible rider is selected.
+* [x] Pickup distance is calculated.
+* [x] Delivery distance is calculated.
+* [x] Rider availability is considered.
+* [x] Rider location is considered.
+* [x] Vehicle type is considered.
+* [x] Bicycle riders are excluded beyond 6 km.
+* [x] Motorcycle riders are considered for long-distance deliveries.
+* [x] Rider workload can influence assignment.
+* [x] Assignment score is calculated.
+* [x] Best eligible rider is selected.
 
 ## Testing
 
-* [ ] Data structure tests completed.
-* [ ] Engine tests completed.
-* [ ] Vehicle restriction tests completed.
-* [ ] Nearest-rider tests completed.
-* [ ] Multiple-order tests completed.
-* [ ] No-rider tests completed.
-* [ ] Cancellation/reassignment tests completed.
-* [ ] End-to-end delivery test completed.
+* [x] Data structure tests completed.
+* [x] Engine tests completed.
+* [x] Vehicle restriction tests completed.
+* [x] Nearest-rider tests completed.
+* [x] Multiple-order tests completed.
+* [x] No-rider tests completed.
+* [x] Cancellation/reassignment tests completed.
+* [x] End-to-end delivery test completed.
 
 ## Performance
 
-* [ ] AlgorithmRun integrated.
-* [ ] Benchmarking implemented.
-* [ ] Algorithm execution times recorded.
-* [ ] Complexity documented.
-* [ ] Search algorithms compared.
-* [ ] Sorting algorithms compared.
-* [ ] Routing performance measured.
-* [ ] Scheduling performance measured.
-* [ ] Optimization performance measured.
+* [x] AlgorithmRun integrated.
+* [x] Benchmarking implemented.
+* [x] Algorithm execution times recorded.
+* [x] Complexity documented.
+* [x] Search algorithms compared.
+* [x] Sorting algorithms compared.
+* [x] Routing performance measured.
+* [x] Scheduling performance measured.
+* [x] Optimization performance measured.
 
 ## Optional Advanced Features
 
-* [ ] SimulationEngine
-* [ ] MetricsEngine
-* [ ] ReportEngine
-* [ ] Route caching
-* [ ] Rider workload balancing
-* [ ] Cancellation/reassignment
-* [ ] DSA Trace Mode
-* [ ] Benchmark Mode
-* [ ] Config class
-* [ ] Enums
-* [ ] AssignmentResult
+* [x] SimulationEngine (`src/engines/SimulationEngine.java`)
+* [x] MetricsEngine (`src/engines/MetricsEngine.java`)
+* [x] ReportEngine (`src/engines/ReportEngine.java`)
+* [x] Route caching (`src/engines/RouteEngine.java`)
+* [x] Rider workload balancing (`DeliveryEngine` & `OptimisationEngine`)
+* [x] Cancellation/reassignment (`DeliveryEngine` & `UGSwiftApp`)
+* [x] DSA Trace Mode (`UGSwiftTestSuite.java` & Panel 3 UI)
+* [x] Benchmark Mode (`BenchmarkEngine` & `G2BenchmarkRunner`)
+* [x] Config class (`src/utils/Config.java`)
+* [x] Enums (`VehicleType.java`, `AuditEventType.java`, `OrderState`)
+* [x] AssignmentResult (Scoring breakdown in `OptimisationEngine`)
 
 ---
 

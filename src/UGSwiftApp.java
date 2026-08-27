@@ -1860,79 +1860,59 @@ public class UGSwiftApp extends JFrame {
         try {
             double currentMinutes = LocalTime.now().getHour() * 60 + LocalTime.now().getMinute() + LocalTime.now().getSecond() / 60.0;
 
-            // Move orders through PICKED_UP and IN_TRANSIT before anything is
-            // completed, so the lifecycle is visible rather than instantaneous.
             advanceInFlightOrders();
 
-            List<ServiceRequest> toComplete = new ArrayList<>();
-            for (ServiceRequest req : requests) {
-                if (req.getStatus() != null && req.getStatus().equalsIgnoreCase("ASSIGNED")) {
-                    if (isDeliveryDue(req.getRequestId())) {
-                        toComplete.add(req);
-                    }
+            List<Order> ordersToComplete = new ArrayList<>();
+            for (Order order : activeOrders) {
+                int reqId = order.getRequestId();
+                if (reqId <= 0 || isDeliveryDue(reqId)) {
+                    ordersToComplete.add(order);
                 }
             }
 
-            for (ServiceRequest req : toComplete) {
-                req.setStatus("DELIVERED");
-                // Record WHEN it was delivered, not just that it was. Without
-                // this the column stayed NULL on every row ever written.
-                req.setDeliveredTimeMin(currentMinutes);
-                DatabaseManager.saveServiceRequest(req);
-                int riderId = req.getAssignedRiderId();
-                // Held so the audit row can name the rider, not just their id.
-                Resource releasedRider = null;
-                if (riderId > 0) {
-                    for (Resource r : riders) {
-                        if (r.getResourceId() == riderId) {
-                            releasedRider = r;
+            for (Order order : ordersToComplete) {
+                order.setStatus(Order.OrderState.COMPLETED);
+                DatabaseManager.saveOrder(order);
+
+                activeOrders.removeElement(order);
+                completedOrders.add(order);
+
+                int reqId = order.getRequestId();
+                ServiceRequest matchedReq = null;
+                if (reqId > 0) {
+                    for (ServiceRequest req : requests) {
+                        if (req.getRequestId() == reqId) {
+                            matchedReq = req;
                             break;
                         }
                     }
-                    if (releasedRider != null) {
-                        // completeOrder does four things at once: clears the current
-                        // order, MOVES the rider to the delivery destination, sets
-                        // them AVAILABLE, and increments their completed count.
-                        // Moving the rider is what makes the next "nearest rider"
-                        // calculation measure from where they actually are.
-                        releasedRider.completeOrder(req.getDestLocationId());
-                        DatabaseManager.updateResourceState(releasedRider);
-                    }
-                    // Each audit call sits beside the database write it describes,
-                    // so the row and the state change cannot drift apart.
+                }
+                if (matchedReq != null) {
+                    matchedReq.setStatus("DELIVERED");
+                    matchedReq.setDeliveredTimeMin(currentMinutes);
+                    DatabaseManager.saveServiceRequest(matchedReq);
+                }
+
+                int riderId = order.getAssignedRiderId();
+                Resource releasedRider = findRider(riderId);
+                if (releasedRider != null) {
+                    releasedRider.completeOrder(order.getDeliveryLocationId());
+                    DatabaseManager.updateResourceState(releasedRider);
                     AuditLog.riderStatusChanged(releasedRider, "AVAILABLE");
                 }
-                AuditLog.orderDelivered(req, releasedRider);
-
-                // Exact lookup by the stored link. The previous version matched on
-                // pickup id + delivery id + meal name, which picked the wrong
-                // order whenever two customers ordered the same meal along the
-                // same route.
-                Order moved = null;
-                for (Order o : activeOrders) {
-                    if (o.getRequestId() == req.getRequestId()) {
-                        moved = o;
-                        break;
-                    }
+                if (matchedReq != null) {
+                    AuditLog.orderDelivered(matchedReq, releasedRider);
                 }
-                if (moved != null) {
-                    // PICKED_UP and IN_TRANSIT were already reached by
-                    // advanceInFlightOrders() at their scheduled times; this is
-                    // the final transition.
-                    moved.setStatus(Order.OrderState.COMPLETED);
-                    DatabaseManager.saveOrder(moved);
-
-                    activeOrders.removeElement(moved);
-                    completedOrders.add(moved);
+                if (reqId > 0) {
+                    deliverySchedule.remove(reqId);
                 }
-                deliverySchedule.remove(req.getRequestId());
             }
 
-            if (!toComplete.isEmpty()) {
+            if (!ordersToComplete.isEmpty()) {
                 refreshDashboard();
                 refreshAuditTrail();
                 refreshSummary();
-                log("Moved " + toComplete.size() + " deliveries to completed queue.");
+                log("Moved " + ordersToComplete.size() + " delivery/deliveries to completed queue.");
             }
         } catch (Exception ex) {
             // keep watcher resilient

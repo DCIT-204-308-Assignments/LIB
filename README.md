@@ -294,15 +294,16 @@ The suite verifies:
 
 # Algorithm Testing and Performance Evidence
 
-The current validation suite contains **80 automated tests** covering custom
+The current validation suite contains **221 automated tests** covering custom
 data structures, searching, sorting, routing, optimisation, models, and edge
 cases.
 
 Latest verified result:
 
 ```text
-RESULTS: 80 passed, 0 failed
+RESULTS: 221 passed, 0 failed  (out of 221 total)
 ALL TESTS PASSED!
+```
 
 ---
 
