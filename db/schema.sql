@@ -119,3 +119,5 @@ CREATE INDEX IF NOT EXISTS idx_orders_request          ON orders(requestId);
 CREATE INDEX IF NOT EXISTS idx_orders_assigned_rider   ON orders(assignedRiderId);
 CREATE INDEX IF NOT EXISTS idx_algorithm_runs_name     ON algorithm_runs(algorithmName);
 CREATE INDEX IF NOT EXISTS idx_audit_events_type       ON audit_events(eventType);
+
+
