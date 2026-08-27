@@ -84,7 +84,6 @@ erDiagram
         int foodItemId PK
         int restaurantId FK
         string name
-        real price
         string category
         boolean available
     }
@@ -124,7 +123,6 @@ erDiagram
         string status
         real distanceKm
         real estimatedDeliveryMin
-        real totalPrice
         string vehicleType
         int assignedResourceId FK
     }
@@ -134,7 +132,6 @@ erDiagram
         int orderId FK
         int foodItemId FK
         int quantity
-        real unitPrice
     }
 
     DELIVERY_ASSIGNMENTS {
