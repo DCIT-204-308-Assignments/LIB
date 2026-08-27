@@ -83,7 +83,6 @@ CREATE TABLE IF NOT EXISTS food_items (
     foodItemId    INTEGER PRIMARY KEY,
     restaurantId  INTEGER NOT NULL,
     name          TEXT NOT NULL,
-    price         REAL NOT NULL,
     category      TEXT,                  -- e.g. 'Main', 'Drink', 'Snack'
     available     BOOLEAN NOT NULL DEFAULT 1,
     FOREIGN KEY (restaurantId) REFERENCES restaurants(restaurantId)
@@ -139,7 +138,6 @@ CREATE TABLE IF NOT EXISTS orders (
         --         PICKED_UP, IN_TRANSIT, COMPLETED, CANCELLED
     distanceKm             REAL,
     estimatedDeliveryMin   REAL,
-    totalPrice             REAL,
     vehicleType            TEXT,                     -- 'BICYCLE' | 'MOTORCYCLE'
     assignedResourceId     INTEGER,
     FOREIGN KEY (requestId)          REFERENCES service_requests(requestId),
@@ -156,7 +154,6 @@ CREATE TABLE IF NOT EXISTS order_items (
     orderId       INTEGER NOT NULL,
     foodItemId    INTEGER NOT NULL,
     quantity      INTEGER NOT NULL DEFAULT 1,
-    unitPrice     REAL NOT NULL,
     FOREIGN KEY (orderId)    REFERENCES orders(orderId),
     FOREIGN KEY (foodItemId) REFERENCES food_items(foodItemId)
 );

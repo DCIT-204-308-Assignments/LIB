@@ -79,7 +79,6 @@ Menu items per restaurant.
 | `foodItemId` | INTEGER | PRIMARY KEY | Unique menu item ID. |
 | `restaurantId` | INTEGER | FK → restaurants.restaurantId | Owning restaurant. |
 | `name` | TEXT | NOT NULL | Dish/item name. |
-| `price` | REAL | NOT NULL | Price in GHS. |
 | `category` | TEXT | NULLABLE | Main, Snack, Drink, etc. |
 | `available` | BOOLEAN | NOT NULL, DEFAULT 1 | Whether currently orderable. |
 
@@ -128,7 +127,6 @@ The core operational order record — created from a `ServiceRequest` once accep
 | `status` | TEXT | NOT NULL, DEFAULT 'CREATED' | One of: `CREATED`, `QUEUED`, `SCHEDULED`, `ASSIGNED`, `PICKED_UP`, `IN_TRANSIT`, `COMPLETED`, `CANCELLED`. |
 | `distanceKm` | REAL | NULLABLE | Pickup→delivery distance. |
 | `estimatedDeliveryMin` | REAL | NULLABLE | Estimated delivery time. |
-| `totalPrice` | REAL | NULLABLE | Total order cost in GHS. |
 | `vehicleType` | TEXT | NULLABLE | `BICYCLE` or `MOTORCYCLE`, set by the 6km eligibility rule. |
 | `assignedResourceId` | INTEGER | FK → resources.resourceId, NULLABLE | Assigned rider. |
 
@@ -141,7 +139,6 @@ Junction table — line items within an order (many-to-many between orders and f
 | `orderId` | INTEGER | FK → orders.orderId | Parent order. |
 | `foodItemId` | INTEGER | FK → food_items.foodItemId | Selected menu item. |
 | `quantity` | INTEGER | NOT NULL, DEFAULT 1 | Quantity ordered. |
-| `unitPrice` | REAL | NOT NULL | Price per unit at time of purchase. |
 
 ## 10. DELIVERY_ASSIGNMENTS
 Rider-to-order assignment and delivery lifecycle timing — kept separate from `orders` so timestamps don't clutter the order record.
