@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
     name           TEXT NOT NULL,
     locationId     INTEGER NOT NULL,
     category       TEXT,                 -- e.g. 'Local', 'Fast Food', 'Continental'
+    contactNumber  TEXT,
     avgPrepTimeMin REAL NOT NULL DEFAULT 15,
     popularityScore REAL NOT NULL DEFAULT 0,   -- used by SortingEngine (popularity sort)
     isOpen          BOOLEAN NOT NULL DEFAULT 1,
@@ -94,8 +95,10 @@ CREATE TABLE IF NOT EXISTS food_items (
 CREATE TABLE IF NOT EXISTS customers (
     customerId    INTEGER PRIMARY KEY,
     name          TEXT NOT NULL,
+    email         TEXT UNIQUE,            -- institutional email, e.g. name@st.ug.edu.gh
     phone         TEXT,
     locationId    INTEGER NOT NULL,       -- default delivery location (e.g. hostel room / hall)
+    createdAt     TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (locationId) REFERENCES locations(locationId)
 );
 
