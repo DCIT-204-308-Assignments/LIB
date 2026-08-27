@@ -58,6 +58,9 @@ node_modules/
 *.zip
 *.tar.gz
 
+Progress.md
+Suggestions.md
+
 # Ignore compiled native libs
 *.so
 *.dll
