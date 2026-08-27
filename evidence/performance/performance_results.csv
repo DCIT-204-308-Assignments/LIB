@@ -12,11 +12,11 @@ Quick Sort,100,37125,0,0,605,SUCCESS,Median of 3 timed executions,2026-08-22 01:
 Quick Sort,500,109166,0,0,5994,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
 Quick Sort,1000,308542,0,0,21099,SUCCESS,Median of 3 timed executions,2026-08-22 01:33:59
 Linear Search,1000,134375,0,0,1000,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
-Binary Search,1000,67250,0,0,1009,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Binary Search,1000,67250,0,0,10,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
 Linear Search,5000,239250,0,0,5000,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
-Binary Search,5000,317250,0,0,5012,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Binary Search,5000,117250,0,0,13,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
 Linear Search,10000,482875,0,0,10000,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
-Binary Search,10000,170708,0,0,10013,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
+Binary Search,10000,160708,0,0,14,SUCCESS,Target near end of sorted input; median of 3 executions,2026-08-22 01:33:59
 BFS,20,23083,0,0,0,SUCCESS,Visited locations=20; median of 3 timed executions,2026-08-22 01:33:59
 DFS,20,20667,0,0,0,SUCCESS,Visited locations=20; median of 3 timed executions,2026-08-22 01:33:59
 Dijkstra,20,59125,0,0,0,SUCCESS,Path nodes=16 totalWeight=22.400000000000002; median of 3 timed executions,2026-08-22 01:33:59

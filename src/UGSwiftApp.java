@@ -2629,23 +2629,79 @@ public class UGSwiftApp extends JFrame {
     private void populateRestaurantMenus() {
         restaurantMenus.clear();
         menuWeights.clear();
-        restaurantMenus.put("Auntie Mame's Kitchen", Arrays.asList("Waakye Bowl", "Jollof Rice", "Chicken Wrap"));
-        restaurantMenus.put("Tasty Bites", Arrays.asList("Veggie Pizza", "Chicken Shawarma", "Pasta Box"));
-        restaurantMenus.put("Campus Grill", Arrays.asList("Burger Combo", "Rice Bowl", "Spicy Noodles"));
-        restaurantMenus.put("The Snack Stop", Arrays.asList("Fruit Smoothie", "Sandwich", "Puff-Puff Pack"));
 
-        menuWeights.put("Waakye Bowl", 1.1);
-        menuWeights.put("Jollof Rice", 1.4);
-        menuWeights.put("Chicken Wrap", 0.9);
-        menuWeights.put("Veggie Pizza", 1.2);
-        menuWeights.put("Chicken Shawarma", 1.0);
-        menuWeights.put("Pasta Box", 1.3);
-        menuWeights.put("Burger Combo", 1.6);
-        menuWeights.put("Rice Bowl", 1.1);
-        menuWeights.put("Spicy Noodles", 1.2);
-        menuWeights.put("Fruit Smoothie", 0.7);
-        menuWeights.put("Sandwich", 0.8);
-        menuWeights.put("Puff-Puff Pack", 0.6);
+        // Restaurants 1-10 (original)
+        restaurantMenus.put("Auntie Muni's Kitchen",          Arrays.asList("Jollof Rice with Chicken", "Banku with Tilapia", "Sobolo Drink", "Fried Plantain"));
+        restaurantMenus.put("Night Market Grill House",        Arrays.asList("Grilled Chicken Wings", "Kelewele", "Bissap Juice"));
+        restaurantMenus.put("Bush Canteen Chop Bar",           Arrays.asList("Waakye Special", "Fried Rice with Beef", "Meat Pie", "Fanta"));
+        restaurantMenus.put("Continental Bites",               Arrays.asList("Pasta Alfredo", "Caesar Salad", "Bottled Water"));
+        restaurantMenus.put("Central Cafeteria Diner",         Arrays.asList("Rice and Stew", "Fried Yam and Egg", "Malt Drink"));
+        restaurantMenus.put("Legon Waakye Spot",               Arrays.asList("Waakye with Egg", "Gari and Beans", "Ice Kenkey"));
+        restaurantMenus.put("Campus Pizza Corner",             Arrays.asList("Margherita Pizza", "Pepperoni Pizza", "Soft Drink"));
+        restaurantMenus.put("Sarbah Fried Rice Joint",         Arrays.asList("Fried Rice with Chicken", "Spring Rolls"));
+        restaurantMenus.put("Banking Square Smoothies",        Arrays.asList("Mango Smoothie", "Avocado Shake"));
+        restaurantMenus.put("Jollof Junction",                 Arrays.asList("Special Jollof with Turkey", "Coleslaw", "Zobo Drink"));
+
+        // Restaurants 11-25 (new)
+        restaurantMenus.put("Akuafo Hall Chop Bar",            Arrays.asList("Konkonte with Palmnut Soup", "Ampesi with Garden Egg Stew", "Sobolo Drink", "Kelewele with Groundnuts"));
+        restaurantMenus.put("Volta Hall Canteen",              Arrays.asList("Rice with Groundnut Soup", "Yam with Egg Stew", "Bofrot", "Pineapple Juice"));
+        restaurantMenus.put("Legon Shawarma Spot",             Arrays.asList("Chicken Shawarma", "Beef Shawarma", "Veggie Shawarma", "Malta Drink"));
+        restaurantMenus.put("Commonwealth Bites",              Arrays.asList("Chicken Burger", "Beef Burger", "French Fries", "Coke"));
+        restaurantMenus.put("Sarbah Breakfast Corner",         Arrays.asList("Hausa Koko with Koose", "Tom Brown Porridge", "Egg Sandwich", "Hot Chocolate"));
+        restaurantMenus.put("The Legon Grill",                 Arrays.asList("Grilled Tilapia", "Pork Ribs", "Garden Salad", "Chapman"));
+        restaurantMenus.put("Night Market Suya Stand",         Arrays.asList("Suya Beef Sticks", "Suya Chicken", "Pepper Sauce", "Sobolo"));
+        restaurantMenus.put("Campus Noodle House",             Arrays.asList("Fried Noodles with Chicken", "Vegetable Chow Mein", "Egg Fried Rice", "Green Tea"));
+        restaurantMenus.put("Cocoa House Cafe",                Arrays.asList("Chocolate Cake Slice", "Doughnut", "Cappuccino", "Iced Coffee"));
+        restaurantMenus.put("Pent Market Eatery",              Arrays.asList("Banku with Okro Soup", "Fufu with Light Soup", "Omotuo with Palmnut Soup", "Sobolo"));
+        restaurantMenus.put("Jubilee Hall Kitchen",            Arrays.asList("Jollof with Lamb", "Fried Yam with Chicken", "Bofrot", "Malta Drink"));
+        restaurantMenus.put("JQB Snack Bar",                   Arrays.asList("Chin Chin", "Plantain Chips", "Puff Puff", "Bottled Water"));
+        restaurantMenus.put("Republic Hall Diner",             Arrays.asList("Fufu with Goat Soup", "Banku with Grilled Fish", "Kenkey and Fish", "Fanta"));
+        restaurantMenus.put("Legon Fresh Juice Bar",           Arrays.asList("Watermelon Juice", "Pineapple-Ginger Juice", "Mixed Fruit Smoothie", "Coconut Water"));
+        restaurantMenus.put("UG Sandwich Station",             Arrays.asList("Club Sandwich", "Tuna Sandwich", "Egg and Cheese Sandwich", "Iced Tea"));
+
+        // Weights (kg) per menu item
+        menuWeights.put("Jollof Rice with Chicken", 1.4);   menuWeights.put("Banku with Tilapia", 1.6);
+        menuWeights.put("Sobolo Drink", 0.5);               menuWeights.put("Fried Plantain", 0.6);
+        menuWeights.put("Grilled Chicken Wings", 1.1);      menuWeights.put("Kelewele", 0.7);
+        menuWeights.put("Bissap Juice", 0.5);               menuWeights.put("Waakye Special", 1.3);
+        menuWeights.put("Fried Rice with Beef", 1.4);       menuWeights.put("Meat Pie", 0.4);
+        menuWeights.put("Fanta", 0.5);                      menuWeights.put("Pasta Alfredo", 1.2);
+        menuWeights.put("Caesar Salad", 0.8);               menuWeights.put("Bottled Water", 0.5);
+        menuWeights.put("Rice and Stew", 1.3);              menuWeights.put("Fried Yam and Egg", 1.0);
+        menuWeights.put("Malt Drink", 0.5);                 menuWeights.put("Waakye with Egg", 1.2);
+        menuWeights.put("Gari and Beans", 1.1);             menuWeights.put("Ice Kenkey", 0.6);
+        menuWeights.put("Margherita Pizza", 1.5);           menuWeights.put("Pepperoni Pizza", 1.5);
+        menuWeights.put("Soft Drink", 0.5);                 menuWeights.put("Fried Rice with Chicken", 1.4);
+        menuWeights.put("Spring Rolls", 0.6);               menuWeights.put("Mango Smoothie", 0.5);
+        menuWeights.put("Avocado Shake", 0.5);              menuWeights.put("Special Jollof with Turkey", 1.6);
+        menuWeights.put("Coleslaw", 0.5);                   menuWeights.put("Zobo Drink", 0.5);
+        menuWeights.put("Konkonte with Palmnut Soup", 1.5); menuWeights.put("Ampesi with Garden Egg Stew", 1.4);
+        menuWeights.put("Kelewele with Groundnuts", 0.7);   menuWeights.put("Rice with Groundnut Soup", 1.4);
+        menuWeights.put("Yam with Egg Stew", 1.1);         menuWeights.put("Bofrot", 0.4);
+        menuWeights.put("Pineapple Juice", 0.5);            menuWeights.put("Chicken Shawarma", 1.0);
+        menuWeights.put("Beef Shawarma", 1.0);              menuWeights.put("Veggie Shawarma", 0.9);
+        menuWeights.put("Malta Drink", 0.5);                menuWeights.put("Chicken Burger", 1.2);
+        menuWeights.put("Beef Burger", 1.3);                menuWeights.put("French Fries", 0.5);
+        menuWeights.put("Coke", 0.5);                       menuWeights.put("Hausa Koko with Koose", 1.0);
+        menuWeights.put("Tom Brown Porridge", 0.9);         menuWeights.put("Egg Sandwich", 0.8);
+        menuWeights.put("Hot Chocolate", 0.5);              menuWeights.put("Grilled Tilapia", 1.5);
+        menuWeights.put("Pork Ribs", 1.8);                  menuWeights.put("Garden Salad", 0.7);
+        menuWeights.put("Chapman", 0.6);                    menuWeights.put("Suya Beef Sticks", 0.9);
+        menuWeights.put("Suya Chicken", 0.9);               menuWeights.put("Pepper Sauce", 0.3);
+        menuWeights.put("Sobolo", 0.5);                     menuWeights.put("Fried Noodles with Chicken", 1.3);
+        menuWeights.put("Vegetable Chow Mein", 1.1);        menuWeights.put("Egg Fried Rice", 1.2);
+        menuWeights.put("Green Tea", 0.4);                  menuWeights.put("Chocolate Cake Slice", 0.4);
+        menuWeights.put("Doughnut", 0.3);                   menuWeights.put("Cappuccino", 0.4);
+        menuWeights.put("Iced Coffee", 0.4);                menuWeights.put("Banku with Okro Soup", 1.6);
+        menuWeights.put("Fufu with Light Soup", 1.7);       menuWeights.put("Omotuo with Palmnut Soup", 1.5);
+        menuWeights.put("Jollof with Lamb", 1.5);           menuWeights.put("Fried Yam with Chicken", 1.2);
+        menuWeights.put("Chin Chin", 0.3);                  menuWeights.put("Plantain Chips", 0.3);
+        menuWeights.put("Puff Puff", 0.4);                  menuWeights.put("Fufu with Goat Soup", 1.7);
+        menuWeights.put("Banku with Grilled Fish", 1.5);    menuWeights.put("Kenkey and Fish", 1.4);
+        menuWeights.put("Watermelon Juice", 0.5);           menuWeights.put("Pineapple-Ginger Juice", 0.5);
+        menuWeights.put("Mixed Fruit Smoothie", 0.5);       menuWeights.put("Coconut Water", 0.5);
+        menuWeights.put("Club Sandwich", 0.9);              menuWeights.put("Tuna Sandwich", 0.9);
+        menuWeights.put("Egg and Cheese Sandwich", 0.8);    menuWeights.put("Iced Tea", 0.4);
 
         restaurantCombo.removeAllItems();
         for (String restaurant : restaurantMenus.keySet()) {

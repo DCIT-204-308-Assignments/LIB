@@ -29,3 +29,63 @@ foodItemId,restaurantId,name,category,available
 28,1,Fried Plantain,Snack,1
 29,3,Fanta,Drink,1
 30,6,Ice Kenkey,Drink,1
+31,11,Konkonte with Palmnut Soup,Main,1
+32,11,Ampesi with Garden Egg Stew,Main,1
+33,11,Sobolo Drink,Drink,1
+34,11,Kelewele with Groundnuts,Snack,1
+35,12,Rice with Groundnut Soup,Main,1
+36,12,Yam with Egg Stew,Main,1
+37,12,Bofrot,Snack,1
+38,12,Pineapple Juice,Drink,1
+39,13,Chicken Shawarma,Main,1
+40,13,Beef Shawarma,Main,1
+41,13,Veggie Shawarma,Main,1
+42,13,Malta Drink,Drink,1
+43,14,Chicken Burger,Main,1
+44,14,Beef Burger,Main,1
+45,14,French Fries,Snack,1
+46,14,Coke,Drink,1
+47,15,Hausa Koko with Koose,Main,1
+48,15,Tom Brown Porridge,Main,1
+49,15,Egg Sandwich,Main,1
+50,15,Hot Chocolate,Drink,1
+51,16,Grilled Tilapia,Main,1
+52,16,Pork Ribs,Main,1
+53,16,Garden Salad,Main,1
+54,16,Chapman,Drink,1
+55,17,Suya Beef Sticks,Main,1
+56,17,Suya Chicken,Main,1
+57,17,Pepper Sauce,Snack,1
+58,17,Sobolo,Drink,1
+59,18,Fried Noodles with Chicken,Main,1
+60,18,Vegetable Chow Mein,Main,1
+61,18,Egg Fried Rice,Main,1
+62,18,Green Tea,Drink,1
+63,19,Chocolate Cake Slice,Snack,1
+64,19,Doughnut,Snack,1
+65,19,Cappuccino,Drink,1
+66,19,Iced Coffee,Drink,1
+67,20,Banku with Okro Soup,Main,1
+68,20,Fufu with Light Soup,Main,1
+69,20,Omotuo with Palmnut Soup,Main,1
+70,20,Sobolo,Drink,1
+71,21,Jollof with Lamb,Main,1
+72,21,Fried Yam with Chicken,Main,1
+73,21,Bofrot,Snack,1
+74,21,Malta Drink,Drink,1
+75,22,Chin Chin,Snack,1
+76,22,Plantain Chips,Snack,1
+77,22,Puff Puff,Snack,1
+78,22,Bottled Water,Drink,1
+79,23,Fufu with Goat Soup,Main,1
+80,23,Banku with Grilled Fish,Main,1
+81,23,Kenkey and Fish,Main,1
+82,23,Fanta,Drink,1
+83,24,Watermelon Juice,Drink,1
+84,24,Pineapple-Ginger Juice,Drink,1
+85,24,Mixed Fruit Smoothie,Drink,1
+86,24,Coconut Water,Drink,1
+87,25,Club Sandwich,Main,1
+88,25,Tuna Sandwich,Main,1
+89,25,Egg and Cheese Sandwich,Main,1
+90,25,Iced Tea,Drink,1
